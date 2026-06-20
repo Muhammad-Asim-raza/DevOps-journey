@@ -1,0 +1,42 @@
+# AWS credentials and keys — NEVER commit these
+*.pem
+*.key
+*.ppk
+.aws/
+credentials
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+*.env
+
+# Terraform state files (contain sensitive data)
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Node modules (if you ever run JS tools)
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
