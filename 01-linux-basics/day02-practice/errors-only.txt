@@ -1,0 +1,9 @@
+2026-06-21 08:10:15 ERROR Cannot connect to payment service
+2026-06-21 08:10:16 ERROR Payment service timeout after 30s
+2026-06-21 08:30:00 ERROR Database connection lost
+2026-06-21 08:30:01 ERROR Retrying database connection
+2026-06-21 08:45:00 ERROR Disk quota exceeded
+2026-06-21 09:05:00 ERROR Failed to send email notification
+2026-06-21 08:20:00 WARNING Disk usage above 80%
+2026-06-21 08:35:00 WARNING Memory usage above 90%
+2026-06-21 08:55:00 WARNING CPU usage above 95%

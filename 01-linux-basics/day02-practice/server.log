@@ -1,0 +1,20 @@
+2026-06-21 08:00:01 INFO  Server started successfully
+2026-06-21 08:00:02 INFO  Database connection established
+2026-06-21 08:00:03 INFO  Loading configuration files
+2026-06-21 08:05:10 INFO  User john logged in
+2026-06-21 08:10:15 ERROR Cannot connect to payment service
+2026-06-21 08:10:16 ERROR Payment service timeout after 30s
+2026-06-21 08:15:20 INFO  User sarah logged in
+2026-06-21 08:20:00 WARNING Disk usage above 80%
+2026-06-21 08:25:30 INFO  Backup started
+2026-06-21 08:30:00 ERROR Database connection lost
+2026-06-21 08:30:01 ERROR Retrying database connection
+2026-06-21 08:30:05 INFO  Database connection restored
+2026-06-21 08:35:00 WARNING Memory usage above 90%
+2026-06-21 08:40:00 INFO  User ahmed logged in
+2026-06-21 08:45:00 ERROR Disk quota exceeded
+2026-06-21 08:50:00 INFO  Backup completed successfully
+2026-06-21 08:55:00 WARNING CPU usage above 95%
+2026-06-21 09:00:00 INFO  Server health check passed
+2026-06-21 09:05:00 ERROR Failed to send email notification
+2026-06-21 09:10:00 INFO  Server running normally
