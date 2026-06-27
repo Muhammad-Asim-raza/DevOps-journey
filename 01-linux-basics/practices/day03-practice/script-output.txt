@@ -1,0 +1,39 @@
+============================================
+   PROCESS MONITOR REPORT
+   Generated: Sat Jun 27 12:02:53 PKT 2026
+============================================
+
+[ TOTAL PROCESSES RUNNING ]
+28
+
+[ TOP 5 CPU CONSUMING PROCESSES ]
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.3 167152 12844 ?        Ss   10:05   0:02 /sbin/init
+root           2  0.0  0.0   3180  2200 hvc0     Sl+  10:05   0:00 /init
+root           7  0.0  0.0   3196  2132 hvc0     Sl+  10:05   0:00 plan9 --control-socket 7 --log-level 4 --server-fd 8 --pipe-fd 10 --log-truncate
+root          67  0.0  0.5  64232 18520 ?        S<s  10:05   0:01 /lib/systemd/systemd-journald
+root          92  0.0  0.1  22980  6068 ?        Ss   10:05   0:00 /lib/systemd/systemd-udevd
+
+[ TOP 5 MEMORY CONSUMING PROCESSES ]
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         221  0.0  0.6 107180 22200 ?        Ssl  10:05   0:00 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+root         865  0.0  0.5 293052 20728 ?        Ssl  10:41   0:00 /usr/libexec/packagekitd
+root         187  0.0  0.5  30208 19672 ?        Ss   10:05   0:00 /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers
+root          67  0.0  0.5  64232 18520 ?        S<s  10:05   0:01 /lib/systemd/systemd-journald
+systemd+     114  0.0  0.3  25556 13708 ?        Ss   10:05   0:00 /lib/systemd/systemd-resolved
+
+[ CHECKING IMPORTANT SERVICES ]
+✅ SSH Service     = RUNNING
+✅ Cron Service    = RUNNING
+
+[ SYSTEM LOAD ]
+ 12:02:53 up  1:57,  1 user,  load average: 0.00, 0.01, 0.00
+
+[ MEMORY USAGE ]
+               total        used        free      shared  buff/cache   available
+Mem:           3.5Gi       386Mi       2.2Gi       3.0Mi       1.0Gi       3.1Gi
+Swap:          1.0Gi          0B       1.0Gi
+
+============================================
+   MONITOR REPORT COMPLETE
+============================================

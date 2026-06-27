@@ -1,0 +1,4 @@
+28
+asim_ra+     298  0.0  0.1   6520  5524 pts/0    Ss   10:06   0:00 -bash
+asim_ra+     380  0.0  0.1   6112  5200 pts/1    S+   10:06   0:00 -bash
+asim_ra+    1547  0.0  0.0   4036  2336 pts/0    S+   11:48   0:00 grep --color=auto bash
