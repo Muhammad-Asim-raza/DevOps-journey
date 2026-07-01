@@ -1,0 +1,39 @@
+============================================
+   SSH STATUS REPORT
+   Generated: Wed Jul  1 22:32:56 PKT 2026
+============================================
+
+[ CHECKING SSH DIRECTORY ]
+✅ SSH directory exists: ~/.ssh
+
+[ CHECKING SSH KEYS ]
+✅ Private key: ~/.ssh/id_ed25519
+✅ Public key:  ~/.ssh/id_ed25519.pub
+
+[ KEY PERMISSIONS ]
+total 28
+drwx------  2 asim_raza asim_raza 4096 Jul  1 22:10 .
+drwxr-x--- 13 asim_raza asim_raza 4096 Jun 30 11:01 ..
+-rw-------  1 asim_raza asim_raza  244 Jul  1 22:10 config
+-rw-------  1 asim_raza asim_raza  419 Jun 20 17:48 id_ed25519
+-rw-r--r--  1 asim_raza asim_raza  104 Jun 20 17:48 id_ed25519.pub
+-rw-------  1 asim_raza asim_raza  978 Jun 20 18:04 known_hosts
+-rw-r--r--  1 asim_raza asim_raza  142 Jun 20 18:04 known_hosts.old
+
+[ YOUR PUBLIC KEY ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDSCek9MWbwzHriFFAk7DZ4PYI5EXyJE6rfMQ9sTdNBJ asimraza9659@gmail.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ CHECKING SSH CONFIG ]
+✅ SSH config exists
+   Your configured shortcuts:
+Host production
+Host github.com
+
+[ TESTING GITHUB CONNECTION ]
+Hi Muhammad-Asim-raza! You've successfully authenticated, but GitHub does not provide shell access.
+
+============================================
+   REPORT COMPLETE
+============================================
