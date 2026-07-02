@@ -1,0 +1,66 @@
+============================================
+   SYSTEM ADMINISTRATION REPORT
+   Generated: Thu Jul  2 13:16:53 PKT 2026
+   Server: DESKTOP-OF0SJ5C
+============================================
+
+[ INSTALLED PACKAGES COUNT ]
+Total packages installed: 943
+
+[ CHECKING IMPORTANT PACKAGES ]
+✅ nginx = installed
+✅ curl = installed
+✅ wget = installed
+✅ git = installed
+
+[ ENVIRONMENT VARIABLES ]
+User     : asim_raza
+Home     : /home/asim_raza
+Shell    : /bin/bash
+Path     : /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files/WindowsApps/MicrosoftCorporationII.WindowsSubsystemForLinux_2.7.10.0_x64__8wekyb3d8bbwe:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/d/Vscode/Git/cmd:/mnt/c/Program Files/Amazon/AWSCLI/bin/:/mnt/c/Users/Asim Raza/AppData/Local/Microsoft/WindowsApps:/mnt/d/Vscode/Microsoft VS Code/bin:/mnt/d/Vscode/mingw/ucrt64/bin:/snap/bin
+
+[ DISK USAGE ]
+Filesystem      Size  Used Avail Use% Mounted on
+none            1.8G     0  1.8G   0% /usr/lib/modules/6.18.33.2-microsoft-standard-WSL2
+none            1.8G  4.0K  1.8G   1% /mnt/wsl
+drivers         117G   53G   65G  45% /usr/lib/wsl/drivers
+/dev/sdd       1007G  3.6G  953G   1% /
+none            1.8G   68K  1.8G   1% /mnt/wslg
+none            1.8G     0  1.8G   0% /usr/lib/wsl/lib
+rootfs          1.8G  2.8M  1.8G   1% /init
+none            1.8G  528K  1.8G   1% /run
+none            1.8G     0  1.8G   0% /run/lock
+none            1.8G     0  1.8G   0% /run/shm
+none            1.8G  100K  1.8G   1% /mnt/wslg/versions.txt
+none            1.8G  100K  1.8G   1% /mnt/wslg/doc
+C:\             117G   53G   65G  45% /mnt/c
+D:\             121G   15G  107G  12% /mnt/d
+
+[ LARGEST FOLDERS IN HOME ]
+53M	/home/asim_raza/AWS-Session
+904K	/home/asim_raza/DevOps-journey
+16K	/home/asim_raza/practice
+4.0K	/home/asim_raza/varlog-contents.txt
+4.0K	/home/asim_raza/nodeHealth.sh
+
+[ NETWORK INFORMATION ]
+IP Address: 172.25.147.56 
+Listening ports:
+LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*          
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:80        0.0.0.0:*          
+LISTEN 0      128             [::]:22           [::]:*          
+LISTEN 0      511             [::]:80           [::]:*          
+
+[ RECENT SYSTEM ERRORS ]
+Last 5 system errors:
+-- No entries --
+
+[ SERVICE STATUS ]
+✅ nginx = running
+✅ ssh = running
+✅ cron = running
+
+============================================
+   REPORT COMPLETE
+============================================
