@@ -1,0 +1,19 @@
+2026-06-27
+2026-06-27
+2026-06-27
+2026-06-27
+2026-06-27
+
+--- Date and time ---
+2026-06-27 08:00:01
+2026-06-27 08:00:02
+2026-06-27 08:00:03
+2026-06-27 08:01:00
+2026-06-27 08:02:15
+
+--- Message part ---
+ [server] Application started on port 8080
+ [database] Connected to PostgreSQL successfully
+ [cache] Redis connection established
+ [auth] User admin logged in from 192.168.1.10
+ [api] GET /api/users 200 45ms

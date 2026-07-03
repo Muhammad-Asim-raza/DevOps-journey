@@ -1,0 +1,55 @@
+============================================
+   AWK DEMONSTRATIONS
+============================================
+
+[ EXTRACT DATE COLUMN ]
+First column only:
+2026-06-27
+2026-06-27
+2026-06-27
+2026-06-27
+2026-06-27
+
+[ EXTRACT DATE TIME LEVEL ]
+First three columns:
+2026-06-27 08:00:01 INFO
+2026-06-27 08:00:02 INFO
+2026-06-27 08:00:03 INFO
+2026-06-27 08:01:00 INFO
+2026-06-27 08:02:15 INFO
+
+[ COUNT LOG LEVELS ]
+How many of each level:
+     13 INFO
+     10 ERROR
+      4 WARNING
+      3 CRITICAL
+
+[ FILTER BY CONDITION ]
+Only ERROR lines:
+2026-06-27 08:04:00 ERROR [payment] Payment gateway connection refused
+2026-06-27 08:04:01 ERROR [payment] Retry attempt 1 of 3 failed
+2026-06-27 08:04:02 ERROR [payment] Retry attempt 2 of 3 failed
+2026-06-27 08:04:03 ERROR [payment] Retry attempt 3 of 3 failed
+2026-06-27 08:06:01 ERROR [database] Connection pool exhausted
+2026-06-27 08:06:02 ERROR [database] Failed to acquire connection after 30s
+2026-06-27 08:08:00 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:01 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:02 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:10:01 ERROR [server] Out of memory error
+
+[ COUNT WITH AWK ]
+Total error count:
+Total errors: 10
+
+[ ADD LINE NUMBERS ]
+Lines with numbers:
+1 2026-06-27 08:00:01 INFO  [server] Application started on port 8080
+2 2026-06-27 08:00:02 INFO  [database] Connected to PostgreSQL successfully
+3 2026-06-27 08:00:03 INFO  [cache] Redis connection established
+4 2026-06-27 08:01:00 INFO  [auth] User admin logged in from 192.168.1.10
+5 2026-06-27 08:02:15 INFO  [api] GET /api/users 200 45ms
+
+============================================
+   AWK COMPLETE
+============================================

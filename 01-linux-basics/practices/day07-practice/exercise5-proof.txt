@@ -1,0 +1,17 @@
+--- Log level counts ---
+     13 INFO
+     10 ERROR
+      4 WARNING
+      3 CRITICAL
+
+--- Total lines ---
+30 app.log
+
+--- Unique log levels ---
+CRITICAL
+ERROR
+INFO
+WARNING
+
+--- Uppercase demo ---
+HELLO DEVOPS ENGINEER

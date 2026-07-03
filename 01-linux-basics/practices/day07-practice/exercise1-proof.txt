@@ -1,0 +1,47 @@
+---FIND ERROR  ---
+ 
+2026-06-27 08:04:00 ERROR [payment] Payment gateway connection refused
+2026-06-27 08:04:01 ERROR [payment] Retry attempt 1 of 3 failed
+2026-06-27 08:04:02 ERROR [payment] Retry attempt 2 of 3 failed
+2026-06-27 08:04:03 ERROR [payment] Retry attempt 3 of 3 failed
+2026-06-27 08:06:01 ERROR [database] Connection pool exhausted
+2026-06-27 08:06:02 ERROR [database] Failed to acquire connection after 30s
+2026-06-27 08:08:00 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:01 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:02 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:10:01 ERROR [server] Out of memory error
+ 
+--- ERROR count ---
+10
+ 
+--- CRITICAL with context ---
+2026-06-27 08:04:02 ERROR [payment] Retry attempt 2 of 3 failed
+2026-06-27 08:04:03 ERROR [payment] Retry attempt 3 of 3 failed
+2026-06-27 08:04:04 CRITICAL [payment] Payment service completely down
+--
+2026-06-27 08:08:01 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:02 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:03 CRITICAL [auth] Possible brute force attack detected from 10.0.0.1
+--
+2026-06-27 08:10:00 WARNING [memory] Memory usage at 89%
+2026-06-27 08:10:01 ERROR [server] Out of memory error
+2026-06-27 08:10:02 CRITICAL [server] Server restarting due to memory exhaustion
+ 
+--- Everything except INFO ---
+2026-06-27 08:03:00 WARNING [database] Query took longer than 500ms
+2026-06-27 08:04:00 ERROR [payment] Payment gateway connection refused
+2026-06-27 08:04:01 ERROR [payment] Retry attempt 1 of 3 failed
+2026-06-27 08:04:02 ERROR [payment] Retry attempt 2 of 3 failed
+2026-06-27 08:04:03 ERROR [payment] Retry attempt 3 of 3 failed
+2026-06-27 08:04:04 CRITICAL [payment] Payment service completely down
+2026-06-27 08:05:30 WARNING [memory] Memory usage at 75%
+2026-06-27 08:06:01 ERROR [database] Connection pool exhausted
+2026-06-27 08:06:02 ERROR [database] Failed to acquire connection after 30s
+2026-06-27 08:07:00 WARNING [disk] Disk usage at 82%
+2026-06-27 08:08:00 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:01 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:02 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:03 CRITICAL [auth] Possible brute force attack detected from 10.0.0.1
+2026-06-27 08:10:00 WARNING [memory] Memory usage at 89%
+2026-06-27 08:10:01 ERROR [server] Out of memory error
+2026-06-27 08:10:02 CRITICAL [server] Server restarting due to memory exhaustion

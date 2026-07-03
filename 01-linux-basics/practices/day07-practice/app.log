@@ -1,0 +1,30 @@
+2026-06-27 08:00:01 INFO  [server] Application started on port 8080
+2026-06-27 08:00:02 INFO  [database] Connected to PostgreSQL successfully
+2026-06-27 08:00:03 INFO  [cache] Redis connection established
+2026-06-27 08:01:00 INFO  [auth] User admin logged in from 192.168.1.10
+2026-06-27 08:02:15 INFO  [api] GET /api/users 200 45ms
+2026-06-27 08:02:16 INFO  [api] GET /api/products 200 32ms
+2026-06-27 08:03:00 WARNING [database] Query took longer than 500ms
+2026-06-27 08:03:01 INFO  [api] POST /api/orders 201 89ms
+2026-06-27 08:04:00 ERROR [payment] Payment gateway connection refused
+2026-06-27 08:04:01 ERROR [payment] Retry attempt 1 of 3 failed
+2026-06-27 08:04:02 ERROR [payment] Retry attempt 2 of 3 failed
+2026-06-27 08:04:03 ERROR [payment] Retry attempt 3 of 3 failed
+2026-06-27 08:04:04 CRITICAL [payment] Payment service completely down
+2026-06-27 08:05:00 INFO  [auth] User john logged in from 192.168.1.20
+2026-06-27 08:05:30 WARNING [memory] Memory usage at 75%
+2026-06-27 08:06:00 INFO  [api] GET /api/users 200 41ms
+2026-06-27 08:06:01 ERROR [database] Connection pool exhausted
+2026-06-27 08:06:02 ERROR [database] Failed to acquire connection after 30s
+2026-06-27 08:07:00 WARNING [disk] Disk usage at 82%
+2026-06-27 08:07:01 INFO  [api] DELETE /api/sessions 200 12ms
+2026-06-27 08:08:00 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:01 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:02 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:03 CRITICAL [auth] Possible brute force attack detected from 10.0.0.1
+2026-06-27 08:09:00 INFO  [api] GET /api/health 200 5ms
+2026-06-27 08:10:00 WARNING [memory] Memory usage at 89%
+2026-06-27 08:10:01 ERROR [server] Out of memory error
+2026-06-27 08:10:02 CRITICAL [server] Server restarting due to memory exhaustion
+2026-06-27 08:11:00 INFO  [server] Server restarted successfully
+2026-06-27 08:12:00 INFO  [database] Reconnected to PostgreSQL

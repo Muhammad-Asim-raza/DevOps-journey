@@ -1,0 +1,20 @@
+--- Log level counts ---
+     13 INFO
+     10 ERROR
+      4 WARNING
+      3 CRITICAL
+
+--- Only ERROR lines ---
+2026-06-27 08:04:00 ERROR [payment] Payment gateway connection refused
+2026-06-27 08:04:01 ERROR [payment] Retry attempt 1 of 3 failed
+2026-06-27 08:04:02 ERROR [payment] Retry attempt 2 of 3 failed
+2026-06-27 08:04:03 ERROR [payment] Retry attempt 3 of 3 failed
+2026-06-27 08:06:01 ERROR [database] Connection pool exhausted
+2026-06-27 08:06:02 ERROR [database] Failed to acquire connection after 30s
+2026-06-27 08:08:00 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:01 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:08:02 ERROR [auth] Failed login attempt for user admin from 10.0.0.1
+2026-06-27 08:10:01 ERROR [server] Out of memory error
+
+--- Total error count ---
+Total errors: 10
