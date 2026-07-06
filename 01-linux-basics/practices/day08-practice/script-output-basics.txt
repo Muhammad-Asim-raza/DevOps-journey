@@ -1,0 +1,53 @@
+============================================
+   VIM BASICS REFERENCE
+============================================
+
+[ VIM MODES ]
+  NORMAL  = default mode, navigation and commands
+  INSERT  = typing text (press i to enter)
+  VISUAL  = selecting text (press v to enter)
+  COMMAND = running commands (press : to enter)
+
+[ OPENING VIM ]
+  vim filename     = open or create file
+  vim +10 file     = open at line 10
+  vim file1 file2  = open multiple files
+
+[ EXITING VIM ]
+  :q               = quit (no changes)
+  :q!              = force quit (discard changes)
+  :w               = save (write)
+  :wq              = save and quit
+  :x               = save and quit
+  ZZ               = save and quit (no colon)
+
+[ NAVIGATION ]
+  h j k l          = left down up right
+  w b e            = word forward back end
+  0 $              = line start end
+  gg G             = file start end
+  Ctrl+f Ctrl+b    = page down up
+
+[ EDITING ]
+  i I a A o O      = enter insert mode
+  x                = delete character
+  dd               = delete line
+  yy               = copy line
+  p P              = paste after before
+  u Ctrl+r         = undo redo
+
+[ SEARCH AND REPLACE ]
+  /word            = search forward
+  ?word            = search backward
+  n N              = next previous match
+  :%s/old/new/g    = replace all
+  :%s/old/new/gc   = replace with confirm
+
+[ COMMAND MODE ]
+  :set number      = show line numbers
+  :syntax on       = syntax highlighting
+  :set paste       = paste mode
+
+============================================
+   VIM REFERENCE COMPLETE
+============================================

@@ -1,0 +1,25 @@
+# Application Configuration
+# Environment: production
+# Version: 1.0.0
+
+DATABASE_HOST=db.prod.internal
+DATABASE_PORT=5432
+DATABASE_NAME=myapp_dev
+DATABASE_USER=admin
+DATABASE_PASS=dev_password_123
+
+REDIS_HOST=redis.prod.internal
+REDIS_PORT=6379
+
+APP_PORT=3000
+APP_ENV=production
+APP_INFO=true
+
+LOG_LEVEL=INFO
+LOG_FILE=/var/log/app/app.log
+
+Made following replacements:
+development → production
+old-db → db.prod
+old-redis → redis.prod
+DEBUG → INFO

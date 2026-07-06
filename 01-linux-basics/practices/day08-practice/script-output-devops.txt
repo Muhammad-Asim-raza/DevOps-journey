@@ -1,0 +1,50 @@
+============================================
+   VIM REAL DEVOPS SCENARIOS
+============================================
+
+[ SCENARIO 1: Edit nginx config ]
+  Real command: vim /etc/nginx/nginx.conf
+  Common tasks:
+  - Change server_name
+  - Update proxy_pass IP
+  - Modify listen port
+  Commands used:
+  /server_name     = find server_name
+  cw               = change word
+  :%s/old-ip/new-ip/g = replace IP
+  :wq              = save and exit
+
+[ SCENARIO 2: Edit SSH config ]
+  Real command: sudo vim /etc/ssh/sshd_config
+  Common tasks:
+  - Disable root login
+  - Change SSH port
+  - Add allowed users
+  Commands used:
+  /PermitRootLogin = find the setting
+  cw               = change the value
+  :wq              = save
+  sudo systemctl restart ssh = apply
+
+[ SCENARIO 3: Edit Kubernetes manifest ]
+  Real command: vim deployment.yaml
+  Common tasks:
+  - Update image version
+  - Change replica count
+  - Update environment variables
+  Commands used:
+  :%s/image:v1/image:v2/g = update version
+  /replicas        = find replicas
+  cw               = change value
+
+[ SCENARIO 4: Quick server fix ]
+  vim /etc/hosts
+  Add IP to hostname mapping
+  G = go to end of file
+  o = new line below and insert
+  Type: 192.168.1.100 myserver.local
+  Escape + :wq = save
+
+============================================
+   DEVOPS SCENARIOS COMPLETE
+============================================
