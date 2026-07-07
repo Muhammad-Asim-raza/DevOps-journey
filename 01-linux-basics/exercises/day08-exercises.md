@@ -4,7 +4,7 @@
 
 ---
 
-## Exercise 1: Open Exit Vim ✅
+## Exercise 1 : Open And Exit Vim Comands Vom ✅
 - [x] Opened vim with vim test-file.txt
 - [x] Entered insert mode with i
 - [x] Typed text
@@ -12,7 +12,7 @@
 - [x] Saved with :w
 - [x] Quit with :q
 
-### Proof
+### Proofs
 See: practices/day08-practice/exercise1-proof.txt
 
 ### What I Learned
@@ -47,7 +47,7 @@ gg = file start         G = file end
 
 ## Exercise 3: Search and Replace ✅
 - [x] Used :%s/old/new/g to replace all
-- [x] Replaced development with production
+- [x] Replaced  development with production
 - [x] Replaced old hostnames with new ones
 - [x] Changed DEBUG to INFO
 
