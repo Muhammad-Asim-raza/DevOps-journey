@@ -1,0 +1,6 @@
+=== GROUP MANAGEMENT ===
+Created group: devops-team
+devops-team:x:1002:
+
+Added devopstest to devops-team
+devopstest : devopstest devops-team

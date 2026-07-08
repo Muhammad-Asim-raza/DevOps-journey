@@ -1,0 +1,61 @@
+============================================
+   USER AND GROUP MANAGER
+   Generated: Wed Jul  8 12:08:59 PKT 2026
+============================================
+
+[ CURRENT USER INFO ]
+Username : asim-raza
+User ID  : 1000
+Group ID : 1000
+Groups   : asim-raza adm dialout cdrom floppy sudo audio dip video plugdev users netdev
+
+[ ALL USERS ON SYSTEM ]
+Regular users (UID >= 1000):
+nobody UID:65534 Shell:/usr/sbin/nologin
+asim-raza UID:1000 Shell:/bin/bash
+devopstest UID:1001 Shell:/bin/bash
+
+[ ALL GROUPS ]
+Groups on this system:
+root:0
+daemon:1
+bin:2
+sys:3
+adm:4
+tty:5
+disk:6
+lp:7
+mail:8
+news:9
+uucp:10
+man:12
+proxy:13
+kmem:15
+dialout:20
+fax:21
+voice:22
+cdrom:24
+floppy:25
+tape:26
+
+[ SUDO USERS ]
+Users with sudo access:
+asim-raza
+
+[ LOGGED IN USERS ]
+asim-raza pts/1        2026-07-08 09:23
+
+[ RECENT LOGINS ]
+reboot   system boot  6.18.33.2-micros Wed Jul  8 09:23   still running
+reboot   system boot  6.18.33.2-micros Tue Jul  7 21:55 - 22:11  (00:15)
+reboot   system boot  6.18.33.2-micros Tue Jul  7 21:11 - 21:54  (00:42)
+reboot   system boot  6.18.33.2-micros Tue Jul  7 21:11 - 21:11  (00:00)
+
+wtmp begins Tue Jul  7 21:11:13 2026
+
+[ FAILED LOGIN ATTEMPTS ]
+2026-07-08T12:08:59.479736+05:00 DESKTOP-OF0SJ5C sudo: asim-raza : TTY=pts/0 ; PWD=/home/asim-raza/DevOps-journey/01-linux-basics/practices/day09-practice ; USER=root ; COMMAND=/usr/bin/grep 'Failed password' /var/log/auth.log
+
+============================================
+   USER REPORT COMPLETE
+============================================

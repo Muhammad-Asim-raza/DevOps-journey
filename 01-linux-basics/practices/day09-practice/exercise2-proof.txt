@@ -1,0 +1,8 @@
+=== USER MANAGEMENT ===
+
+Created user: devopstest
+uid=1001(devopstest) gid=1001(devopstest) groups=1001(devopstest)
+devopstest:x:1001:1001:DevOps Test:/home/devopstest:/bin/bash
+
+Modified user comment
+devopstest:x:1001:1001:DevOps Test Updated:/home/devopstest:/bin/bash

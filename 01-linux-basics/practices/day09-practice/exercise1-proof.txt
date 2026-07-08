@@ -1,0 +1,5 @@
+=== USER INFORMATION ===
+asim-raza
+
+uid=1000(asim-raza) gid=1000(asim-raza) groups=1000(asim-raza),4(adm),20(dialout),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev),100(users),107(netdev)
+
