@@ -1,0 +1,25 @@
+=== SYSTEMD SERVICE STATUS ===
+○ devops-monitor.service - DevOps Server Monitor Service
+     Loaded: loaded (/etc/systemd/system/devops-monitor.service; disabled; preset: enabled)
+     Active: inactive (dead)
+
+=== SERVICE FILE CONTENT ===
+[Unit]
+Description=DevOps Server Monitor Service
+After=network.target
+
+[Service]
+Type=simple
+User=asim_raza
+WorkingDirectory=/home/asim_raza/DevOps-journey/01-linux-basics/practices/day10-practice/myservice
+ExecStart=/bin/bash /home/asim_raza/DevOps-journey/01-linux-basics/practices/day10-practice/myservice/monitor.sh
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+
+=== SERVICE LOGS ===
+-- No entries --

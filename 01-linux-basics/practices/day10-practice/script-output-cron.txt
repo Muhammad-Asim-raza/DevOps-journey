@@ -1,0 +1,77 @@
+============================================
+   CRON JOB MANAGER
+   Generated: Thu Jul  9 12:57:31 PKT 2026
+============================================
+
+[ CRON SERVICE STATUS ]
+     Loaded: loaded (/usr/lib/systemd/system/cron.service; enabled; preset: enabled)
+     Active: active (running) since Thu 2026-07-09 11:41:16 PKT; 1h 16min ago
+
+[ YOUR CURRENT CRON JOBS ]
+# Edit this file to introduce tasks to be run by cron.
+# 
+# Each task to run has to be defined through a single line
+# indicating with different fields when the task will be run
+# and what command to run for the task
+# 
+# To define the time you can provide concrete values for
+# minute (m), hour (h), day of month (dom), month (mon),
+# and day of week (dow) or use '*' in these fields (for 'any').
+# 
+# Notice that tasks will be started based on the cron's system
+# daemon's notion of time and timezones.
+# 
+# Output of the crontab jobs (including errors) is sent through
+# email to the user the crontab file belongs to (unless redirected).
+# 
+# For example, you can run a backup of all your user accounts
+# at 5 a.m every week with:
+# 0 5 * * 1 tar -zcf /var/backups/home.tgz /home/
+# 
+# For more information see the manual pages of crontab(5) and cron(8)
+# 
+# m h  dom mon dow   command
+Above are your scheduled jobs
+
+[ SYSTEM CRON JOBS ]
+System-wide cron jobs:
+e2scrub_all
+apport
+apt-compat
+dpkg
+logrotate
+man-db
+man-db
+
+[ RECENT CRON ACTIVITY ]
+2026-07-09T12:16:01.541804+05:00 DESKTOP-OF0SJ5C CRON[988]: (CRON) info (No MTA installed, discarding output)
+2026-07-09T12:17:01.547300+05:00 DESKTOP-OF0SJ5C CRON[1014]: (root) CMD (cd / && run-parts --report /etc/cron.hourly)
+2026-07-09T12:17:01.547920+05:00 DESKTOP-OF0SJ5C CRON[1015]: (asim-raza) CMD (echo "Cron working at $(date)" >> /home/asim_raza/DevOps-journey/01-linux-basics/practices/day10-practice/cron-test.txt)
+2026-07-09T12:17:01.551120+05:00 DESKTOP-OF0SJ5C CRON[1013]: (CRON) info (No MTA installed, discarding output)
+2026-07-09T12:18:01.557226+05:00 DESKTOP-OF0SJ5C CRON[1023]: (asim-raza) CMD (echo "Cron working at $(date)" >> /home/asim_raza/DevOps-journey/01-linux-basics/practices/day10-practice/cron-test.txt)
+2026-07-09T12:18:01.560568+05:00 DESKTOP-OF0SJ5C CRON[1022]: (CRON) info (No MTA installed, discarding output)
+2026-07-09T12:19:01.177370+05:00 DESKTOP-OF0SJ5C CRON[1040]: (asim-raza) CMD (echo "Cron working at $(date)" >> /home/asim_raza/DevOps-journey/01-linux-basics/practices/day10-practice/cron-test.txt)
+2026-07-09T12:19:01.180621+05:00 DESKTOP-OF0SJ5C CRON[1039]: (CRON) info (No MTA installed, discarding output)
+2026-07-09T12:20:08.574938+05:00 DESKTOP-OF0SJ5C CRON[1069]: (asim-raza) CMD (echo "Cron is working!" >> /home/asim-raza/DevOps-journey/01-linux-basics/practices/day10-practice/cron-test.txt)
+2026-07-09T12:21:00.578457+05:00 DESKTOP-OF0SJ5C CRON[1086]: (asim-raza) CMD (echo "Cron is working!" >> /home/asim-raza/DevOps-journey/01-linux-basics/practices/day10-practice/cron-test.txt)
+
+[ CRON SYNTAX REFERENCE ]
+  * * * * * command
+  │ │ │ │ │
+  │ │ │ │ └── Weekday (0-7, 0=Sun)
+  │ │ │ └──── Month (1-12)
+  │ │ └────── Day (1-31)
+  │ └──────── Hour (0-23)
+  └────────── Minute (0-59)
+
+  */15 * * * *  = every 15 minutes
+  0 9 * * 1     = every Monday 9am
+  0 0 * * *     = every day midnight
+  0 0 1 * *     = first of every month
+  @reboot       = on system start
+  @daily        = every day
+  @weekly       = every week
+
+============================================
+   CRON MANAGER COMPLETE
+============================================

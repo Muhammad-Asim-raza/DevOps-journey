@@ -1,0 +1,39 @@
+================================
+DAILY SYSTEM REPORT
+Generated: Thu Jul  9 13:08:22 PKT 2026
+================================
+
+DISK USAGE:
+Filesystem      Size  Used Avail Use% Mounted on
+none            1.8G     0  1.8G   0% /usr/lib/modules/6.18.33.2-microsoft-standard-WSL2
+none            1.8G  4.0K  1.8G   1% /mnt/wsl
+drivers         117G   54G   64G  46% /usr/lib/wsl/drivers
+/dev/sdd       1007G  3.5G  953G   1% /
+none            1.8G   40K  1.8G   1% /mnt/wslg
+none            1.8G     0  1.8G   0% /usr/lib/wsl/lib
+rootfs          1.8G  2.8M  1.8G   1% /init
+none            1.8G  516K  1.8G   1% /run
+none            1.8G     0  1.8G   0% /run/lock
+none            1.8G     0  1.8G   0% /run/shm
+none            1.8G  100K  1.8G   1% /mnt/wslg/versions.txt
+none            1.8G  100K  1.8G   1% /mnt/wslg/doc
+C:\             117G   54G   64G  46% /mnt/c
+D:\             121G   15G  107G  12% /mnt/d
+tmpfs           362M   20K  362M   1% /run/user/1000
+
+MEMORY USAGE:
+               total        used        free      shared  buff/cache   available
+Mem:           3.5Gi       473Mi       2.3Gi       3.5Mi       827Mi       3.1Gi
+Swap:          1.0Gi          0B       1.0Gi
+
+TOP 10 RUNNING SERVICES:
+  UNIT                        LOAD   ACTIVE SUB     DESCRIPTION
+  atd.service                 loaded active running Deferred execution scheduler
+  cron.service                loaded active running Regular background program processing daemon
+  dbus.service                loaded active running D-Bus System Message Bus
+  getty@tty1.service          loaded active running Getty on tty1
+  polkit.service              loaded active running Authorization Manager
+  rsyslog.service             loaded active running System Logging Service
+  systemd-journald.service    loaded active running Journal Service
+  systemd-logind.service      loaded active running User Login Management
+  systemd-resolved.service    loaded active running Network Name Resolution
