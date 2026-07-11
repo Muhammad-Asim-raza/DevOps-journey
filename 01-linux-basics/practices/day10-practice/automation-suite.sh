@@ -2,7 +2,7 @@
 # ================================================
 # automation-suite.sh
 # Complete Linux Automation Suite
-# Author: Asim Raza
+# Author: M Asim Raza
 # Day 10 of DevOps Journey
 # ================================================
 
@@ -144,7 +144,7 @@ head -20 "$LOGS_DIR/daily-report.txt" 2>/dev/null || echo "No report yet."
 
 echo ""
 echo "============================================"
-echo " AUTOMATION SUITE COMPLETE"
+echo " AUTOMATION SUITE COMPLETE "
 echo " Scripts : $SCRIPTS_DIR"
 echo " Logs    : $LOGS_DIR"
 echo "============================================"
