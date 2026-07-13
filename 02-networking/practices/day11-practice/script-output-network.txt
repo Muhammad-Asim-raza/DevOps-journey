@@ -1,0 +1,39 @@
+============================================
+   NETWORK INFORMATION REPORT
+   Generated: Mon Jul 13 13:16:05 PKT 2026
+============================================
+
+[ NETWORK INTERFACES ]
+lo: 127.0.0.1/8
+eth0: 172.25.147.56/20
+
+[ IP ADDRESSES ]
+Private IP: 172.25.147.56
+Public IP:  203.215.163.200
+
+[ DEFAULT GATEWAY ]
+default via 172.25.144.1 dev eth0 proto kernel 
+
+[ DNS SERVERS ]
+nameserver 172.25.144.1
+
+[ LISTENING PORTS ]
+  Port: 127.0.0.53%lo:53  Process: 
+  Port: 127.0.0.54:53  Process: 
+
+[ CONNECTIVITY TESTS ]
+  ✅ google.com = reachable
+  ✅ github.com = reachable
+  ✅ 8.8.8.8 = reachable
+
+[ HTTP CONNECTIVITY ]
+  ✅ https://google.com = HTTP 301
+  ✅ https://github.com = HTTP 200
+
+[ DNS RESOLUTION ]
+  ✅ google.com → 142.250.187.14
+  ✅ github.com → 20.207.73.82
+
+============================================
+   NETWORK REPORT COMPLETE
+============================================

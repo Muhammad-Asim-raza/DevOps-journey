@@ -1,0 +1,37 @@
+============================================
+   NETWORK TROUBLESHOOTER
+   Target: google.com
+   Generated: Mon Jul 13 13:17:04 PKT 2026
+============================================
+
+[ STEP 1: Check network interface ]
+✅ Network interface is UP
+
+[ STEP 2: Check IP address assigned ]
+✅ IP address assigned: 172.25.147.56
+
+[ STEP 3: Check default gateway ]
+✅ Default gateway: 172.25.144.1
+
+[ STEP 4: Ping gateway ]
+❌ Cannot reach gateway: 172.25.144.1
+   Check: physical connection cable WiFi
+
+[ STEP 5: Ping external IP ]
+✅ External IP 8.8.8.8 is reachable
+   Internet connection is working
+
+[ STEP 6: Test DNS resolution ]
+✅ DNS resolved: google.com → 142.250.187.14
+
+[ STEP 7: Test HTTP connectivity ]
+✅ HTTP connection successful: HTTP 301
+
+[ STEP 8: Check ports ]
+Open listening ports on this machine:
+  Port: 127.0.0.53%lo:53
+  Port: 127.0.0.54:53
+
+============================================
+   ❌ FOUND 1 ISSUES - Check above for fixes
+============================================

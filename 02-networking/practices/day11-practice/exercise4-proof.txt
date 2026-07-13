@@ -1,0 +1,17 @@
+=== NETWORK CONNECTIONS ===
+--- Listening ports ---
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*          
+LISTEN 0      4096      127.0.0.54:53        0.0.0.0:*          
+
+--- Connection summary ---
+Total: 173
+TCP:   2 (estab 0, closed 0, orphaned 0, timewait 0)
+
+Transport Total     IP        IPv6
+RAW	  0         0         0        
+UDP	  4         3         1        
+TCP	  2         2         0        
+INET	  6         5         1        
+FRAG	  0         0         0        
+

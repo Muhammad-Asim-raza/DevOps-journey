@@ -1,0 +1,22 @@
+=== DNS LOOKUP DEMONSTRATIONS ===
+--- nslookup google.com ---
+;; Got recursion not available from 172.25.144.1
+Server:		172.25.144.1
+Address:	172.25.144.1#53
+
+Non-authoritative answer:
+Name:	google.com
+Address: 142.250.187.14
+;; Got recursion not available from 172.25.144.1
+Name:	google.com
+Address: 2a00:1450:4018:80e::200e
+
+
+--- dig google.com +short ---
+142.250.187.14
+
+--- MX records ---
+10 smtp.google.com.
+
+--- Using Google DNS ---
+20.207.73.82
