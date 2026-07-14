@@ -1,5 +1,5 @@
 #!/bin/bash
-# ================================================
+# ==================================================
 # network-info.sh
 # Network Information and Status Report
 # Author: Asim Raza
