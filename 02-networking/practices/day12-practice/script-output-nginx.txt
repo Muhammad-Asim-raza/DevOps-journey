@@ -1,0 +1,55 @@
+============================================
+   NGINX MANAGER
+   Generated: Wed Jul 15 12:16:00 PKT 2026
+============================================
+
+[ NGINX VERSION ]
+nginx version: nginx/1.24.0 (Ubuntu)
+
+[ NGINX SERVICE STATUS ]
+     Active: active (running) since Wed 2026-07-15 09:06:27 PKT; 3h 9min ago
+   Main PID: 215 (nginx)
+      Tasks: 13 (limit: 4322)
+
+[ ENABLED VIRTUAL HOSTS ]
+Sites enabled:
+total 8
+drwxr-xr-x 2 root root 4096 Jul 15 10:39 .
+drwxr-xr-x 8 root root 4096 Jul 14 20:25 ..
+lrwxrwxrwx 1 root root   34 Jul 14 20:25 default -> /etc/nginx/sites-available/default
+lrwxrwxrwx 1 root root   38 Jul 14 21:59 devops-site -> /etc/nginx/sites-available/devops-site
+lrwxrwxrwx 1 root root   40 Jul 15 10:39 load-balancer -> /etc/nginx/sites-available/load-balancer
+lrwxrwxrwx 1 root root   40 Jul 15 09:23 reverse-proxy -> /etc/nginx/sites-available/reverse-proxy
+
+[ NGINX CONFIGURATION TEST ]
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+[ LISTENING PORTS ]
+Ports nginx is listening on:
+
+[ VIRTUAL HOST PORTS ]
+Configured ports in nginx:
+
+[ HTTP CONNECTIVITY TESTS ]
+  ✅ Port 80 = HTTP 200
+  ✅ Port 8081 = HTTP 200
+  ✅ Port 8082 = HTTP 200
+  ✅ Port 8083 = HTTP 200
+  ⚠️  Port 8084 = HTTP 000 (not running or error)
+
+[ RECENT ACCESS LOGS ]
+Last 5 requests:
+::1 - - [14/Jul/2026:20:40:10 +0500] "GET / HTTP/1.1" 200 615 "-" "curl/8.5.0"
+::1 - - [14/Jul/2026:20:41:43 +0500] "GET / HTTP/1.1" 200 615 "-" "curl/8.5.0"
+::1 - - [14/Jul/2026:20:43:37 +0500] "GET / HTTP/1.1" 200 615 "-" "curl/8.5.0"
+::1 - - [15/Jul/2026:12:15:53 +0500] "GET / HTTP/1.1" 200 615 "-" "curl/8.5.0"
+::1 - - [15/Jul/2026:12:16:00 +0500] "GET / HTTP/1.1" 200 615 "-" "curl/8.5.0"
+
+[ RECENT ERROR LOGS ]
+Last 5 errors:
+2026/07/14 20:25:29 [notice] 966#966: using inherited sockets from "5;6;"
+
+============================================
+   NGINX MANAGER COMPLETE
+============================================

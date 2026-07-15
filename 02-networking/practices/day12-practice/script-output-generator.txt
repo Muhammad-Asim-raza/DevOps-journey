@@ -1,0 +1,39 @@
+============================================
+   NGINX CONFIG GENERATOR
+============================================
+
+[ GENERATING STATIC SITE CONFIG ]
+✅ Generated: static-site.conf
+
+[ GENERATING REVERSE PROXY CONFIG ]
+✅ Generated: reverse-proxy.conf
+
+[ GENERATING LOAD BALANCER CONFIG ]
+✅ Generated: load-balancer.conf
+
+[ GENERATING HTTPS REDIRECT CONFIG ]
+✅ Generated: https-redirect.conf
+
+[ GENERATING MICROSERVICES CONFIG ]
+✅ Generated: microservices.conf
+
+[ ALL CONFIGS GENERATED ]
+total 28
+drwxr-xr-x 2 asim-raza asim-raza 4096 Jul 15 12:17 .
+drwxr-xr-x 4 asim-raza asim-raza 4096 Jul 15 12:17 ..
+-rw-r--r-- 1 asim-raza asim-raza  710 Jul 15 12:17 https-redirect.conf
+-rw-r--r-- 1 asim-raza asim-raza  554 Jul 15 12:17 load-balancer.conf
+-rw-r--r-- 1 asim-raza asim-raza  801 Jul 15 12:17 microservices.conf
+-rw-r--r-- 1 asim-raza asim-raza  399 Jul 15 12:17 reverse-proxy.conf
+-rw-r--r-- 1 asim-raza asim-raza  445 Jul 15 12:17 static-site.conf
+
+To use any config:
+1. sudo cp ./nginx-configs/config.conf /etc/nginx/sites-available/
+2. Edit the config with your actual values
+3. sudo ln -s /etc/nginx/sites-available/config /etc/nginx/sites-enabled/
+4. sudo nginx -t
+5. sudo systemctl reload nginx
+
+============================================
+   GENERATOR COMPLETE
+============================================

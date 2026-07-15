@@ -1,0 +1,98 @@
+=== LOAD BALANCER CONFIG ===
+# /etc/nginx/sites-available/load-balancer
+# Load Balancer Configuration
+
+# Define the pool of backend servers
+upstream app_servers {
+    # Default: round_robin algorithm
+    # Each request goes to next server
+
+    # least_conn;
+    # Uncomment to use least connections
+
+    # ip_hash;
+    # Uncomment to use IP hash (sticky sessions)
+
+    server 127.0.0.1:3000 weight=3;
+    # weight=3 = gets 3x more traffic
+    # use for more powerful servers
+
+    server 127.0.0.1:3001 weight=2;
+    # weight=2 = gets 2x normal traffic
+
+    server 127.0.0.1:3002;
+    # default weight=1
+
+    server 127.0.0.1:3003 backup;
+    # backup = only used when all others are down
+    # standby server for failover
+}
+
+server {
+    listen 8083;
+    server_name localhost;
+
+    access_log /var/log/nginx/lb-access.log;
+    error_log /var/log/nginx/lb-error.log;
+
+    location / {
+        proxy_pass http://app_servers;
+        # nginx automatically distributes
+        # requests across all upstream servers
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # Health check behavior
+        proxy_next_upstream error timeout;
+        # if server errors or times out
+        # automatically try next server
+        # transparent to the user
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        # do not log health check requests
+        # reduces log noise
+        return 200 "healthy\n";
+        # always return 200 OK
+        # used by load balancer health checks
+        add_header Content-Type text/plain;
+    }
+
+    # nginx status page
+    location /nginx-status {
+        stub_status on;
+        # enables nginx status page
+        # shows:
+        # active connections
+        # requests per second
+        # reading writing waiting connections
+        allow 127.0.0.1;
+        # only allow from localhost
+        deny all;
+        # deny everyone else
+    }
+}
+
+=== LOAD BALANCER TEST ===
+Request 1:
+    <p>Port: 3001</p>
+Request 2:
+    <p>Port: 3000</p>
+Request 3:
+    <p>Port: 3002</p>
+Request 4:
+    <p>Port: 3001</p>
+Request 5:
+    <p>Port: 3000</p>
+Request 6:
+    <p>Port: 3000</p>
+
+=== HEALTH CHECK ===
+healthy

@@ -1,0 +1,82 @@
+=== REVERSE PROXY CONFIG ===
+# /etc/nginx/sites-available/reverse-proxy
+# Reverse Proxy Configuration
+
+# Upstream block defines backend servers
+upstream backend_app {
+    # upstream = group of backend servers
+    # nginx will forward requests to these
+    server 127.0.0.1:3000;
+    # 127.0.0.1 = localhost
+    # 3000 = port our backend runs on
+}
+
+server {
+    listen 8082;
+    # nginx listens on this port
+    server_name localhost;
+
+    # Access and error logs
+    access_log /var/log/nginx/proxy-access.log;
+    error_log /var/log/nginx/proxy-error.log;
+
+    # Proxy all requests to backend
+    location / {
+        proxy_pass http://backend_app;
+        # proxy_pass = forward request to this URL
+        # http://backend_app = our upstream group
+        # nginx receives request then passes it
+        # to the backend transparently
+
+        proxy_set_header Host $host;
+        # forward original Host header
+        # backend knows which domain was requested
+
+        proxy_set_header X-Real-IP $remote_addr;
+        # forward client's real IP to backend
+        # without this backend sees nginx IP
+        # $remote_addr = client IP address
+
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # standard header for proxy chains
+        # shows full chain of IP addresses
+
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # tell backend if request was HTTP or HTTPS
+        # $scheme = http or https
+
+        proxy_connect_timeout 30s;
+        # how long to wait connecting to backend
+        # if backend does not respond in 30s = 502
+
+        proxy_send_timeout 30s;
+        # how long to wait sending request to backend
+
+        proxy_read_timeout 30s;
+        # how long to wait for backend response
+        # if backend takes longer than 30s = 504
+    }
+
+    # Proxy /api specifically to different backend
+    location /api {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+=== NGINX TEST ===
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+=== PROXY RESPONSE ===
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Backend Server Response</h1>
+    <p>Port: 3000</p>
+    <p>Server: Python HTTP Server</p>
+    <p>Time: Wed Jul 15 09:21:07 PKT 2026</p>
+    <p>This is a mock backend application</p>
+</body>
+</html>

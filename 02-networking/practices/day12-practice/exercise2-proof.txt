@@ -1,0 +1,92 @@
+=== STATIC SITE CONFIG ===
+# /etc/nginx/sites-available/devops-site
+# Static website configuration
+
+server {
+    listen 8081;
+    # listen on port 8081
+    # using 8081 to not conflict with default
+    # in production use 80 or 443
+
+    server_name localhost;
+    # which hostname this block responds to
+    # localhost = any request to this server
+    # production: server_name mysite.com www.mysite.com
+
+    root /var/www/devops-site;
+    # where website files are located
+    # nginx serves files from this directory
+
+    index index.html index.htm;
+    # default file to serve when / requested
+    # tries index.html first then index.htm
+
+    location / {
+        # location block = how to handle requests
+        # / = match ALL requests
+        try_files $uri $uri/ =404;
+        # try_files = look for the requested file
+        # $uri = the requested URL path
+        # $uri/ = check if it is a directory
+        # =404 = if not found return 404 error
+    }
+
+    # Serve static assets with caching
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
+        # ~* = case insensitive regex match
+        # matches URLs ending in these extensions
+        expires 7d;
+        # browser should cache these for 7 days
+        add_header Cache-Control "public, immutable";
+        # tell browser to cache aggressively
+    }
+
+    # Custom error pages
+    error_page 404 /404.html;
+    # when 404 occurs serve this file
+
+    # Logging
+    access_log /var/log/nginx/devops-site-access.log;
+    error_log /var/log/nginx/devops-site-error.log;
+}
+
+=== NGINX TEST ===
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+=== HTTP RESPONSE ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Asim's DevOps Journey</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0a192f;
+            color: #64ffda;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            border: 2px solid #64ffda;
+            border-radius: 10px;
+        }
+        h1 { color: #ccd6f6; }
+        p { color: #8892b0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Asim's DevOps Journey</h1>
+        <p>Day 12 — nginx Web Server</p>
+        <p>Server: nginx on Ubuntu 22.04</p>
+        <p>Status: Running Successfully ✅</p>
+    </div>
+</body>
+</html>
