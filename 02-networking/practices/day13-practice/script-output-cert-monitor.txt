@@ -1,0 +1,22 @@
+============================================
+   CERTIFICATE EXPIRY MONITOR
+   Generated: 2026-07-16 13:25:04
+   Alert threshold: 30 days
+============================================
+
+[ LOCAL CERTIFICATE FILES ]
+  No Let's Encrypt certificates found
+
+[ REMOTE CERTIFICATE CHECKS ]
+  ✅ OK: google.com valid for 60 more days
+  ✅ OK: github.com valid for 76 more days
+
+[ MONITOR LOG ]
+No alerts logged yet
+
+============================================
+   MONITOR COMPLETE
+============================================
+
+To run daily via cron add:
+0 8 * * * /home/asim_raza/DevOps-journey/02-networking/practices/day13-practice/cert-monitor.sh

@@ -1,0 +1,44 @@
+============================================
+   SSL/TLS CERTIFICATE CHECKER
+   Target: localhost:8443
+   Generated: Thu Jul 16 13:24:22 PKT 2026
+============================================
+
+[ CONNECTING TO localhost:8443 ]
+✅ Connection successful
+
+[ CERTIFICATE DETAILS ]
+        Issuer: C = PK, ST = KPK, L = DIKhan, O = DevOpsJourney, CN = localhost
+            Not Before: Jul 16 05:39:43 2026 GMT
+        Subject: C = PK, ST = KPK, L = DIKhan, O = DevOpsJourney, CN = localhost
+
+[ PROTOCOL AND CIPHER ]
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+
+[ CERTIFICATE EXPIRY ]
+Expires: Jul 16 05:39:43 2027 GMT
+✅ Certificate valid for 364 more days
+
+[ LOCAL CERTIFICATE: certs/self-signed.crt ]
+✅ Certificate file exists
+
+[ CERTIFICATE INFORMATION ]
+        Issuer: C = PK, ST = KPK, L = DIKhan, O = DevOpsJourney, CN = localhost
+            Not Before: Jul 16 05:39:43 2026 GMT
+        Subject: C = PK, ST = KPK, L = DIKhan, O = DevOpsJourney, CN = localhost
+
+[ CERTIFICATE VALIDITY ]
+Certificate will not expire
+✅ Certificate is currently valid
+Certificate will not expire
+✅ Certificate valid for more than 30 days
+
+[ SSL SECURITY HEADERS CHECK ]
+✅ Strict-Transport-Security header present
+❌ X-Frame-Options header MISSING
+❌ X-Content-Type-Options header MISSING
+❌ X-XSS-Protection header MISSING
+
+============================================
+   SSL CHECK COMPLETE
+============================================

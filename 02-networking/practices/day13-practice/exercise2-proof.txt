@@ -1,0 +1,121 @@
+=== HTTPS NGINX CONFIG ===
+# /etc/nginx/sites-available/https-site
+# HTTPS Configuration with Self-Signed Certificate
+
+# HTTP server - redirect to HTTPS
+server {
+    listen 8085;
+    server_name localhost;
+
+    # Permanent redirect to HTTPS
+    return 301 https://$host:8443$request_uri;
+    # 301 = permanent redirect
+    # $host = the hostname from request
+    # :8443 = our HTTPS port
+    # $request_uri = path and query string
+    # Result: http://localhost:8085/path
+    #       → https://localhost:8443/path
+}
+
+# HTTPS server
+server {
+    listen 8443 ssl;
+    # 8443 = our HTTPS port (443 is standard)
+    # ssl = enable SSL/TLS on this port
+    server_name localhost;
+
+    # Certificate files
+    ssl_certificate /home/asim-raza/DevOps-journey/02-networking/practices/day13-practice/certs/self-signed.crt;
+    # ssl_certificate = path to certificate file
+    # This file contains the public certificate
+    # nginx sends this to browsers
+
+    ssl_certificate_key /home/asim-raza/DevOps-journey/02-networking/practices/day13-practice/certs/self-signed.key;
+    # ssl_certificate_key = path to private key
+    # This file is the private key
+    # NEVER expose this file
+    # nginx uses it for key exchange
+
+    # TLS Protocol versions
+    ssl_protocols TLSv1.2 TLSv1.3;
+    # Only allow modern secure protocols
+    # Disable old vulnerable: SSLv2 SSLv3 TLS1.0 TLS1.1
+    # TLSv1.2 = widely supported
+    # TLSv1.3 = fastest and most secure
+
+    # Cipher suites (encryption algorithms)
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    # These are strong cipher suites
+    # ECDHE = Elliptic Curve Diffie-Hellman Ephemeral
+    # provides perfect forward secrecy
+    # AES-GCM = strong symmetric encryption
+
+    ssl_prefer_server_ciphers off;
+    # TLSv1.3 handles cipher selection
+    # let client choose from allowed ciphers
+
+    # SSL session cache (performance)
+    ssl_session_cache shared:SSL:10m;
+    # shared:SSL = shared between workers
+    # 10m = 10 megabytes of session storage
+    # stores session info to avoid full handshake
+    # on reconnection (faster)
+
+    ssl_session_timeout 1d;
+    # sessions cached for 1 day
+    # reconnecting client reuses session
+
+    # HSTS - HTTP Strict Transport Security
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    # max-age=31536000 = 1 year in seconds
+    # tells browser: ALWAYS use HTTPS for this domain
+    # even if user types http://
+    # includeSubDomains = applies to subdomains too
+    # NEVER go back to HTTP after setting this
+    # (you cannot undo without waiting for expiry)
+
+    # Root directory
+    root /var/www/html;
+    index index.html index.nginx-debian.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # SSL specific logs
+    access_log /var/log/nginx/https-access.log;
+    error_log /var/log/nginx/https-error.log;
+}
+
+=== NGINX TEST ===
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+=== HTTPS RESPONSE ===
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   615    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Thu, 16 Jul 2026 06:55:52 GMT
+Content-Type: text/html
+Content-Length: 615
+Last-Modified: Tue, 14 Jul 2026 15:25:27 GMT
+Connection: keep-alive
+ETag: "6a5654e7-267"
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Accept-Ranges: bytes
+
+
+=== HTTP REDIRECT ===
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   178    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+HTTP/1.1 301 Moved Permanently
+Server: nginx/1.24.0 (Ubuntu)
+Date: Thu, 16 Jul 2026 06:56:35 GMT
+Content-Type: text/html
+Content-Length: 178
+Connection: keep-alive
+Location: https://localhost:8443/
+
