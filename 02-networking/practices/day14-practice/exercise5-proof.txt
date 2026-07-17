@@ -1,0 +1,14 @@
+=== PACKET CAPTURE ===
+Captured 10 packets...
+12:35:12.791520 eth0  Out IP 172.25.147.56.43840 > alphyn.canonical.com.ntp: NTPv4, Client, length 48
+12:35:12.931893 eth0  Out IP 172.25.147.56.36773 > DESKTOP-OF0SJ5C.mshome.net.domain: 32305+ PTR? 157.91.189.91.in-addr.arpa. (44)
+12:35:12.933173 eth0  In  IP DESKTOP-OF0SJ5C.mshome.net.domain > 172.25.147.56.36773: 32305- 1/0/0 PTR alphyn.canonical.com. (104)
+12:35:12.933557 eth0  Out IP 172.25.147.56.38999 > DESKTOP-OF0SJ5C.mshome.net.domain: 42478+ PTR? 56.147.25.172.in-addr.arpa. (44)
+12:35:12.936573 eth0  M   IP DESKTOP-OF0SJ5C.mshome.net.mdns > mdns.mcast.net.mdns: 0 PTR (QM)? 56.147.25.172.in-addr.arpa.local. (50)
+12:35:12.937161 eth0  M   IP6 DESKTOP-OF0SJ5C.mdns > ff02::fb.mdns: 0 PTR (QM)? 56.147.25.172.in-addr.arpa.local. (50)
+12:35:13.046288 eth0  M   IP DESKTOP-OF0SJ5C.mshome.net.mdns > mdns.mcast.net.mdns: 0 PTR (QM)? 56.147.25.172.in-addr.arpa.local. (50)
+12:35:13.046919 eth0  M   IP6 DESKTOP-OF0SJ5C.mdns > ff02::fb.mdns: 0 PTR (QM)? 56.147.25.172.in-addr.arpa.local. (50)
+12:35:13.471724 eth0  In  IP alphyn.canonical.com.ntp > 172.25.147.56.43840: NTPv4, Server, length 48
+12:35:06.624645 eth0  M   IP DESKTOP-OF0SJ5C.mshome.net.mdns > mdns.mcast.net.mdns: 0 PTR (QM)? 56.147.25.172.in-addr.arpa.local. (50)
+
+Capturing ping packets to 8.8.8.8:

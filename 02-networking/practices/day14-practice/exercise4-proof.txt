@@ -1,0 +1,32 @@
+=== CONNECTION ANALYSIS ===
+--- Connection summary ---
+Total: 219
+TCP:   10 (estab 0, closed 0, orphaned 0, timewait 0)
+
+Transport Total     IP        IPv6
+RAW	  0         0         0        
+UDP	  5         4         1        
+TCP	  10        8         2        
+INET	  15        12        3        
+FRAG	  0         0         0        
+
+
+--- Connection states ---
+    137 ESTAB
+     53 LISTEN
+     47 UNCONN
+      1 State
+      1 CLOSING
+
+--- Listening ports ---
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      4096      127.0.0.54:53        0.0.0.0:*          
+LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:8085      0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:8083      0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:8082      0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:8081      0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:8443      0.0.0.0:*          
+LISTEN 0      511          0.0.0.0:80        0.0.0.0:*          
+LISTEN 0      4096               *:5201            *:*          
+LISTEN 0      511             [::]:80           [::]:*          

@@ -1,0 +1,17 @@
+=== PING MONITORING ===
+--- google.com ---
+3 packets transmitted, 3 received, 0% packet loss, time 2000ms
+rtt min/avg/max/mdev = 353.808/2785.101/7493.525/3329.952 ms
+
+--- github.com ---
+3 packets transmitted, 3 received, 0% packet loss, time 2864ms
+rtt min/avg/max/mdev = 384.850/2826.171/7478.535/3291.061 ms
+
+--- 8.8.8.8 ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 292.712/387.342/543.239/111.073 ms
+
+--- 1.1.1.1 ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 305.153/2702.854/7373.364/3302.942 ms
+
