@@ -1,4 +1,4 @@
-=== PACKET CAPTURE ===
+=== PACKETs CAPTURING ===
 Captured 10 packets...
 12:35:12.791520 eth0  Out IP 172.25.147.56.43840 > alphyn.canonical.com.ntp: NTPv4, Client, length 48
 12:35:12.931893 eth0  Out IP 172.25.147.56.36773 > DESKTOP-OF0SJ5C.mshome.net.domain: 32305+ PTR? 157.91.189.91.in-addr.arpa. (44)
