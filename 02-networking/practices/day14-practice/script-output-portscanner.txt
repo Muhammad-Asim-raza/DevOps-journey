@@ -1,0 +1,22 @@
+============================================
+   PORT SCANNER
+   Target: localhost
+   Range : 1 - 1024
+   Generated: Mon Jul 20 11:29:43 PKT 2026
+============================================
+
+Scanning...
+
+[ CHECKING IMPORTANT PORTS ]
+  ✅ Port 80 OPEN - HTTP
+  ✅ Port 8443 OPEN - HTTPS-alt
+
+[ SUMMARY ]
+  Open ports found: 2
+  Open ports: 80 8443
+
+[ SECURITY ASSESSMENT ]
+
+============================================
+   SCAN COMPLETE
+============================================

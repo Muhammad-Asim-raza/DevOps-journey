@@ -1,0 +1,23 @@
+============================================
+   COMPLETE NETWORK HEALTH MONITOR
+   Generated: 2026-07-20 11:27:21
+   Server: DESKTOP-OF0SJ5C
+============================================
+
+[ LAYER 1/2: NETWORK INTERFACES ]
+  ✅ Interface eth0 is UP
+
+[ LAYER 3: IP AND ROUTING ]
+  ✅ IP Address: 172.25.147.56
+  ❌ Gateway 172.25.144.1 is unreachable
+
+[ LAYER 4: CONNECTIVITY TESTS ]
+  ✅ 8.8.8.8 reachable (avg 99ms)
+  ✅ 1.1.1.1 reachable (avg 119ms)
+
+[ LAYER 7: DNS RESOLUTION ]
+  ✅ google.com → 142.250.202.174
+  ✅ github.com → 20.207.73.82
+
+[ HTTP/HTTPS CONNECTIVITY ]
+  ✅ http://google.com = HTTP 301 (0.769610s)
