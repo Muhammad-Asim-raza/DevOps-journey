@@ -1,0 +1,109 @@
+============================================
+   SUBNET CALCULATOR
+   Author: Asim Raza - Day 15
+============================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBNET CALCULATION: 192.168.1.0/24
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Network Address   : 192.168.1.0
+Subnet Mask       : 255.255.255.0
+Broadcast Address : 192.168.1.255
+First Usable IP   : 192.168.1.1
+Last Usable IP    : 192.168.1.254
+Total Addresses   : 256
+Usable Hosts      : 254
+Prefix Length     : /24
+Host Bits         : 8
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBNET CALCULATION: 10.0.0.0/16
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Network Address   : 10.0.0.0
+Subnet Mask       : 255.255.0.0
+Broadcast Address : 10.0.255.255
+First Usable IP   : 10.0.0.1
+Last Usable IP    : 10.0.255.254
+Total Addresses   : 65536
+Usable Hosts      : 65534
+Prefix Length     : /16
+Host Bits         : 16
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBNET CALCULATION: 10.0.1.0/24
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Network Address   : 10.0.1.0
+Subnet Mask       : 255.255.255.0
+Broadcast Address : 10.0.1.255
+First Usable IP   : 10.0.1.1
+Last Usable IP    : 10.0.1.254
+Total Addresses   : 256
+Usable Hosts      : 254
+Prefix Length     : /24
+Host Bits         : 8
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBNET CALCULATION: 172.16.0.0/12
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Network Address   : 172.16.0.0
+Subnet Mask       : 255.240.0.0
+Broadcast Address : 172.31.255.255
+First Usable IP   : 172.16.0.1
+Last Usable IP    : 172.31.255.254
+Total Addresses   : 1048576
+Usable Hosts      : 1048574
+Prefix Length     : /12
+Host Bits         : 20
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUBNET CALCULATION: 10.0.0.0/8
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Network Address   : 10.0.0.0
+Subnet Mask       : 255.0.0.0
+Broadcast Address : 10.255.255.255
+First Usable IP   : 10.0.0.1
+Last Usable IP    : 10.255.255.254
+Total Addresses   : 16777216
+Usable Hosts      : 16777214
+Prefix Length     : /8
+Host Bits         : 24
+
+============================================
+   CIDR REFERENCE TABLE
+============================================
+
+Prefix  Addresses  Usable Hosts  Subnet Mask
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  /32    1            -1             255.255.255.255
+  /30    4            2              255.255.255.252
+  /28    16           14             255.255.255.240
+  /27    32           30             255.255.255.224
+  /26    64           62             255.255.255.192
+  /25    128          126            255.255.255.128
+  /24    256          254            255.255.255.0
+  /23    512          510            255.255.254.0
+  /22    1024         1022           255.255.252.0
+  /20    4096         4094           255.255.240.0
+  /18    16384        16382          255.255.192.0
+  /16    65536        65534          255.255.0.0
+
+============================================
+   VPC DESIGN EXAMPLE
+============================================
+
+VPC: 10.0.0.0/16 (65,534 usable IPs)
+
+Subnet Layout:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Public  Subnet AZ-A: 10.0.1.0/24  (254 hosts)
+Public  Subnet AZ-B: 10.0.2.0/24  (254 hosts)
+Private Subnet AZ-A: 10.0.10.0/24 (254 hosts)
+Private Subnet AZ-B: 10.0.11.0/24 (254 hosts)
+DB      Subnet AZ-A: 10.0.20.0/26 (62 hosts)
+DB      Subnet AZ-B: 10.0.21.0/26 (62 hosts)
+
+Traffic Rules:
+Public subnets  → Route: 0.0.0.0/0 → IGW
+Private subnets → Route: 0.0.0.0/0 → NAT GW
+DB subnets      → No internet route
+============================================

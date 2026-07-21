@@ -1,0 +1,102 @@
+============================================
+   VPC ARCHITECTURE DESIGNER
+   Author: Asim Raza - Day 15
+============================================
+
+[ VPC CONFIGURATION ]
+VPC CIDR    : 10.0.0.0/16
+Region      : us-east-1
+Purpose     : Production 3-tier application
+
+[ SUBNET DESIGN ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name            CIDR            Type     AZ          Purpose
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+db_a             10.0.20.0/26     PRIVATE   us-east-1a   Database Primary
+db_b             10.0.21.0/26     PRIVATE   us-east-1b   Database Standby
+private_a        10.0.10.0/24     PRIVATE   us-east-1a   Application Servers
+private_b        10.0.11.0/24     PRIVATE   us-east-1b   Application Servers
+public_a         10.0.1.0/24      PUBLIC    us-east-1a   Load Balancer Web
+public_b         10.0.2.0/24      PUBLIC    us-east-1b   Load Balancer Web
+
+[ ROUTE TABLES ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Public Route Table:
+  Destination    Target
+  10.0.0.0/16 → local (VPC internal)
+  0.0.0.0/0   → Internet Gateway
+  → Attached to: public_a, public_b
+
+Private Route Table:
+  Destination    Target
+  10.0.0.0/16 → local (VPC internal)
+  0.0.0.0/0   → NAT Gateway
+  → Attached to: private_a, private_b
+
+Database Route Table:
+  Destination    Target
+  10.0.0.0/16 → local (VPC internal)
+  (no internet route = completely isolated)
+  → Attached to: db_a, db_b
+
+[ SECURITY GROUPS ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+sg-load-balancer:
+  Inbound:  80/tcp   0.0.0.0/0 (HTTP from anywhere)
+  Inbound:  443/tcp  0.0.0.0/0 (HTTPS from anywhere)
+  Outbound: all      0.0.0.0/0
+
+sg-application:
+  Inbound:  3000/tcp sg-load-balancer (from LB only)
+  Inbound:  22/tcp   10.0.0.0/16 (SSH from VPC)
+  Outbound: all      0.0.0.0/0
+
+sg-database:
+  Inbound:  5432/tcp sg-application (from app only)
+  Outbound: all      10.0.0.0/16 (VPC only)
+
+sg-bastion:
+  Inbound:  22/tcp   YOUR-OFFICE-IP/32 (SSH from office)
+  Outbound: 22/tcp   10.0.0.0/16 (SSH to VPC)
+
+[ TRAFFIC FLOW ANALYSIS ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+User Request Flow:
+  Internet
+  → Internet Gateway
+  → Load Balancer (public subnet)
+  → Application Server (private subnet)
+  → Database (db subnet)
+  → Response follows same path back
+
+Admin SSH Flow:
+  Admin laptop
+  → Internet Gateway
+  → Bastion Host (public subnet, port 22)
+  → App Server (private subnet, port 22)
+  (database accessible from app server)
+
+Outbound Update Flow:
+  App Server (private subnet)
+  → NAT Gateway (public subnet)
+  → Internet Gateway
+  → Package repositories
+  (internet cannot initiate connection back)
+
+[ SECURITY ASSESSMENT ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Database not accessible from internet
+✅ App servers not directly exposed
+✅ Load balancer only accepts 80/443
+✅ SSH restricted to bastion host
+✅ NAT allows outbound not inbound
+✅ Multi-AZ for high availability
+✅ Separate security groups per tier
+✅ Database subnet has no internet route
+
+============================================
+   VPC DESIGN COMPLETE
+============================================
