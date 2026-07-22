@@ -1,0 +1,32 @@
+=== STICKY SESSIONS REFERENCE ===
+
+HAProxy cookie sticky session config:
+
+
+
+backend web_backend
+    balance roundrobin
+
+    cookie SERVERID insert indirect nocache
+    # SERVERID = cookie name injected by HAProxy
+    # insert = HAProxy adds cookie to response
+    # indirect = removes cookie before sending to server
+
+    server web1 127.0.0.1:3000 check cookie web1
+    server web2 127.0.0.1:3001 check cookie web2
+    # cookie web1 = identifies which server
+
+# nginx source IP hash (alternative method):
+upstream backend {
+    ip_hash;
+    # same client IP always goes same server
+    server 127.0.0.1:3000;
+    server 127.0.0.1:3001;
+}
+
+# Best Practice: Use external session store
+# Store sessions in Redis:
+# - Any server can read any session
+# - No stickiness needed
+# - No single point of failure
+# - Scales horizontally

@@ -1,0 +1,83 @@
+============================================
+   LOAD BALANCER ALGORITHM SIMULATOR
+   Author: Asim Raza - Day 16
+============================================
+
+[ ALGORITHM 1: ROUND ROBIN ]
+Requests distributed equally to each server
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Request 1 → web1:3000
+  Request 2 → web2:3001
+  Request 3 → web3:3002
+  Request 4 → web1:3000
+  Request 5 → web2:3001
+  Request 6 → web3:3002
+  Request 7 → web1:3000
+  Request 8 → web2:3001
+  Request 9 → web3:3002
+  Request 10 → web1:3000
+  Request 11 → web2:3001
+  Request 12 → web3:3002
+
+Distribution:
+  web1:3000: 4 requests
+  web2:3001: 4 requests
+  web3:3002: 4 requests
+
+[ ALGORITHM 2: WEIGHTED ROUND ROBIN ]
+web1 weight=3, web2 weight=2, web3 weight=1
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Request 1 → web3:3002
+  Request 2 → web1:3000
+  Request 3 → web2:3001
+  Request 4 → web1:3000
+  Request 5 → web3:3002
+  Request 6 → web1:3000
+  Request 7 → web3:3002
+  Request 8 → web2:3001
+  Request 9 → web2:3001
+  Request 10 → web3:3002
+  Request 11 → web3:3002
+  Request 12 → web1:3000
+
+Distribution (expected: web1=6, web2=4, web3=2):
+  web1:3000: 4 requests
+  web2:3001: 3 requests
+  web3:3002: 5 requests
+
+[ ALGORITHM 3: LEAST CONNECTIONS ]
+Send to server with fewest active connections
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Request 1 → web3:3002 (had 1 connections)
+  Request 2 → web1:3000 (had 2 connections)
+  Request 3 → web3:3002 (had 2 connections)
+  Request 4 → web3:3002 (had 2 connections)
+  Request 5 → web1:3000 (had 3 connections)
+  Request 6 → web3:3002 (had 3 connections)
+  Request 7 → web1:3000 (had 3 connections)
+  Request 8 → web1:3000 (had 4 connections)
+  Request 9 → web3:3002 (had 4 connections)
+  Request 10 → web1:3000 (had 4 connections)
+  Request 11 → web1:3000 (had 5 connections)
+  Request 12 → web2:3001 (had 5 connections)
+
+[ ALGORITHM 4: IP HASH (Sticky Sessions) ]
+Same client IP always goes to same server
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Client 192.168.1.10 → web3:3002
+  Client 192.168.1.10 → web3:3002
+  Client 192.168.1.20 → web1:3000
+  Client 192.168.1.10 → web3:3002
+  Client 192.168.1.30 → web2:3001
+  Client 192.168.1.20 → web1:3000
+
+============================================
+   ALGORITHM COMPARISON SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Round Robin    : Equal distribution, simple
+Weighted RR    : For unequal server capacity
+Least Conn     : Best for varied request time
+IP Hash        : Sticky sessions, same server
+Random         : Simple random selection
+First          : Fill server before next one
+============================================

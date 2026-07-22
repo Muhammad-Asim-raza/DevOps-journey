@@ -1,0 +1,33 @@
+Health check endpoint example for port 3000:
+
+A proper /health endpoint should:
+✅ Return HTTP 200 when healthy
+✅ Return HTTP 503 when unhealthy
+✅ Check dependencies (DB, cache, etc)
+✅ Respond within 1-2 seconds
+✅ Not require authentication
+✅ Return JSON with status details
+
+Example response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 89
+
+{
+  "status": "healthy",
+  "port": 3000,
+  "timestamp": "2026-07-22T08:03:05Z",
+  "checks": {
+    "database": "ok",
+    "cache": "ok"
+  }
+}
+
+HAProxy health check config:
+  option httpchk GET /health
+  http-check expect status 200
+
+nginx health check in upstream:
+  server app1 127.0.0.1:3000;
+  # HAProxy checks /health endpoint
+  # nginx uses passive health checks

@@ -1,0 +1,34 @@
+============================================
+   LOAD BALANCER HEALTH MONITOR
+   Check interval: 2s
+   Checks before mark: 2
+============================================
+
+Monitoring servers (Ctrl+C to stop)...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Health Check Round 1 - 2026-07-22 13:09:05
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ⚠️  web2 (127.0.0.1:3001) - FAILING (1/2)
+    ⚠️  web1 (127.0.0.1:3000) - FAILING (1/2)
+    ⚠️  nginx (127.0.0.1:80) - HTTP 404
+    ⚠️  api1 (127.0.0.1:4000) - FAILING (1/2)
+
+Summary: 0 healthy, 0 down
+Next check in 2s...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Health Check Round 2 - 2026-07-22 13:09:07
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ❌ web2 (127.0.0.1:3001) - DOWN (2 failures)
+    ❌ web1 (127.0.0.1:3000) - DOWN (2 failures)
+    ⚠️  nginx (127.0.0.1:80) - HTTP 404
+    ❌ api1 (127.0.0.1:4000) - DOWN (2 failures)
+
+Summary: 0 healthy, 3 down
+Stopping after 2 rounds (demo mode)
+
+Final Server Status:
+  web2: DOWN
+  web1: DOWN
+  nginx: DEGRADED
+  api1: DOWN
