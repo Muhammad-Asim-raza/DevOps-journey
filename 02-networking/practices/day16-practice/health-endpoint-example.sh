@@ -6,7 +6,7 @@
 # Day 16 of DevOps Journey
 # ================================================
 
-# Start a simple HTTP server that responds to health checks
+# Starting a simple HTTP server that responds to health checks
 # This simulates what your application should expose
 
 PORT=${1:-3000}
