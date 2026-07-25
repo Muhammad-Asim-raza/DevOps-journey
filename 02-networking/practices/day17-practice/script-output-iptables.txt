@@ -1,0 +1,80 @@
+============================================
+   IPTABLES FIREWALL SETUP
+   Author: Asim Raza - Day 17
+============================================
+
+[ STEP 1: Flushing existing rules ]
+✅ Existing rules cleared
+
+[ STEP 2: Setting default policies ]
+✅ Default: INPUT=DROP, FORWARD=DROP, OUTPUT=ACCEPT
+
+[ STEP 3: Allowing loopback interface ]
+✅ Loopback (127.0.0.1) allowed
+
+[ STEP 4: Allowing established connections ]
+✅ Established/Related connections allowed
+
+[ STEP 5: Allowing ICMP (ping) ]
+✅ ICMP ping allowed (rate limited: 5/sec)
+
+[ STEP 6: Allowing SSH with brute force protection ]
+✅ SSH port 22 allowed (max 3 attempts per 60 sec)
+
+[ STEP 7: Allowing HTTP and HTTPS ]
+✅ HTTP (80) and HTTPS (443) allowed
+
+[ STEP 8: Allowing application ports ]
+✅ App ports (8080 8443 8090) allowed
+✅ HAProxy stats (8404) localhost only
+
+[ STEP 9: Blocking common attacks ]
+✅ NULL packet scan blocked
+✅ XMAS packet scan blocked
+✅ SYN flood protection enabled
+✅ Fragmented packet attack blocked
+
+[ STEP 10: Setting up logging ]
+✅ Dropped packets logged to syslog
+
+[ FINAL FIREWALL RULES ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0           
+2        0     0 ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+3        0     0 ACCEPT     1    --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 8 limit: avg 5/sec burst 5
+4        0     0            6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22 state NEW recent: SET name: SSH_ATTACK side: source mask: 255.255.255.255
+5        0     0 LOG        6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22 state NEW recent: UPDATE seconds: 60 hit_count: 4 name: SSH_ATTACK side: source mask: 255.255.255.255 LOG flags 0 level 4 prefix "SSH_BRUTE_FORCE: "
+6        0     0 DROP       6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22 state NEW recent: UPDATE seconds: 60 hit_count: 4 name: SSH_ATTACK side: source mask: 255.255.255.255
+7        0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22
+8        0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+9        0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:443
+10       0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080
+11       0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8443
+12       0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8090
+13       0     0 ACCEPT     6    --  *      *       127.0.0.1            0.0.0.0/0            tcp dpt:8404
+14       0     0 DROP       6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp flags:0x3F/0x00
+15       0     0 DROP       6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp flags:0x3F/0x3F
+16       0     0 DROP       6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp flags:!0x17/0x02 state NEW
+17       0     0 DROP       0    -f  *      *       0.0.0.0/0            0.0.0.0/0           
+18       0     0 LOG        0    --  *      *       0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4 prefix "IPTABLES_DROP: "
+
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+num   pkts bytes target     prot opt in     out     source               destination         
+1        0     0 ACCEPT     0    --  *      lo      0.0.0.0/0            0.0.0.0/0           
+
+============================================
+   FIREWALL SETUP COMPLETE ✅
+============================================
+
+Open ports: 22 (SSH) 80 (HTTP) 443 (HTTPS)
+           8080 8443 8090 (apps)
+Blocked:   everything else
+
+To save rules permanently:
+sudo apt install iptables-persistent
+sudo netfilter-persistent save

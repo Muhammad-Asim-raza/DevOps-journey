@@ -1,0 +1,91 @@
+=== IPTABLES SETUP OUTPUT ===
+============================================
+   IPTABLES FIREWALL SETUP
+   Author: Asim Raza - Day 17
+============================================
+
+[ STEP 1: Flushing existing rules ]
+iptables-setup.sh: line 18: iptables: command not found
+iptables-setup.sh: line 19: iptables: command not found
+iptables-setup.sh: line 20: iptables: command not found
+iptables-setup.sh: line 21: iptables: command not found
+✅ Existing rules cleared
+
+[ STEP 2: Setting default policies ]
+iptables-setup.sh: line 27: iptables: command not found
+iptables-setup.sh: line 28: iptables: command not found
+iptables-setup.sh: line 29: iptables: command not found
+✅ Default: INPUT=DROP, FORWARD=DROP, OUTPUT=ACCEPT
+
+[ STEP 3: Allowing loopback interface ]
+iptables-setup.sh: line 35: iptables: command not found
+iptables-setup.sh: line 36: iptables: command not found
+✅ Loopback (127.0.0.1) allowed
+
+[ STEP 4: Allowing established connections ]
+iptables-setup.sh: line 42: iptables: command not found
+✅ Established/Related connections allowed
+
+[ STEP 5: Allowing ICMP (ping) ]
+iptables-setup.sh: line 49: iptables: command not found
+✅ ICMP ping allowed (rate limited: 5/sec)
+
+[ STEP 6: Allowing SSH with brute force protection ]
+iptables-setup.sh: line 60: iptables: command not found
+iptables-setup.sh: line 63: iptables: command not found
+iptables-setup.sh: line 69: iptables: command not found
+iptables-setup.sh: line 75: iptables: command not found
+✅ SSH port 22 allowed (max 3 attempts per 60 sec)
+
+[ STEP 7: Allowing HTTP and HTTPS ]
+iptables-setup.sh: line 81: iptables: command not found
+iptables-setup.sh: line 82: iptables: command not found
+✅ HTTP (80) and HTTPS (443) allowed
+
+[ STEP 8: Allowing application ports ]
+iptables-setup.sh: line 88: iptables: command not found
+iptables-setup.sh: line 89: iptables: command not found
+iptables-setup.sh: line 90: iptables: command not found
+iptables-setup.sh: line 92: iptables: command not found
+✅ App ports (8080 8443 8090) allowed
+✅ HAProxy stats (8404) localhost only
+
+[ STEP 9: Blocking common attacks ]
+iptables-setup.sh: line 102: iptables: command not found
+✅ NULL packet scan blocked
+iptables-setup.sh: line 107: iptables: command not found
+✅ XMAS packet scan blocked
+iptables-setup.sh: line 112: iptables: command not found
+✅ SYN flood protection enabled
+iptables-setup.sh: line 117: iptables: command not found
+✅ Fragmented packet attack blocked
+
+[ STEP 10: Setting up logging ]
+iptables-setup.sh: line 123: iptables: command not found
+✅ Dropped packets logged to syslog
+
+[ FINAL FIREWALL RULES ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+iptables-setup.sh: line 132: iptables: command not found
+
+============================================
+   FIREWALL SETUP COMPLETE ✅
+============================================
+
+Open ports: 22 (SSH) 80 (HTTP) 443 (HTTPS)
+           8080 8443 8090 (apps)
+Blocked:   everything else
+
+To save rules permanently:
+sudo apt install iptables-persistent
+sudo netfilter-persistent save
+
+=== CURRENT RULES ===
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
