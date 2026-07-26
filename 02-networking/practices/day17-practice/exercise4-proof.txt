@@ -1,0 +1,7 @@
+=== WAF CONCEPTS AND RULES ===
+
+Basic nginx WAF rules created at:
+/etc/nginx/snippets/waf-rules.conf
+
+WAF Rules content:
+File location shown above

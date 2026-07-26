@@ -1,0 +1,147 @@
+=== FAIL2BAN INSTALLATION ===
+Fail2Ban v1.0.2
+
+=== SERVICE STATUS ===
+     Loaded: loaded (/usr/lib/systemd/system/fail2ban.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2026-07-26 09:03:17 PKT; 38min ago
+
+=== JAIL.LOCAL CONFIG ===
+# /etc/fail2ban/jail.local
+# fail2ban Local Configuration
+# This overrides /etc/fail2ban/jail.conf
+
+[DEFAULT]
+# Default settings for all jails
+
+ignoreip = 127.0.0.1/8 ::1
+# ignoreip = never ban these IPs
+# 127.0.0.1/8 = localhost
+# Add your office IP here:
+# ignoreip = 127.0.0.1/8 192.168.1.0/24
+
+bantime = 1h
+# bantime = how long to ban the IP
+# 1h = 1 hour
+# 1d = 1 day
+# -1 = permanent ban
+
+findtime = 10m
+# findtime = time window for counting failures
+# 10m = count failures in last 10 minutes
+
+maxretry = 5
+# maxretry = failures before ban
+# 5 = ban after 5 failures in findtime window
+
+banaction = iptables-multiport
+# how to ban: add iptables rule
+
+backend = auto
+# log backend: auto detects best method
+
+#---------------------------------------------------------------------
+# SSH Protection (most important jail)
+#---------------------------------------------------------------------
+[sshd]
+enabled = true
+# enabled = activate this jail
+
+port = ssh
+# port = which port to monitor
+# ssh = port 22
+
+filter = sshd
+# filter = which filter file to use
+# /etc/fail2ban/filter.d/sshd.conf
+
+logpath = %(sshd_log)s
+# logpath = which log file to watch
+# %(sshd_log)s = automatic detection
+# Usually: /var/log/auth.log
+
+maxretry = 3
+# override default: only 3 attempts for SSH
+# more strict than default
+
+bantime = 24h
+# ban SSH attackers for 24 hours
+
+#---------------------------------------------------------------------
+# nginx HTTP Authentication Protection
+#---------------------------------------------------------------------
+[nginx-http-auth]
+enabled = true
+port    = http,https
+filter  = nginx-http-auth
+logpath = /var/log/nginx/error.log
+maxretry = 5
+
+#---------------------------------------------------------------------
+# nginx 4xx Error Protection (scanner detection)
+#---------------------------------------------------------------------
+[nginx-noscript]
+enabled  = true
+port     = http,https
+filter   = nginx-noscript
+logpath  = /var/log/nginx/error.log
+maxretry = 10
+findtime = 1m
+bantime  = 1h
+
+#---------------------------------------------------------------------
+# nginx Limit Request Zone (rate limit violations)
+#---------------------------------------------------------------------
+[nginx-limit-req]
+enabled = true
+port    = http,https
+filter  = nginx-limit-req
+logpath = /var/log/nginx/error.log
+maxretry = 10
+
+#---------------------------------------------------------------------
+# HAProxy Protection
+#---------------------------------------------------------------------
+[haproxy-http-auth]
+enabled  = false
+# disabled until HAProxy log format configured
+port     = http,https
+filter   = haproxy-http-auth
+logpath  = /var/log/haproxy.log
+maxretry = 5
+=== FAIL2BAN STATUS ===
+Status
+|- Number of jail:	3
+`- Jail list:	nginx-http-auth, nginx-limit-req, sshd
+
+=== SSHD JAIL STATUS ===
+Status for the jail: sshd
+|- Filter
+|  |- Currently failed:	0
+|  |- Total failed:	0
+|  `- File list:	/var/log/auth.log
+`- Actions
+   |- Currently banned:	0
+   |- Total banned:	0
+   `- Banned IP list:	
+
+=== RECENT FAIL2BAN LOGS ===
+2026-07-26 09:03:18,116 fail2ban.jail           [787]: INFO    Creating new jail 'nginx-http-auth'
+2026-07-26 09:03:18,116 fail2ban.jail           [787]: INFO    Jail 'nginx-http-auth' uses pyinotify {}
+2026-07-26 09:03:18,120 fail2ban.jail           [787]: INFO    Initiated 'pyinotify' backend
+2026-07-26 09:03:18,122 fail2ban.filter         [787]: INFO      maxRetry: 5
+2026-07-26 09:03:18,123 fail2ban.filter         [787]: INFO      findtime: 600
+2026-07-26 09:03:18,123 fail2ban.actions        [787]: INFO      banTime: 3600
+2026-07-26 09:03:18,123 fail2ban.filter         [787]: INFO      encoding: UTF-8
+2026-07-26 09:03:18,124 fail2ban.filter         [787]: INFO    Added logfile: '/var/log/nginx/error.log' (pos = 0, hash = f66b1ebcde887034d7fb9b8f6c24ddbc853ec894)
+2026-07-26 09:03:18,125 fail2ban.jail           [787]: INFO    Creating new jail 'nginx-limit-req'
+2026-07-26 09:03:18,125 fail2ban.jail           [787]: INFO    Jail 'nginx-limit-req' uses pyinotify {}
+2026-07-26 09:03:18,129 fail2ban.jail           [787]: INFO    Initiated 'pyinotify' backend
+2026-07-26 09:03:18,130 fail2ban.filter         [787]: INFO      maxRetry: 10
+2026-07-26 09:03:18,130 fail2ban.filter         [787]: INFO      findtime: 600
+2026-07-26 09:03:18,130 fail2ban.actions        [787]: INFO      banTime: 3600
+2026-07-26 09:03:18,130 fail2ban.filter         [787]: INFO      encoding: UTF-8
+2026-07-26 09:03:18,131 fail2ban.filter         [787]: INFO    Added logfile: '/var/log/nginx/error.log' (pos = 0, hash = f66b1ebcde887034d7fb9b8f6c24ddbc853ec894)
+2026-07-26 09:03:18,131 fail2ban.transmitter    [787]: ERROR   Jail 'nginx-noscript' skipped, because of wrong configuration: Unable to read the filter 'nginx-noscript'
+2026-07-26 09:03:18,134 fail2ban.jail           [787]: INFO    Jail 'sshd' started
+2026-07-26 09:03:18,137 fail2ban.jail           [787]: INFO    Jail 'nginx-http-auth' started
+2026-07-26 09:03:18,141 fail2ban.jail           [787]: INFO    Jail 'nginx-limit-req' started
