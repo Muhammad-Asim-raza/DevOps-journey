@@ -1,4 +1,4 @@
-=== WAF CONCEPTS AND RULES ===
+==== WAF CONCEPTS AND RULES ===
 
 Basic nginx WAF rules created at:
 /etc/nginx/snippets/waf-rules.conf
