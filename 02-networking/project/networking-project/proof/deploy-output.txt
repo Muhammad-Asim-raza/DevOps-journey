@@ -1,0 +1,36 @@
+============================================
+   DEPLOYMENT SCRIPT
+   Zero-Downtime Rolling Deployment
+   Time: Tue Jul 28 13:03:36 PKT 2026
+============================================
+
+[ STEP 1: Starting all backend apps ]
+  ✅ app1 already running on port 3001
+  ✅ app2 already running on port 3002
+  ✅ app3 already running on port 3003
+
+[ STEP 2: Verifying all apps healthy ]
+  ✅ Port 3001: HTTP 200 OK
+  ✅ Port 3002: HTTP 200 OK
+  ✅ Port 3003: HTTP 200 OK
+
+[ STEP 3: Testing nginx load balancer ]
+  ✅ nginx load balancer: HTTP 200 OK
+
+[ STEP 4: Running post-deployment checks ]
+  Testing load distribution (3 requests):
+    Request 1 → App-1
+    Request 2 → App-2
+    Request 3 → App-3
+
+============================================
+   ✅ DEPLOYMENT SUCCESSFUL
+   All 3 apps running and healthy
+   nginx load balancing across them
+============================================
+
+Access your infrastructure:
+  HTTP  (redirects): http://localhost:8080
+  HTTPS (main):      https://localhost:8443
+  Health check:      https://localhost:8443/nginx-health
+  API endpoint:      https://localhost:8443/api

@@ -1,0 +1,16 @@
+# Private keys - NEVER commit these
+nginx/ssl/server.key
+*.key
+*.pem
+
+# Log files
+logs/
+*.log
+
+# PID files
+*.pid
+
+# Python cache
+__pycache__/
+*.pyc
+

@@ -1,0 +1,33 @@
+============================================
+   INFRASTRUCTURE HEALTH MONITOR
+   Time: 2026-07-28 13:09:19
+============================================
+
+[ BACKEND APPLICATIONS ]
+  ✅ App-1 (port 3001) = HTTP 200
+  ✅ App-2 (port 3002) = HTTP 200
+  ✅ App-3 (port 3003) = HTTP 200
+
+[ NGINX LOAD BALANCER ]
+  ✅ nginx HTTP→HTTPS redirect = HTTP 301
+  ✅ nginx HTTPS = HTTP 200
+
+[ LOAD BALANCING TEST ]
+  Sending 6 requests to verify distribution:
+  App-1: 2 requests
+  App-3: 2 requests
+  App-2: 2 requests
+
+[ SYSTEM RESOURCES ]
+  CPU Usage : 0%
+  RAM Usage : 16%
+  Disk Usage: 1%
+
+[ SECURITY STATUS ]
+  ✅ fail2ban active (0 IPs banned)
+  ✅ Firewall (ufw) active
+
+============================================
+   SUMMARY: 5 healthy, 0 unhealthy
+   STATUS: ✅ ALL SYSTEMS OPERATIONAL
+============================================
