@@ -1,1 +1,71 @@
+# ================================================
+# .gitignore for DevOps Projects
+# Author: Asim Raza
+# ================================================
+
+# ── SECRETS (NEVER commit these) ──
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# AWS credentials
+.aws/
+credentials
+aws_credentials.json
+*.pem
+*.key
+*.p12
+
+# ── DEPENDENCY FOLDERS ──
 node_modules/
+vendor/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ── BUILD OUTPUTS ──
+dist/
+build/
+*.egg-info/
+target/
+*.class
+*.jar
+
+# ── LOG FILES ──
+*.log
+logs/
+*.log.*
+
+# ── EDITOR FILES ──
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── TERRAFORM ──
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# ── DOCKER ──
+# docker-compose.override.yml
+
+# ── CERTIFICATES ──
+*.crt
+*.cert
+# Keep .csr (certificate signing requests) out too
+*.csr
+
+# ── TESTING ──
+coverage/
+.coverage
+.pytest_cache/
+htmlcov/node_modules/
