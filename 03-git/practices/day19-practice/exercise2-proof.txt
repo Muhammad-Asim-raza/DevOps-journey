@@ -1,0 +1,17 @@
+=== GIT ADD ===
+On branch master
+
+No commits yet
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+	new file:   .gitignore
+	new file:   README.md
+	new file:   app.py
+	new file:   src/main.py
+	new file:   tests/test_main.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.env
+

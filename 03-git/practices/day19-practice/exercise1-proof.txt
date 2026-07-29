@@ -1,0 +1,18 @@
+=== GIT INIT ===
+/home/asim-raza/DevOps-journey/03-git/practices/day19-practice/git-practice-project
+On branch master
+
+No commits yet
+
+nothing to commit (create/copy files and use "git add" to track)
+total 40
+drwxr-xr-x 7 asim-raza asim-raza 4096 Jul 29 10:15 .
+drwxr-xr-x 3 asim-raza asim-raza 4096 Jul 29 10:13 ..
+-rw-r--r-- 1 asim-raza asim-raza   23 Jul 29 10:13 HEAD
+drwxr-xr-x 2 asim-raza asim-raza 4096 Jul 29 10:13 branches
+-rw-r--r-- 1 asim-raza asim-raza   92 Jul 29 10:13 config
+-rw-r--r-- 1 asim-raza asim-raza   73 Jul 29 10:13 description
+drwxr-xr-x 2 asim-raza asim-raza 4096 Jul 29 10:13 hooks
+drwxr-xr-x 2 asim-raza asim-raza 4096 Jul 29 10:13 info
+drwxr-xr-x 4 asim-raza asim-raza 4096 Jul 29 10:13 objects
+drwxr-xr-x 4 asim-raza asim-raza 4096 Jul 29 10:13 refs

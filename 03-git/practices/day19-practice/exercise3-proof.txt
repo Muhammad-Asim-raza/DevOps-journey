@@ -1,0 +1,23 @@
+=== GIT LOG ===
+f25c0ad Add health check function to app
+5237455 Add getting started section to README
+294cdc1 Initial project setup with README app and tests
+
+=== FULL LOG ===
+commit f25c0adfc2096071d1fdb27865f2b427d595aaeb
+Author: Muhammad-Asim-raza <asimraza9659@gmail.com>
+Date:   Wed Jul 29 10:26:48 2026 +0500
+
+    Add health check function to app
+
+commit 5237455b8910436308e2aec3009f4ac74c809cc7
+Author: Muhammad-Asim-raza <asimraza9659@gmail.com>
+Date:   Wed Jul 29 10:26:08 2026 +0500
+
+    Add getting started section to README
+
+commit 294cdc1b5b23da41fcec07820f1755399ad40116
+Author: Muhammad-Asim-raza <asimraza9659@gmail.com>
+Date:   Wed Jul 29 10:23:29 2026 +0500
+
+    Initial project setup with README app and tests

@@ -1,0 +1,57 @@
+============================================
+   GIT HELPER REFERENCE
+   Author: Asim Raza - Day 19
+============================================
+
+[ REPOSITORY INFO ]
+  Location: /home/asim-raza/DevOps-journey
+  Branch  : main
+  Remote  : git@github.com:Muhammad-Asim-raza/DevOps-journey.git
+
+[ CURRENT STATUS ]
+?? ../../
+
+[ RECENT COMMITS (last 10) ]
+b69fb78 Day 18: Networking Phase Project - nginx load balancer SSL fail2ban monitoring - PHASE 2 COMPLETE
+36c8d3e Day 17: Network security - iptables fail2ban WAF DDoS protection - security-audit script
+9f6333c Day 18: Networking Phase Project - nginx load balancer SSL fail2ban monitoring - PHASE 2 COMPLETED
+faf4354 Day 17: Network security - iptables fail2ban WAF DDoS protection - security-audit script
+661e2c8 Day 17: Network security - iptables fail2ban WAF DDoS protection - security-audit script
+42e674e Day 16: Load balancing deep dive - HAProxy health checks sticky session connection draining AWS ALB NLB
+3808311 Day 16: Load balancing deep dive - HAProxy health checks sticky sessions connection draining AWS ALB NLB
+f069551 Day 15: Subnetting VPC design - subnet calculator vpc designer scripts - CIDR mastery
+c932f52 Day 14: VPN networking monitoring troubleshooting - network-monitor port-scanner scripts - NETWORKING PHASE COMPLETE
+9326c4d Netwroking
+
+[ COMMIT STATISTICS ]
+  Total commits: 30
+  Contributors: 1
+  Files tracked: 0
+
+[ MOST CHANGED FILES ]
+  29 changes: 
+  2 changes: README.md
+  2 changes: 02-networking/practices/day17-practice/security-audit.sh
+  2 changes: 02-networking/practices/day17-practice/script-output-iptables.txt
+  2 changes: 02-networking/practices/day17-practice/script-output-audit.txt
+
+[ COMMON GIT COMMANDS ]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  git init                = start repo
+  git add .               = stage all
+  git commit -m 'msg'     = save snapshot
+  git push origin main    = upload
+  git pull origin main    = download
+  git log --oneline       = view history
+  git diff                = see changes
+  git status              = check state
+  git branch              = list branches
+  git checkout -b name    = new branch
+  git merge branch-name   = merge branch
+  git clone url           = copy remote repo
+  git stash               = save work temp
+  git stash pop           = restore stashed
+
+============================================
+   GIT REFERENCE COMPLETE
+============================================

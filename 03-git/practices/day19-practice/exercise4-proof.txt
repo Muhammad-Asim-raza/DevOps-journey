@@ -1,0 +1,47 @@
+=== GIT LOG VARIATIONS ===
+f25c0ad Add health check function to app
+5237455 Add getting started section to README
+294cdc1 Initial project setup with README app and tests
+
+--- Graph ---
+* f25c0ad (HEAD -> master) Add health check function to app
+* 5237455 Add getting started section to README
+* 294cdc1 Initial project setup with README app and tests
+
+--- Stat ---
+commit f25c0adfc2096071d1fdb27865f2b427d595aaeb
+Author: Muhammad-Asim-raza <asimraza9659@gmail.com>
+Date:   Wed Jul 29 10:26:48 2026 +0500
+
+    Add health check function to app
+
+ app.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+commit 5237455b8910436308e2aec3009f4ac74c809cc7
+Author: Muhammad-Asim-raza <asimraza9659@gmail.com>
+Date:   Wed Jul 29 10:26:08 2026 +0500
+
+    Add getting started section to README
+
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+
+commit 294cdc1b5b23da41fcec07820f1755399ad40116
+Author: Muhammad-Asim-raza <asimraza9659@gmail.com>
+Date:   Wed Jul 29 10:23:29 2026 +0500
+
+    Initial project setup with README app and tests
+
+ .gitignore         | 1 +
+ README.md          | 1 +
+ app.py             | 1 +
+ src/main.py        | 1 +
+ tests/test_main.py | 1 +
+ 5 files changed, 5 insertions(+)
+
+--- Blame ---
+^294cdc1 (Muhammad-Asim-raza 2026-07-29 10:23:29 +0500 1) print('Hello DevOps')
+f25c0adf (Muhammad-Asim-raza 2026-07-29 10:26:48 +0500 2) 
+f25c0adf (Muhammad-Asim-raza 2026-07-29 10:26:48 +0500 3) def health_check():
+f25c0adf (Muhammad-Asim-raza 2026-07-29 10:26:48 +0500 4)     return {"status": "healthy"}

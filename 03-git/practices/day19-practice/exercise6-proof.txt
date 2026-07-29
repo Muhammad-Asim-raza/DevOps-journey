@@ -1,0 +1,7 @@
+=== GITIGNORE TEST ===
+On branch master
+nothing to commit, working tree clean
+
+--- Check ignore ---
+.gitignore:11:*.env	.env
+.env is ignored ✅
