@@ -3,7 +3,7 @@ f25c0ad Add health check function to app
 5237455 Add getting started section to README
 294cdc1 Initial project setup with README app and tests
 
---- Graph ---
+---- Graph ---
 * f25c0ad (HEAD -> master) Add health check function to app
 * 5237455 Add getting started section to README
 * 294cdc1 Initial project setup with README app and tests
