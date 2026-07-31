@@ -1,0 +1,13 @@
+=== BRANCH SWITCHING ===
+--- On main branch ---
+3450fc7 Initial app version 1.0.0
+
+--- Switching to feature/login ---
+Switched to branch 'feature/login'
+fe3ee55 Add authentication module with password hashing
+38f5a21 Add login function to app
+3450fc7 Initial app version 1.0.0
+
+--- Back to main ---
+Switched to branch 'main'
+3450fc7 Initial app version 1.0.0

@@ -1,0 +1,7 @@
+=== GIT BRANCH COMMANDS ===
+* main
+After creating feature/test-branch:
+  feature/test-branch
+* main
+After deleting test-branch:
+* main
