@@ -4,7 +4,7 @@
 
 ---
 
-## Exercise 1: git branch Commands ✅
+### Exercise 1: git branch Commands ✅
 - [x] Listed branches with git branch
 - [x] Created branch with git branch name
 - [x] Listed all including remote with -a
