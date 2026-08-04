@@ -1,0 +1,11 @@
+=== THREE-WAY MERGE ===
+*   5e3c86c Merge feature/payment into main
+|\  
+| * 596ae90 Add payment processing module
+* | a2d8a3f Update README with recent changes
+|/  
+* fe3ee55 Add authentication module with password hashing
+* 38f5a21 Add login function to app
+* 3450fc7 Initial app version 1.0.0
+
+Files after merge:

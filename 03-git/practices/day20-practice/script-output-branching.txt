@@ -1,0 +1,75 @@
+============================================
+   GIT BRANCHING REFERENCE
+   Author: Asim Raza - Day 20
+============================================
+
+[ BRANCH COMMANDS ]
+  git branch                  = list branches
+  git branch name             = create branch
+  git branch -d name          = delete (safe)
+  git branch -D name          = delete (force)
+  git branch -a               = list all + remote
+  git branch -m old new       = rename
+
+[ SWITCHING BRANCHES ]
+  git switch branch-name      = switch (modern)
+  git switch -c new-branch    = create and switch
+  git checkout branch-name    = switch (old way)
+  git checkout -b new-branch  = create and switch
+
+[ MERGING ]
+  git merge branch-name       = merge into current
+  git merge --no-ff branch    = always create merge commit
+  git merge --abort           = cancel merge
+  git merge --squash branch   = squash all commits
+
+[ CONFLICT RESOLUTION ]
+  1. git merge branch-name    (triggers conflict)
+  2. Edit conflicted files
+  3. Remove conflict markers: <<<<< ===== >>>>>
+  4. git add resolved-file
+  5. git commit
+
+[ BRANCH NAMING CONVENTIONS ]
+  feature/feature-name        = new features
+  fix/bug-description         = bug fixes
+  hotfix/critical-fix         = emergency fixes
+  release/version-number      = release prep
+  chore/task-description      = maintenance
+  docs/doc-name               = documentation
+
+[ CURRENT REPOSITORY STATE ]
+  Branches:
+    * main
+
+  Recent history:
+    *   71d2e82 Merge feature/version-update - resolve version conflict
+    |\  
+    | * 085e2f1 Bump version to 2.0.0 in feature branch
+    * | d325e07 Bump version to 1.5.0 in main
+    |/  
+    *   5e3c86c Merge feature/payment into main
+    |\  
+    | * 596ae90 Add payment processing module
+    * | a2d8a3f Update README with recent changes
+    |/  
+    * fe3ee55 Add authentication module with password hashing
+    * 38f5a21 Add login function to app
+    * 3450fc7 Initial app version 1.0.0
+
+[ BRANCHING STRATEGIES ]
+  GitHub Flow (recommended):
+    main = production (always deployable)
+    feature/xxx = any change
+    Rules: PR → review → tests → merge → deploy
+
+  GitFlow (enterprise):
+    main = production
+    develop = integration
+    feature/xxx = features
+    release/xxx = release prep
+    hotfix/xxx = emergency fixes
+
+============================================
+   REFERENCE COMPLETE
+============================================

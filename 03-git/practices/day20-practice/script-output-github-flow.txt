@@ -1,0 +1,79 @@
+============================================
+   GITHUB FLOW DEMONSTRATION
+   Author: Asim Raza - Day 20
+============================================
+
+[ GITHUB FLOW RULES ]
+  1. main is ALWAYS deployable
+  2. Create branch for ANY change
+  3. Open Pull Request for discussion
+  4. Tests must pass before merge
+  5. Merge to main
+  6. Deploy immediately after merge
+
+[ SIMULATING GITHUB FLOW ]
+
+Step 1: Ensure we are on main
+  Current branch: main
+
+Step 2: Create feature branch
+  Created: feature/api-endpoints
+  Current: feature/api-endpoints
+
+Step 3: Make changes (simulate development)
+[feature/api-endpoints 20b065b] Add API endpoints for users and health check
+ 1 file changed, 17 insertions(+)
+ create mode 100644 api.py
+  Committed: Add API endpoints
+[feature/api-endpoints 2f75f12] Add delete user endpoint
+ 1 file changed, 4 insertions(+)
+  Committed: Add delete user endpoint
+
+Step 4: (In real life: Open Pull Request on GitHub)
+  PR Title: Add API endpoints for users
+  PR Description: Adds GET/POST/DELETE for /users
+  Reviewer: Team lead
+  Checks: CI tests pass ✅
+  Status: Approved ✅
+
+Step 5: Merge approved PR to main
+Updating 71d2e82..2f75f12
+Fast-forward (no commit created; -m option ignored)
+ api.py | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+ create mode 100644 api.py
+  Merged to main ✅
+Deleted branch feature/api-endpoints (was 2f75f12).
+  Deleted feature branch ✅
+
+Step 6: Deploy to production
+  (CI/CD pipeline triggered by push to main)
+  Building Docker image...
+  Running tests...
+  Deploying to production...
+  ✅ Deployed successfully!
+
+[ FINAL REPOSITORY STATE ]
+* 2f75f12 Add delete user endpoint
+* 20b065b Add API endpoints for users and health check
+*   71d2e82 Merge feature/version-update - resolve version conflict
+|\  
+| * 085e2f1 Bump version to 2.0.0 in feature branch
+* | d325e07 Bump version to 1.5.0 in main
+|/  
+*   5e3c86c Merge feature/payment into main
+|\  
+| * 596ae90 Add payment processing module
+* | a2d8a3f Update README with recent changes
+|/  
+
+Files in project:
+README.md
+api.py
+app.py
+auth.py
+payment.py
+
+============================================
+   GITHUB FLOW DEMO COMPLETE
+============================================
