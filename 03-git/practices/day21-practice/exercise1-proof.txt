@@ -1,0 +1,9 @@
+=== GIT REMOTE COMMANDS ===
+origin	git@github.com:Muhammad-Asim-raza/DevOps-journey.git (fetch)
+origin	git@github.com:Muhammad-Asim-raza/DevOps-journey.git (push)
+
+Remote commands reference:
+git remote add name URL
+git remote remove name
+git remote rename old new
+git remote set-url name URL

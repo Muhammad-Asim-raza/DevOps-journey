@@ -1,0 +1,33 @@
+=== GIT STASH DEMO ===
+Before stash:
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   app.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	__pycache__/
+
+no changes added to commit (use "git add" and/or "git commit -a")
+After stash:
+On branch main
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	__pycache__/
+
+nothing added to commit but untracked files present (use "git add" to track)
+stash@{0}: WIP on main: f244e96 Fix critical production bug
+After stash pop:
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   app.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	__pycache__/
+
+no changes added to commit (use "git add" and/or "git commit -a")

@@ -1,0 +1,79 @@
+============================================
+   GITHUB WORKFLOW REFERENCE
+   Author: Asim Raza - Day 21
+============================================
+
+[ REMOTE COMMANDS ]
+  git remote -v                    = list remotes
+  git remote add name URL          = add remote
+  git remote remove name           = remove remote
+  git remote rename old new        = rename
+  git remote set-url name URL      = change URL
+
+[ FETCH vs PULL vs PUSH ]
+  git fetch origin                 = download only
+  git pull origin main             = download + merge
+  git pull --rebase origin main    = download + rebase
+  git push origin main             = upload commits
+  git push -u origin branch        = push + set tracking
+  git push origin --delete branch  = delete remote branch
+  git push origin --tags           = push all tags
+
+[ PULL REQUEST WORKFLOW ]
+  1. git switch -c feature/name
+  2. (make changes and commits)
+  3. git push -u origin feature/name
+  4. Open PR on GitHub
+  5. Add description and reviewers
+  6. CI checks run automatically
+  7. Address review feedback
+  8. Get approval
+  9. Merge PR
+ 10. git branch -d feature/name
+
+[ GIT STASH ]
+  git stash                        = save changes
+  git stash list                   = show all stashes
+  git stash pop                    = restore + remove
+  git stash apply stash@{0}        = restore + keep
+  git stash save 'description'     = named stash
+  git stash drop stash@{0}         = delete stash
+  git stash clear                  = delete all stashes
+
+[ GIT TAGS ]
+  git tag                          = list tags
+  git tag v1.0.0                   = lightweight tag
+  git tag -a v1.0.0 -m 'msg'       = annotated tag
+  git push origin v1.0.0           = push one tag
+  git push origin --tags           = push all tags
+  git tag -d v1.0.0                = delete local tag
+  git show v1.0.0                  = tag details
+
+[ FORKING WORKFLOW ]
+  Fork on GitHub → clone fork locally
+  git remote add upstream ORIGINAL_URL
+  git fetch upstream
+  git merge upstream/main
+  (contribute via PR from fork)
+
+[ BRANCH PROTECTION (configure on GitHub) ]
+  Settings → Branches → Add rule for main:
+  ✅ Require PR before merging
+  ✅ Require approvals (minimum 1)
+  ✅ Require status checks (CI tests)
+  ✅ No direct pushes to main
+
+[ CURRENT REPO STATUS ]
+  Remotes:
+    origin	git@github.com:Muhammad-Asim-raza/DevOps-journey.git (fetch)
+    origin	git@github.com:Muhammad-Asim-raza/DevOps-journey.git (push)
+  Tags:
+  Branches:
+    * main
+      remotes/origin/HEAD -> origin/main
+      remotes/origin/main
+      remotes/origin/master
+
+============================================
+   REFERENCE COMPLETE
+============================================

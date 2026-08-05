@@ -1,0 +1,20 @@
+=== PR READY BRANCH ===
+Commits this PR would add to main:
+7fe6d69 Add PR template for project
+547a66d Add tests for user management functions
+e13e948 Add user management functions (create delete update)
+
+Files changed in this PR:
+ .github/PULL_REQUEST_TEMPLATE.md | 23 +++++++++++++++++++++++
+ app.py                           | 28 ++++++++++++++++++++++++++++
+ test_app.py                      | 40 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 91 insertions(+)
+
+Tests pass:
+✅ test_create_user_valid passed
+✅ test_create_user_invalid_email passed
+✅ test_create_user_missing_fields passed
+✅ test_delete_user_valid passed
+✅ test_delete_user_invalid_id passed
+
+✅ All tests passed!

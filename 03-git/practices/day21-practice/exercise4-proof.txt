@@ -1,0 +1,25 @@
+=== BRANCH PROTECTION REFERENCE ===
+Branch Protection Rules for main:
+
+Settings → Branches → Add rule for "main":
+
+✅ Require pull request before merging
+   - Require 1 approval minimum
+   - Dismiss stale reviews on new push
+
+✅ Require status checks before merging
+   - Require branches up to date
+   - Add CI test names as required checks
+
+✅ Require conversation resolution
+   All PR comments must be resolved
+
+✅ Do not allow bypassing settings
+   Even admins must follow rules
+
+✅ Restrict pushes to main
+   Only PR merges allowed
+
+Result: Production branch is always
+        reviewed, tested, and approved
+        before any change goes in.
