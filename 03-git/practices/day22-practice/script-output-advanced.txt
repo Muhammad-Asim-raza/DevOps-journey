@@ -1,0 +1,91 @@
+============================================
+   ADVANCED GIT REFERENCE
+   Author: Asim Raza - Day 22
+============================================
+
+[ GIT REBASE ]
+  git rebase main              = replay commits on main
+  git rebase -i HEAD~3         = interactive last 3 commits
+  git rebase --abort           = cancel rebase
+  git rebase --continue        = continue after conflict
+  git pull --rebase            = pull with rebase
+
+  Interactive rebase commands:
+  pick    = keep commit as is
+  reword  = keep commit, edit message
+  squash  = combine with previous commit
+  fixup   = squash, discard message
+  drop    = remove commit entirely
+
+[ GIT CHERRY-PICK ]
+  git cherry-pick abc1234      = copy specific commit
+  git cherry-pick abc..def     = copy range of commits
+  git cherry-pick --abort      = cancel cherry-pick
+  git cherry-pick --continue   = continue after conflict
+
+[ GIT RESET ]
+  git reset --soft HEAD~1      = undo commit, keep staged
+  git reset HEAD~1             = undo commit, keep files
+  git reset --hard HEAD~1      = undo commit, DELETE all
+  git reset HEAD file.txt      = unstage specific file
+
+  Memory trick:
+  --soft  = go back but keep suitcase packed
+  --mixed = go back and unpack suitcase
+  --hard  = go back and burn the suitcase
+
+[ GIT REVERT ]
+  git revert abc1234           = undo specific commit safely
+  git revert HEAD              = undo last commit
+  git revert HEAD~3..HEAD      = undo last 3 commits
+  git revert --no-commit abc   = revert without committing
+
+[ GIT REFLOG ]
+  git reflog                   = show all HEAD positions
+  git reflog show branch-name  = specific branch history
+  git reset --hard HEAD@{2}    = recover to specific point
+  git checkout -b recovered HASH = recover deleted branch
+
+  Reflog keeps history for 90 days
+  You can ALWAYS recover within 90 days
+
+[ GIT BISECT ]
+  git bisect start             = start binary search
+  git bisect bad               = current is broken
+  git bisect good v1.0.0       = this version was good
+  git bisect good/bad          = after testing each commit
+  git bisect reset             = finish bisect session
+  git bisect run test-script   = automated bisect
+
+[ GIT CLEAN ]
+  git clean -n                 = preview (dry run)
+  git clean -f                 = delete untracked files
+  git clean -fd                = delete files + dirs
+  git clean -fdx               = delete including ignored
+  ALWAYS run -n first!
+
+[ EMERGENCY COMMANDS ]
+  # Committed to wrong branch:
+  git cherry-pick <hash>       = copy to right branch
+  git reset --hard HEAD~1      = remove from wrong branch
+
+  # Accidentally deleted branch:
+  git reflog | grep branch-name
+  git checkout -b branch-name <hash>
+
+  # Pushed wrong code to main:
+  git revert <hash>            = create undo commit
+  git push origin main         = push the revert
+
+  # Hard reset but want code back:
+  git reflog                   = find old hash
+  git reset --hard <old-hash>  = go back to it
+
+  # Committed sensitive data:
+  git reset HEAD~1             = if not pushed
+  # If pushed: rotate credentials immediately!
+  # Use: git filter-branch or BFG Repo Cleaner
+
+============================================
+   REFERENCE COMPLETE
+============================================

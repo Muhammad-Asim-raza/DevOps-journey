@@ -1,0 +1,19 @@
+=== GIT REFLOG ===
+Reflog output:
+ce96d25 HEAD@{0}: checkout: moving from important-work to main
+b4f38f5 HEAD@{1}: checkout: moving from main to important-work
+ce96d25 HEAD@{2}: checkout: moving from important-work to main
+b4f38f5 HEAD@{3}: commit: Critical code that should not be lost
+ce96d25 HEAD@{4}: checkout: moving from main to important-work
+ce96d25 HEAD@{5}: reset: moving to ce96d25
+eab7ed7 HEAD@{6}: reset: moving to HEAD~3
+ce96d25 HEAD@{7}: revert: Revert "Add broken feature (accidentally deployed)"
+863fbff HEAD@{8}: commit: Add broken feature (accidentally deployed)
+c2a4702 HEAD@{9}: reset: moving to HEAD~1
+ae7bd19 HEAD@{10}: commit: Dangerous accidental commit
+c2a4702 HEAD@{11}: commit: Clean commit after mixed reset
+eab7ed7 HEAD@{12}: reset: moving to HEAD~1
+96f188c HEAD@{13}: commit: Proper commit message
+eab7ed7 HEAD@{14}: reset: moving to HEAD~1
+
+Reflog is your safety net for 90 days

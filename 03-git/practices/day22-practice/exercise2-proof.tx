@@ -1,0 +1,5 @@
+eab7ed7 Fix critical SQL injection vulnerability
+66ae298 Add email sending utility function
+31f8603 Add create_user function
+56b01a1 Add get_user function
+9e19704 Add timeout configuration

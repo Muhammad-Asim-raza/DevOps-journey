@@ -1,0 +1,9 @@
+=== GIT REVERT ===
+ce96d25 Revert "Add broken feature (accidentally deployed)"
+863fbff Add broken feature (accidentally deployed)
+c2a4702 Clean commit after mixed reset
+eab7ed7 Fix critical SQL injection vulnerability
+
+Revert vs Reset:
+revert = safe for shared branches (adds new commit)
+reset = rewrites history (local only)

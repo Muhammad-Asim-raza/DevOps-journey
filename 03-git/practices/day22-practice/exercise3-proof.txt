@@ -1,0 +1,19 @@
+=== GIT RESET REFERENCE ===
+Current state after resets:
+c2a4702 Clean commit after mixed reset
+eab7ed7 Fix critical SQL injection vulnerability
+66ae298 Add email sending utility function
+31f8603 Add create_user function
+56b01a1 Add get_user function
+
+Reset modes:
+--soft  = undo commit, keep staged
+--mixed = undo commit, keep in working dir
+--hard  = undo commit, DELETE changes
+
+When to use:
+--soft  = wrong commit message
+--mixed = need to unstage and rethink
+--hard  = completely throw away changes
+
+NEVER --hard on shared branches
