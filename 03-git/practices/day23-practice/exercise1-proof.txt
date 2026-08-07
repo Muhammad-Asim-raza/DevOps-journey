@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/asim-raza/DevOps-journey/03-git/practices/day23-practice/sample-app
+collecting ... collected 12 items
+
+test_app.py::TestMath::test_add_positive PASSED                          [  8%]
+test_app.py::TestMath::test_add_negative PASSED                          [ 16%]
+test_app.py::TestMath::test_add_zero PASSED                              [ 25%]
+test_app.py::TestMath::test_subtract PASSED                              [ 33%]
+test_app.py::TestMath::test_multiply PASSED                              [ 41%]
+test_app.py::TestMath::test_divide_normal PASSED                         [ 50%]
+test_app.py::TestMath::test_divide_by_zero PASSED                        [ 58%]
+test_app.py::TestGreet::test_greet_valid PASSED                          [ 66%]
+test_app.py::TestGreet::test_greet_empty PASSED                          [ 75%]
+test_app.py::TestHealthCheck::test_health_check_returns_dict PASSED      [ 83%]
+test_app.py::TestHealthCheck::test_health_check_status PASSED            [ 91%]
+test_app.py::TestHealthCheck::test_health_check_has_version PASSED       [100%]
+
+============================== 12 passed in 0.02s ==============================
