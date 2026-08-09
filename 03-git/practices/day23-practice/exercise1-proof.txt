@@ -1,4 +1,4 @@
-============================= test session starts ==============================
+============================== test session starts ==============================
 platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
 cachedir: .pytest_cache
 rootdir: /home/asim-raza/DevOps-journey/03-git/practices/day23-practice/sample-app
