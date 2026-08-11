@@ -1,0 +1,183 @@
+# ================================================
+# ci-pipeline.yml
+# Continuous Integration Pipeline
+# Runs tests on every push and pull request
+# Author: Asim Raza - Day 23
+# ================================================
+
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+    # Run on push to main OR develop
+
+  pull_request:
+    branches: [ main ]
+    # Run on PRs targeting main
+    # This is the MOST important trigger
+    # Tests run before any code reaches main
+
+jobs:
+
+  # ── JOB 1: Code Quality ──
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        # uses = use a pre-built action
+        # actions/checkout = official GitHub action
+        # downloads your repo code to runner
+        # @v4 = version 4 of this action
+        # ALWAYS checkout first!
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+        # uses = pre-built action
+        # with = parameters for the action
+        # python-version = which Python to install
+
+      - name: Install linting tools
+        run: pip install flake8
+        # flake8 = Python code style checker
+        # checks for syntax errors and style issues
+
+      - name: Run flake8 linting
+        run: |
+          flake8 03-git/practices/day23-practice/sample-app/ \
+            --max-line-length=100 \
+            --exclude=__pycache__ \
+            --statistics
+        # --max-line-length = allow up to 100 chars
+        # --statistics = show count of each error type
+        # flake8 fails (non-zero exit) if issues found
+        # GitHub Actions marks job FAILED if any
+        # step returns non-zero exit code
+
+  # ── JOB 2: Tests ──
+  run-tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    # This job runs in PARALLEL with code-quality
+    # Both start at the same time
+
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+        # matrix = run this job multiple times
+        # once for each python-version
+        # tests run on Python 3.10 AND 3.11
+        # ensures compatibility with both versions
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+        # ${{ matrix.python-version }} = current matrix value
+        # on first run: 3.10
+        # on second run: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov flake8
+          # upgrade pip first (best practice)
+          # install test dependencies
+
+      - name: Run tests with coverage
+        run: |
+          cd 03-git/practices/day23-practice/sample-app
+          python -m pytest test_app.py \
+            -v \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-fail-under=80
+        # -v = verbose (show each test name)
+        # --cov=app = measure coverage of app.py
+        # --cov-report=term-missing = show uncovered lines
+        # --cov-fail-under=80 = FAIL if coverage below 80%
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        if: always()
+        # if: always() = run even if previous step failed
+        # upload-artifact = save files from runner
+        # available to download from GitHub UI
+        with:
+          name: coverage-report-py${{ matrix.python-version }}
+          path: 03-git/practices/day23-practice/sample-app/.coverage
+
+  # ── JOB 3: Security Scan ──
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install security scanner
+        run: pip install bandit
+        # bandit = Python security linter
+        # scans for common security issues
+
+      - name: Run security scan
+        run: |
+          bandit -r 03-git/practices/day23-practice/sample-app/ \
+            -f txt \
+            --severity-level medium \
+            || true
+        # -r = recursive scan
+        # -f txt = text output format
+        # --severity-level medium = only report medium+
+        # || true = do not fail the job even if found
+        # (in production: remove || true to fail on issues)
+
+  # ── JOB 4: Build Docker Image ──
+  build-image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [code-quality, run-tests]
+    # needs = dependencies
+    # this job ONLY runs if BOTH previous jobs pass
+    # code-quality AND run-tests must succeed first
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        # buildx = extended Docker build capabilities
+        # multi-platform builds, caching, etc
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t devops-app:${{ github.sha }} \
+            -t devops-app:latest \
+            03-git/practices/day23-practice/sample-app/
+        # -t = tag the image with name:version
+        # github.sha = unique commit hash as version
+        # devops-app:latest = also tag as latest
+        # last arg = build context (where Dockerfile is)
+
+      - name: Test Docker image
+        run: |
+          docker run --rm devops-app:latest
+        # --rm = remove container after it exits
+        # runs the image and verifies it works

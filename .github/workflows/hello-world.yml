@@ -1,0 +1,63 @@
+# ================================================
+# hello-world.yml
+# First GitHub Actions Workflow
+# Author: Asim Raza - Day 23
+# ================================================
+
+name: Hello World Workflow
+# name = displayed on GitHub Actions tab
+# appears in: Actions → workflow list
+
+on:
+  push:
+    branches: [ main ]
+  # on = what triggers this workflow
+  # push = when code is pushed
+  # branches: [main] = only on main branch
+
+  workflow_dispatch:
+  # workflow_dispatch = allows manual trigger
+  # "Run workflow" button appears on GitHub
+
+jobs:
+  hello-job:
+  # hello-job = unique name for this job
+  # can have any name (no spaces)
+
+    runs-on: ubuntu-latest
+    # runs-on = which runner to use
+    # ubuntu-latest = latest Ubuntu VM
+    # GitHub provides this machine for free
+
+    steps:
+    # steps = list of tasks to run IN ORDER
+    # each step runs after the previous
+
+      - name: Print Hello World
+        # name = displayed in Actions log
+        run: echo "Hello World from GitHub Actions!"
+        # run = shell command to execute
+
+      - name: Show runner information
+        run: |
+          echo "Runner OS: $RUNNER_OS"
+          echo "GitHub Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Event: ${{ github.event_name }}"
+        # | (pipe) = multi-line run command
+        # ${{ }} = GitHub Actions expression
+        # github.actor = who triggered the run
+        # github.sha = commit hash that triggered
+
+      - name: Show current date and time
+        run: |
+          echo "Current UTC time: $(date -u)"
+          echo "Day 23 of DevOps Journey - GitHub Actions!"
+
+      - name: Run a simple calculation
+        run: |
+          RESULT=$((10 + 20 + 30))
+          echo "10 + 20 + 30 = $RESULT"
+          echo "This proves shell commands work in Actions"
