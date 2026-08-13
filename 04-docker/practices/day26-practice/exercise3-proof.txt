@@ -1,0 +1,22 @@
+=== IMAGES vs CONTAINERS ===
+Starting 3 containers from 1 nginx image:
+04426ba21fdc8b824bd8ae2122394e22c261edd817f8e782bf8077a10dd85262
+ffa280f2d9e3fa608a6ff0d54cff9fdc45c21495c150d80c8ea0696b1313f79b
+a28a98a09a94c2ee3c6320d3b1e7d4355a9ef29ffd691ba6a586eb0e05f3c936
+
+All containers running:
+CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS     NAMES
+a28a98a09a94   nginx     "/docker-entrypoint.…"   21 seconds ago   Up 20 seconds   80/tcp    web3
+04426ba21fdc   nginx     "/docker-entrypoint.…"   26 seconds ago   Up 25 seconds   80/tcp    web1
+ffa280f2d9e3   nginx     "/docker-entrypoint.…"   26 seconds ago   Up 25 seconds   80/tcp    web2
+
+Each has unique hostname:
+04426ba21fdc
+ffa280f2d9e3
+a28a98a09a94
+web1
+web2
+web3
+web1
+web2
+web3

@@ -1,0 +1,85 @@
+============================================
+   DOCKER FUNDAMENTALS REFERENCE
+   Author: Asim Raza - Day 26
+============================================
+
+[ DOCKER SYSTEM INFO ]
+Docker version 29.7.2, build a7dcaa6
+   Version:    29.7.2
+      Version:  v0.36.1
+      Version:  v5.4.0
+    dhi: CLI for managing Docker Hardened Images (Docker Inc.)
+      Version:  v0.0.6
+   Containers: 0
+   Images: 0
+   Server Version: 29.7.2
+   Cgroup Version: 2
+   Kernel Version: 6.18.33.2-microsoft-standard-WSL2
+   OSType: linux
+   Architecture: x86_64
+
+[ IMAGES COMMANDS ]
+  docker images              = list all images
+  docker pull image:tag      = download image
+  docker rmi image:tag       = remove image
+  docker image prune -a      = remove unused
+  docker history image       = see layers
+  docker inspect image       = detailed info
+  docker search term         = search Docker Hub
+
+[ CONTAINER COMMANDS ]
+  docker run image           = create + start
+  docker run -d image        = run in background
+  docker run -it image bash  = interactive
+  docker run --name X image  = with name
+  docker run -p H:C image    = port mapping
+  docker run -v H:C image    = volume mount
+  docker run -e VAR=val img  = environment var
+  docker ps                  = running containers
+  docker ps -a               = all containers
+  docker stop container      = graceful stop
+  docker start container     = start stopped
+  docker restart container   = stop + start
+  docker rm container        = remove container
+  docker rm -f container     = force remove
+  docker exec -it X bash     = exec in container
+  docker logs container      = view logs
+  docker logs -f container   = follow logs
+
+[ SYSTEM COMMANDS ]
+  docker system df           = disk usage
+  docker system prune -a     = remove all unused
+  docker container prune     = remove stopped
+  docker image prune -a      = remove unused imgs
+
+[ KEY CONCEPTS ]
+  Image = read-only template (recipe)
+  Container = running instance (meal)
+  Registry = storage for images (Docker Hub)
+  Dockerfile = instructions to build image
+  Layer = each instruction creates a layer
+  Volume = persistent storage
+  Network = container communication
+  Tag = version label for image
+
+[ CURRENT STATUS ]
+  Running containers: 0
+  All containers: 0
+  Local images: 0
+  Disk usage:
+  Images          0         0         0B        0B
+  Containers      0         0         0B        0B
+  Local Volumes   0         0         0B        0B
+  Build Cache     0         0         0B        0B
+
+[ IMAGE NAMING FORMAT ]
+  nginx                = official latest
+  nginx:1.25           = official specific
+  nginx:alpine         = alpine variant (tiny)
+  python:3.11-slim     = slim variant
+  username/myapp:v1.0  = your image on Hub
+  registry/repo:tag    = private registry
+
+============================================
+   REFERENCE COMPLETE
+============================================

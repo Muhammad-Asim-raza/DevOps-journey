@@ -1,0 +1,15 @@
+=== DOCKER INSTALLATION ===
+Docker version 29.7.2, build a7dcaa6
+
+ Version:    29.7.2
+    Version:  v0.36.1
+    Version:  v5.4.0
+  dhi: CLI for managing Docker Hardened Images (Docker Inc.)
+    Version:  v0.0.6
+ Containers: 0
+ Images: 0
+ Server Version: 29.7.2
+ Cgroup Version: 2
+ Kernel Version: 6.18.33.2-microsoft-standard-WSL2
+ Operating System: Ubuntu 24.04.4 LTS
+ Architecture: x86_64
