@@ -1,0 +1,14 @@
+=== ENVIRONMENT VARIABLES ===
+--- MySQL container running ---
+eb503987f573   mysql:8.0   "docker-entrypoint.s…"   4 minutes ago   Up 4 minutes   0.0.0.0:3306->3306/tcp, [::]:3306->3306/tcp, 33060/tcp   mysql-demo
+
+--- Environment variables in container ---
+MYSQL_ROOT_PASSWORD=rootpass
+MYSQL_DATABASE=devopsdb
+MYSQL_USER=asim
+MYSQL_PASSWORD=mypass
+MYSQL_MAJOR=8.0
+MYSQL_VERSION=8.0.46-1.el9
+MYSQL_SHELL_VERSION=8.0.46-1.el9
+mysql-demo
+mysql-demo

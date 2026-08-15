@@ -1,0 +1,19 @@
+=== DOCKER LOGS ===
+--- All logs with timestamps ---
+2026-08-14T06:47:41.024462659Z /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+2026-08-14T06:47:41.024541681Z /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+2026-08-14T06:47:41.029345216Z /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+2026-08-14T06:47:41.049692771Z 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+2026-08-14T06:47:41.068453485Z 10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+2026-08-14T06:47:41.068853696Z /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+2026-08-14T06:47:41.069168584Z /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+2026-08-14T06:47:41.076285362Z /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+2026-08-14T06:47:41.080251964Z /docker-entrypoint.sh: Configuration complete; ready for start up
+2026-08-14T06:47:43.479835558Z 172.17.0.1 - - [14/Aug/2026:06:47:43 +0000] "GET / HTTP/1.1" 200 896 "-" "curl/8.5.0" "-"
+2026-08-14T06:47:49.003435842Z 172.17.0.1 - - [14/Aug/2026:06:47:49 +0000] "GET /notfound HTTP/1.1" 404 153 "-" "curl/8.5.0" "-"
+2026-08-14T06:47:54.189932890Z 172.17.0.1 - - [14/Aug/2026:06:47:54 +0000] "GET / HTTP/1.1" 200 896 "-" "curl/8.5.0" "-"
+
+--- Last 3 lines ---
+172.17.0.1 - - [14/Aug/2026:06:47:49 +0000] "GET /notfound HTTP/1.1" 404 153 "-" "curl/8.5.0" "-"
+172.17.0.1 - - [14/Aug/2026:06:47:54 +0000] "GET / HTTP/1.1" 200 896 "-" "curl/8.5.0" "-"
+logs-proof

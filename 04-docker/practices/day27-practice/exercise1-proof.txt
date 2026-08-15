@@ -1,0 +1,12 @@
+=== PORT MAPPING DEMO ===
+--- Container running ---
+72e74323a6b6   nginx     "/docker-entrypoint.…"   51 seconds ago   Up 50 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   web-demo
+
+--- HTTP response via port mapping ---
+HTTP Status: 200
+
+--- Port mappings ---
+80/tcp -> 0.0.0.0:8080
+80/tcp -> [::]:8080
+web-demo
+web-demo

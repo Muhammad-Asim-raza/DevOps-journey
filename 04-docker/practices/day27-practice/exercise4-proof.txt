@@ -1,0 +1,19 @@
+=== DOCKER EXEC DEMO ===
+--- Running commands inside container ---
+root
+6b9e2cd0cd4a
+
+--- Process list inside container ---
+OCI runtime exec failed: exec failed: unable to start container process: exec: "ps": executable file not found in $PATH
+
+--- Environment variables ---
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=6b9e2cd0cd4a
+NGINX_VERSION=1.31.3
+NJS_VERSION=1.0.0
+NJS_RELEASE=1~trixie
+ACME_VERSION=0.4.1
+PKG_RELEASE=1~trixie
+DYNPKG_RELEASE=1~trixie
+HOME=/root
+exec-proof

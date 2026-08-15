@@ -1,0 +1,15 @@
+=== CONTAINER LIFECYCLE ===
+--- Creating container ---
+45ea9075c2fe   nginx     "/docker-entrypoint.…"   10 seconds ago   Created             lifecycle-test
+
+--- Starting container ---
+45ea9075c2fe   nginx     "/docker-entrypoint.…"   20 seconds ago   Up 5 seconds   80/tcp    lifecycle-test
+
+--- Pausing container ---
+45ea9075c2fe   nginx     "/docker-entrypoint.…"   55 seconds ago   Up 40 seconds (Paused)   80/tcp    lifecycle-test
+
+--- Unpausing container ---
+45ea9075c2fe   nginx     "/docker-entrypoint.…"   About a minute ago   Up 48 seconds   80/tcp    lifecycle-test
+
+--- Stopping and removing ---
+Container removed successfully
