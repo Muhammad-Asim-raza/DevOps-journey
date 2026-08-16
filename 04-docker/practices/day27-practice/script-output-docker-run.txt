@@ -1,0 +1,101 @@
+============================================
+   DOCKER RUN COMPLETE REFERENCE
+   Author: Asim Raza - Day 27
+============================================
+
+[ BASIC SYNTAX ]
+  docker run [OPTIONS] IMAGE [COMMAND]
+
+[ NAMING AND IDENTITY ]
+  --name myapp          = give container a name
+  --hostname myserver   = set hostname inside
+  --label env=prod      = add metadata label
+
+[ EXECUTION MODES ]
+  -d                    = detached (background)
+  -it                   = interactive terminal
+  --rm                  = auto-remove when exits
+  -t                    = allocate TTY
+
+[ PORT MAPPING (-p) ]
+  -p 8080:80            = host:container
+  -p 8080:80/udp        = UDP port mapping
+  -p 127.0.0.1:80:80    = bind to localhost only
+  -p 0:80               = random host port
+  --expose 80           = expose without binding
+
+[ ENVIRONMENT VARIABLES ]
+  -e VAR=value          = set single variable
+  -e VAR                = inherit from host
+  --env-file ./app.env  = load from file
+
+[ RESOURCE LIMITS ]
+  --memory 512m         = max RAM (m=MB g=GB)
+  --memory-swap 512m    = total incl swap
+  --cpus 0.5            = 0.5 CPU cores
+  --cpu-shares 512      = relative CPU weight
+  --pids-limit 100      = max process count
+
+[ RESTART POLICIES ]
+  --restart no          = never restart (default)
+  --restart always      = always restart
+  --restart on-failure  = restart on error
+  --restart on-failure:3 = max 3 retries
+  --restart unless-stopped = restart unless manual stop
+
+[ VOLUMES (Day 29) ]
+  -v /host:/container   = bind mount
+  -v myvolume:/data     = named volume
+  --mount type=...      = detailed mount
+
+[ NETWORK (Day 30) ]
+  --network mynet       = connect to network
+  --network host        = use host network
+  --network none        = no network
+  --add-host host:IP    = add /etc/hosts entry
+
+[ SECURITY ]
+  --user appuser        = run as user
+  --read-only           = read-only filesystem
+  --cap-drop ALL        = drop all capabilities
+  --cap-add NET_BIND    = add specific capability
+  --security-opt ...    = security options
+
+[ USEFUL COMBINATIONS ]
+
+  # Production web service:
+  docker run -d \
+    --name webapp \
+    --restart unless-stopped \
+    --memory 512m \
+    --cpus 1.0 \
+    -p 80:3000 \
+    -e NODE_ENV=production \
+    --env-file .env \
+    myapp:v1.0.0
+
+  # Development with live reload:
+  docker run -it \
+    --rm \
+    --name dev-container \
+    -p 3000:3000 \
+    -v $(pwd):/app \
+    -w /app \
+    node:18-alpine \
+    npm run dev
+
+  # One-time task:
+  docker run --rm \
+    -v $(pwd):/work \
+    -w /work \
+    python:3.11-slim \
+    python script.py
+
+[ CURRENT CONTAINERS ]
+Running:
+
+All (including stopped):
+
+============================================
+   REFERENCE COMPLETE
+============================================

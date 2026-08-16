@@ -1,0 +1,58 @@
+============================================
+   CONTAINER LIFECYCLE DEMONSTRATION
+   Container: lifecycle-full-demo
+============================================
+
+[ STEP 1: Pull image ]
+docker.io/library/nginx:alpine
+  ✅ nginx:alpine ready
+
+[ STEP 2: Create container (not started) ]
+6fd44b134fc745eec6bf7f6d33d5a59393964498772b47fa19af4bbe88cd86b2
+  Status: created
+
+[ STEP 3: Start container ]
+lifecycle-full-demo
+  Status: running
+  IP: 172.17.0.2
+
+[ STEP 4: Test it is working ]
+  HTTP Status: 200
+
+[ STEP 5: Execute command inside ]
+  nginx version inside container:
+  OS inside container:
+PRETTY_NAME="Alpine Linux v3.24"
+
+[ STEP 6: View logs ]
+  Recent logs:
+172.17.0.1 - - [15/Aug/2026:06:57:15 +0000] "GET / HTTP/1.1" 200 896 "-" "curl/8.5.0" "-"
+
+[ STEP 7: Resource stats ]
+  CPU: 0.00% | MEM: 13.89MiB/128MiB
+
+[ STEP 8: Pause container ]
+lifecycle-full-demo
+  Status: paused
+
+[ STEP 9: Unpause container ]
+lifecycle-full-demo
+  Status: running
+
+[ STEP 10: Stop container ]
+lifecycle-full-demo
+  Status: exited
+
+[ STEP 11: Restart stopped container ]
+lifecycle-full-demo
+  Status: running
+
+[ STEP 12: Remove container ]
+lifecycle-full-demo
+  Container removed
+  docker ps -a shows:
+  (container is gone)
+
+============================================
+   LIFECYCLE DEMO COMPLETE
+============================================

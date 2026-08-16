@@ -1,0 +1,11 @@
+=== RESOURCE LIMITS ===
+--- Container with limits ---
+ed5a917b255e   nginx     "/docker-entrypoint.…"   18 seconds ago   Up 18 seconds   80/tcp    resource-demo
+
+--- Resource stats ---
+CONTAINER ID   NAME            CPU %     MEM USAGE / LIMIT   MEM %     NET I/O       BLOCK I/O     PIDS
+ed5a917b255e   resource-demo   0.00%     11.79MiB / 256MiB   4.61%     946B / 126B   0B / 12.3kB   13
+
+--- Inspect resource limits ---
+Memory: 268435456 | CPUs: 500000000
+resource-demo

@@ -1,0 +1,18 @@
+=== DOCKER INSPECT ===
+--- Container IP ---
+Container IP: 172.17.0.2
+
+--- Environment variables ---
+DEMO_VAR=day27
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+NGINX_VERSION=1.31.3
+NJS_VERSION=1.0.0
+NJS_RELEASE=1~trixie
+ACME_VERSION=0.4.1
+PKG_RELEASE=1~trixie
+DYNPKG_RELEASE=1~trixie
+
+
+--- Image info ---
+Image: nginx | Created: 2026-08-15T06:35:46.248252128Z
+inspect-proof

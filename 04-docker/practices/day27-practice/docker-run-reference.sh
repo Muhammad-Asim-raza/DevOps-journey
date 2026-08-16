@@ -1,0 +1,126 @@
+#!/bin/bash
+# ================================================
+# docker-run-reference.sh
+# Complete docker run Reference
+# Author: Asim Raza
+# Day 27 of DevOps Journey
+# ================================================
+
+echo "============================================"
+echo "   DOCKER RUN COMPLETE REFERENCE"
+echo "   Author: Asim Raza - Day 27"
+echo "============================================"
+
+echo ""
+echo "[ BASIC SYNTAX ]"
+echo "  docker run [OPTIONS] IMAGE [COMMAND]"
+
+echo ""
+echo "[ NAMING AND IDENTITY ]"
+echo "  --name myapp          = give container a name"
+echo "  --hostname myserver   = set hostname inside"
+echo "  --label env=prod      = add metadata label"
+
+echo ""
+echo "[ EXECUTION MODES ]"
+echo "  -d                    = detached (background)"
+echo "  -it                   = interactive terminal"
+echo "  --rm                  = auto-remove when exits"
+echo "  -t                    = allocate TTY"
+
+echo ""
+echo "[ PORT MAPPING (-p) ]"
+echo "  -p 8080:80            = host:container"
+echo "  -p 8080:80/udp        = UDP port mapping"
+echo "  -p 127.0.0.1:80:80    = bind to localhost only"
+echo "  -p 0:80               = random host port"
+echo "  --expose 80           = expose without binding"
+
+echo ""
+echo "[ ENVIRONMENT VARIABLES ]"
+echo "  -e VAR=value          = set single variable"
+echo "  -e VAR                = inherit from host"
+echo "  --env-file ./app.env  = load from file"
+
+echo ""
+echo "[ RESOURCE LIMITS ]"
+echo "  --memory 512m         = max RAM (m=MB g=GB)"
+echo "  --memory-swap 512m    = total incl swap"
+echo "  --cpus 0.5            = 0.5 CPU cores"
+echo "  --cpu-shares 512      = relative CPU weight"
+echo "  --pids-limit 100      = max process count"
+
+echo ""
+echo "[ RESTART POLICIES ]"
+echo "  --restart no          = never restart (default)"
+echo "  --restart always      = always restart"
+echo "  --restart on-failure  = restart on error"
+echo "  --restart on-failure:3 = max 3 retries"
+echo "  --restart unless-stopped = restart unless manual stop"
+
+echo ""
+echo "[ VOLUMES (Day 29) ]"
+echo "  -v /host:/container   = bind mount"
+echo "  -v myvolume:/data     = named volume"
+echo "  --mount type=...      = detailed mount"
+
+echo ""
+echo "[ NETWORK (Day 30) ]"
+echo "  --network mynet       = connect to network"
+echo "  --network host        = use host network"
+echo "  --network none        = no network"
+echo "  --add-host host:IP    = add /etc/hosts entry"
+
+echo ""
+echo "[ SECURITY ]"
+echo "  --user appuser        = run as user"
+echo "  --read-only           = read-only filesystem"
+echo "  --cap-drop ALL        = drop all capabilities"
+echo "  --cap-add NET_BIND    = add specific capability"
+echo "  --security-opt ...    = security options"
+
+echo ""
+echo "[ USEFUL COMBINATIONS ]"
+echo ""
+echo "  # Production web service:"
+echo "  docker run -d \\"
+echo "    --name webapp \\"
+echo "    --restart unless-stopped \\"
+echo "    --memory 512m \\"
+echo "    --cpus 1.0 \\"
+echo "    -p 80:3000 \\"
+echo "    -e NODE_ENV=production \\"
+echo "    --env-file .env \\"
+echo "    myapp:v1.0.0"
+echo ""
+echo "  # Development with live reload:"
+echo "  docker run -it \\"
+echo "    --rm \\"
+echo "    --name dev-container \\"
+echo "    -p 3000:3000 \\"
+echo "    -v \$(pwd):/app \\"
+echo "    -w /app \\"
+echo "    node:18-alpine \\"
+echo "    npm run dev"
+echo ""
+echo "  # One-time task:"
+echo "  docker run --rm \\"
+echo "    -v \$(pwd):/work \\"
+echo "    -w /work \\"
+echo "    python:3.11-slim \\"
+echo "    python script.py"
+
+echo ""
+echo "[ CURRENT CONTAINERS ]"
+echo "Running:"
+docker ps --format "  {{.Names}}: {{.Image}} | {{.Status}} | {{.Ports}}" \
+    2>/dev/null || echo "  None running"
+echo ""
+echo "All (including stopped):"
+docker ps -a --format "  {{.Names}}: {{.Status}}" \
+    2>/dev/null | head -10
+
+echo ""
+echo "============================================"
+echo "   REFERENCE COMPLETE"
+echo "============================================"
