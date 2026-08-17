@@ -1,0 +1,90 @@
+============================================
+   DOCKERFILE COMPLETE REFERENCE
+   Author: Asim Raza - Day 28
+============================================
+
+[ DOCKERFILE INSTRUCTIONS ]
+
+  FROM image:tag              = base image (REQUIRED, first)
+  FROM image AS name          = named stage (multi-stage)
+
+  RUN command                 = execute during BUILD
+  RUN cmd1 && cmd2            = combine (fewer layers)
+
+  COPY src dest               = copy from host to image
+  COPY --from=stage src dest  = copy from another stage
+
+  ADD src dest                = like COPY + tar extract
+
+  WORKDIR /path               = set working directory
+
+  ENV VAR=value               = runtime environment var
+  ARG VAR=default             = build-time variable only
+
+  EXPOSE port                 = document port (not publish!)
+
+  USER username               = run as this user
+
+  LABEL key=value             = image metadata
+
+  VOLUME /path                = declare mount point
+
+  CMD ["cmd", "arg"]          = default startup command
+  ENTRYPOINT ["cmd"]          = fixed entrypoint
+
+  HEALTHCHECK --interval=30s CMD curl health-url
+                              = container health monitoring
+
+[ KEY BEST PRACTICES ]
+
+  1. Use specific tags (FROM python:3.11-slim NOT :latest)
+  2. Order: packages before code (layer caching)
+  3. Combine RUN commands (fewer layers = smaller image)
+  4. Use .dockerignore (exclude node_modules .env etc)
+  5. Run as non-root user (security)
+  6. Use multi-stage builds (smaller final image)
+  7. Add HEALTHCHECK (Docker monitors your container)
+  8. Set ENV PYTHONUNBUFFERED=1 for Python apps
+  9. Clean apt cache in same RUN: && rm -rf /var/lib/apt/lists/*
+ 10. Use --no-cache-dir for pip (smaller image)
+
+[ LAYER CACHING RULES ]
+
+  Put RARELY changing instructions FIRST:
+  FROM → RUN apt install → COPY requirements → RUN pip install
+
+  Put FREQUENTLY changing instructions LAST:
+  COPY app code → CMD
+
+  When a layer changes = ALL layers below it rebuild
+  When a layer is unchanged = CACHE HIT (very fast)
+
+[ CMD vs ENTRYPOINT ]
+
+  CMD ["python3", "app.py"]
+  = default command, CAN be overridden:
+  docker run myimage bash  ← overrides CMD
+
+  ENTRYPOINT ["python3"]
+  CMD ["app.py"]
+  = python3 is fixed, app.py is the argument
+  docker run myimage other.py  ← runs python3 other.py
+
+  Use CMD alone for flexibility
+  Use ENTRYPOINT+CMD for wrapper scripts
+
+[ IMAGE SIZE COMPARISON ]
+  devops-node-app:v1.0:52d7f0b021e1   
+  devops-python-app:v1.0:674ea31e65c6 
+  multi-stage-app:v1.0:c705ed86b14e   
+
+[ BUILD COMMANDS ]
+  docker build -t name:tag .
+  docker build --no-cache -t name:tag .
+  docker build --target stage -t name:tag .
+  docker build --build-arg VAR=val -t name:tag .
+  docker build -f OtherDockerfile -t name:tag .
+
+============================================
+   REFERENCE COMPLETE
+============================================

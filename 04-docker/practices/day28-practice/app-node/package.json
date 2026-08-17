@@ -1,0 +1,11 @@
+{
+  "name": "devops-node-app",
+  "version": "1.0.0",
+  "description": "DevOps Node.js App - Day 28",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Asim Raza",
+  "license": "MIT"
+}

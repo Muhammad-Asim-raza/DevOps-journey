@@ -1,0 +1,2 @@
+# No external dependencies for this simple app
+# Real apps would have: flask, fastapi, requests, etc

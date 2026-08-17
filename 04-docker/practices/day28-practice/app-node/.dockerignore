@@ -1,0 +1,64 @@
+# ================================================
+# .dockerignore - Exclude from build context
+# Works exactly like .gitignore syntax
+# Author: Asim Raza - Day 28
+# ================================================
+
+# Node.js dependencies
+# These get installed by npm install in Dockerfile
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development files
+*.test.js
+*.spec.js
+tests/
+__tests__/
+coverage/
+.nyc_output/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+
+# CI/CD
+.github/
+.travis.yml
+Jenkinsfile
+.circleci/
+
+# Environment files (NEVER in image!)
+.env
+.env.*
+*.env
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Build outputs
+dist/
+build/
+.cache/
+
+# Docker files themselves
+Dockerfile*
+docker-compose*
+.dockerignore

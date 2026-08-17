@@ -1,0 +1,17 @@
+=== FIRST DOCKERFILE BUILD ===
+
+--- Image created ---
+devops-python-app:v1.0   674ea31e65c6        203MB         49.6MB        
+
+--- App response ---
+{
+  "message": "DevOps App Running in Docker!",
+  "author": "Asim Raza",
+  "day": "Day 28 - Dockerfile Mastery",
+  "container_id": "3818c84714f9"
+}{
+  "status": "healthy",
+  "timestamp": "2026-08-17T05:41:09.766746",
+  "version": "1.0.0",
+  "environment": "production"
+}

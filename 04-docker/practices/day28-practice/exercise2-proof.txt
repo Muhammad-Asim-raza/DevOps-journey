@@ -1,0 +1,5 @@
+=== NODE.JS DOCKERFILE ===
+devops-node-app:v1.0     52d7f0b021e1        181MB         44.9MB        
+v18.20.8
+Node app runs as user:
+appuser

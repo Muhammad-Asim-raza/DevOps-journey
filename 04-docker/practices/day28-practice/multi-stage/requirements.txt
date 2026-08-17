@@ -1,0 +1,2 @@
+# Production dependencies only
+# flask==3.0.0  # uncomment if using Flask

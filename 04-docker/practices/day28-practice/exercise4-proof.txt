@@ -1,0 +1,9 @@
+=== MULTI-STAGE BUILD ===
+--- Image sizes ---
+devops-python-app:v1.0   674ea31e65c6        203MB         49.6MB        
+multi-stage-app:v1.0     c705ed86b14e        187MB         45.5MB        
+
+--- Production image runs as ---
+appuser
+--- Dev tools NOT in production ---
+pytest correctly NOT available
