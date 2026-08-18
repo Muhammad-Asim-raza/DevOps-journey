@@ -1,0 +1,8 @@
+=== VOLUME BACKUP AND RESTORE ===
+--- Backup file created ---
+total 4.0K
+-rw-r--r-- 1 root root 248 Aug 18 12:03 devops-data-backup.tar.gz
+
+--- Backup contents ---
+./
+./message.txt

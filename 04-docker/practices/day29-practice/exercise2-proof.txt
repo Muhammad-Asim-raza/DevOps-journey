@@ -1,0 +1,20 @@
+=== BIND MOUNTS ===
+--- Host directory contents ---
+total 16
+drwxr-xr-x 2 asim-raza asim-raza 4096 Aug 18 11:17 .
+drwxr-xr-x 3 asim-raza asim-raza 4096 Aug 18 10:59 ..
+-rw-r--r-- 1 root      root        23 Aug 18 11:17 container-output.txt
+-rw-r--r-- 1 asim-raza asim-raza  775 Aug 18 11:13 server.py
+
+--- Running with bind mount ---
+container-output.txt
+server.py
+#!/usr/bin/env python3
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
+
+VERSION = "2.0.0"  # Change this to see live reload
+
+--- Read-only bind mount test ---
+Write correctly blocked by :ro
+Write correctly blocked by :ro

@@ -1,0 +1,17 @@
+=== DATABASE PERSISTENCE ===
+--- Volume info ---
+[
+    {
+        "CreatedAt": "2026-08-18T11:24:02+05:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/postgres-data/_data",
+        "Name": "postgres-data",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+
+--- Data survived container deletion ---
+Container was deleted and recreated
+Data still exists in volume postgres-data

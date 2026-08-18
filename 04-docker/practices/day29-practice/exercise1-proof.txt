@@ -1,0 +1,23 @@
+=== NAMED VOLUMES ===
+--- Volumes before ---
+DRIVER    VOLUME NAME
+local     devops-data
+
+--- Data in volume ---
+Hello from Container 1
+Created: Tue Aug 18 10:48:26 PKT 2026
+DevOps Journey Day 29
+Added by Container 2: Tue Aug 18 10:54:29 PKT 2026
+
+--- Volume inspect ---
+[
+    {
+        "CreatedAt": "2026-08-18T10:44:45+05:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/devops-data/_data",
+        "Name": "devops-data",
+        "Options": null,
+        "Scope": "local"
+    }
+]

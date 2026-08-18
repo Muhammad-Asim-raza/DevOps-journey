@@ -1,0 +1,95 @@
+============================================
+   DOCKER VOLUMES COMPLETE REFERENCE
+   Author: Asim Raza - Day 29
+============================================
+
+[ VOLUME MANAGEMENT COMMANDS ]
+  docker volume create name       = create named volume
+  docker volume ls                = list all volumes
+  docker volume inspect name      = volume details
+  docker volume rm name           = delete volume
+  docker volume prune             = remove unused
+
+[ THREE STORAGE TYPES ]
+
+  1. NAMED VOLUMES (production)
+     -v myvolume:/container/path
+     --mount type=volume,source=myvolume,target=/path
+     Managed by Docker
+     Survives container deletion
+     Best for: databases, persistent data
+
+  2. BIND MOUNTS (development)
+     -v /host/path:/container/path
+     -v /host/path:/container/path:ro  (read-only)
+     --mount type=bind,source=/host,target=/container
+     You control the location
+     Best for: development, config files, SSL certs
+
+  3. TMPFS (security/speed)
+     --tmpfs /container/path:size=100m
+     --mount type=tmpfs,target=/path,tmpfs-size=100m
+     In memory only (never touches disk)
+     Best for: secrets, sensitive temporary data
+
+[ COMMON DATABASE PATTERNS ]
+
+  # PostgreSQL with persistence:
+  docker run -d \
+    --name postgres \
+    -e POSTGRES_PASSWORD=secret \
+    -v postgres-data:/var/lib/postgresql/data \
+    postgres:15-alpine
+
+  # MySQL with persistence:
+  docker run -d \
+    --name mysql \
+    -e MYSQL_ROOT_PASSWORD=secret \
+    -v mysql-data:/var/lib/mysql \
+    mysql:8.0
+
+  # Redis with persistence:
+  docker run -d \
+    --name redis \
+    -v redis-data:/data \
+    redis:7-alpine redis-server --appendonly yes
+
+[ BACKUP PATTERN ]
+
+  # Backup volume to tar:
+  docker run --rm \
+    -v myvolume:/data \
+    -v $(pwd):/backup \
+    ubuntu:22.04 \
+    tar czf /backup/backup.tar.gz -C /data .
+
+  # Restore from tar:
+  docker run --rm \
+    -v myvolume:/data \
+    -v $(pwd):/backup \
+    ubuntu:22.04 \
+    tar xzf /backup/backup.tar.gz -C /data
+
+[ CURRENT VOLUMES ]
+DRIVER    VOLUME NAME
+local     devops-data
+local     postgres-data
+
+[ VOLUMES DISK USAGE ]
+Local Volumes   2         0         47.69MB   47.69MB (100%)
+
+[ VOLUME LOCATIONS ON HOST ]
+  Named volumes: /var/lib/docker/volumes/
+  Access with:   sudo ls /var/lib/docker/volumes/
+
+[ IMPORTANT REMINDERS ]
+  ✅ Always use volumes for database data
+  ✅ Use :ro for sensitive read-only mounts
+  ✅ Backup volumes before container recreation
+  ❌ Never store important data in container layer
+  ❌ Never commit volume data to Git
+  ❌ Don't mount sensitive host directories
+
+============================================
+   REFERENCE COMPLETE
+============================================
