@@ -1,0 +1,14 @@
+=== CUSTOM BRIDGE NETWORK ===
+--- DNS resolution between containers ---
+PING svc-b (172.19.0.3): 56 data bytes
+64 bytes from 172.19.0.3: seq=0 ttl=64 time=0.531 ms
+64 bytes from 172.19.0.3: seq=1 ttl=64 time=0.187 ms
+
+--- svc-b ping statistics ---
+
+--- Network inspection ---
+Name: demo-net-30
+Driver: bridge
+Subnet: 172.19.0.0/16
+Container: svc-b | IP: 172.19.0.3/16
+Container: svc-a | IP: 172.19.0.2/16

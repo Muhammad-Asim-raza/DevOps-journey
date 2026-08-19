@@ -1,0 +1,8 @@
+=== HOST AND NONE NETWORKS ===
+--- Host network: sees host IPs ---
+172.25.147.56 172.17.0.1 172.18.0.1 
+
+--- None network: only loopback ---
+
+--- None network: cannot reach internet ---
+bash: line 1: ping: command not found

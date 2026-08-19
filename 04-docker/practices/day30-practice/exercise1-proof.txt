@@ -1,0 +1,13 @@
+=== DEFAULT BRIDGE NETWORK ===
+NETWORK ID     NAME      DRIVER    SCOPE
+281bd3496a9a   bridge    bridge    local
+e7d9cb36e87a   host      host      local
+9af2595e8df7   none      null      local
+
+--- Default bridge subnet ---
+Subnet: 172.17.0.0/16
+Gateway: 172.17.0.1
+
+NAME RESOLUTION on default bridge:
+Fails - must use IP addresses
+Solution: use custom bridge networks

@@ -1,0 +1,20 @@
+=== MULTI-CONTAINER APP ===
+--- Running containers ---
+b95121a33f38   nginx:alpine       "/docker-entrypoint.…"   3 minutes ago   Up 3 minutes   0.0.0.0:8600->80/tcp, [::]:8600->80/tcp   frontend-proxy
+febb7c0982a5   redis:7-alpine     "docker-entrypoint.s…"   6 minutes ago   Up 6 minutes   6379/tcp                                  cache
+1823bb42f509   day30-backend:v1   "python3 backend.py"     7 minutes ago   Up 7 minutes   5000/tcp                                  backend-api
+
+--- Frontend response ---
+{"message": "DevOps App Frontend", "day": 30}
+--- Backend API via proxy ---
+{
+  "service": "backend-api",
+  "status": "healthy",
+  "hostname": "1823bb42f509",
+  "timestamp": "2026-08-19T07:50:02.135796"
+}
+--- Network topology ---
+Network: app-network-30
+  backend-api          172.19.0.2/16
+  frontend-proxy       172.19.0.4/16
+  cache                172.19.0.3/16

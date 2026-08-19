@@ -1,0 +1,9 @@
+=== NETWORK ISOLATION ===
+
+Frontend can reach backend:
+--- iso-backend ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.207/0.708/1.210 ms
+
+Frontend CANNOT reach database:
+ping: bad address 'iso-db'

@@ -1,0 +1,100 @@
+============================================
+   DOCKER NETWORKING REFERENCE
+   Author: Asim Raza - Day 30
+============================================
+
+[ NETWORK TYPES ]
+
+  bridge (default)
+    --network bridge
+    Virtual network on host
+    Containers get private IPs
+    Isolated from host network
+    Default: no DNS by name
+
+  Custom bridge (recommended)
+    docker network create mynet
+    --network mynet
+    Automatic DNS by container name!
+    Isolated from other networks
+    Best for: application containers
+
+  host
+    --network host
+    Shares host network stack
+    No isolation at all
+    Best for: network tools, monitoring
+
+  none
+    --network none
+    No network access
+    Maximum isolation
+    Best for: security critical workloads
+
+[ NETWORK COMMANDS ]
+  docker network ls                    = list all
+  docker network create name           = create
+  docker network create --subnet x     = with subnet
+  docker network inspect name          = details
+  docker network connect net container = connect
+  docker network disconnect net cont   = disconnect
+  docker network rm name               = delete
+  docker network prune                 = remove unused
+
+[ CONTAINER NETWORKING FLAGS ]
+  --network name       = connect to network
+  --ip 10.0.1.100     = assign specific IP
+  --hostname myhost   = set container hostname
+  --add-host h:ip     = add /etc/hosts entry
+  --dns 8.8.8.8       = custom DNS server
+  --link (deprecated) = old container linking
+
+[ DNS RESOLUTION ]
+  Custom networks: container name → IP (automatic)
+  Default bridge: NO DNS (use IP only)
+
+  Example:
+  docker run --network mynet --name db postgres
+  docker run --network mynet --name app myapp
+  In app: DB_HOST=db (uses container name!)
+
+[ MULTI-TIER NETWORK PATTERN ]
+
+  Internet
+     │
+  ┌──▼──────────────────┐
+  │ frontend-network    │
+  │   [nginx] [backend] │
+  └──────────┬──────────┘
+             │
+  ┌──────────▼──────────┐
+  │ backend-network     │
+  │   [backend] [db]    │
+  │   [backend] [redis] │
+  └─────────────────────┘
+
+  nginx exposed: -p 80:80
+  database: NOT exposed (no -p)
+  backend: bridge between networks
+
+[ CURRENT NETWORKS ]
+NETWORK ID     NAME      DRIVER    SCOPE
+281bd3496a9a   bridge    bridge    local
+e7d9cb36e87a   host      host      local
+9af2595e8df7   none      null      local
+
+[ PORT EXPOSURE REMINDER ]
+  Containers on same network: ALL PORTS accessible
+  No -p needed for container-to-container
+  -p only for host → container access
+
+  Container A → Container B on same network:
+  http://container-b:8000  (no port mapping needed)
+
+  External → Container:
+  docker run -p 8080:80 nginx
+  localhost:8080  (port mapping required)
+
+============================================
+   REFERENCE COMPLETE
+============================================
