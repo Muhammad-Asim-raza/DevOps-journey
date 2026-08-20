@@ -1,0 +1,22 @@
+=== FULL STACK COMPOSE APP ===
+--- Services status ---
+NAME                 IMAGE                    COMMAND                  SERVICE    CREATED          STATUS                      PORTS
+fullstack-backend    fullstack-backend:v1.0   "python3 app.py"         backend    40 minutes ago   Up 40 minutes (healthy)     5000/tcp
+fullstack-nginx      nginx:alpine             "/docker-entrypoint.…"   nginx      40 minutes ago   Up 40 minutes (unhealthy)   0.0.0.0:8800->80/tcp, [::]:8800->80/tcp
+fullstack-postgres   postgres:15-alpine       "docker-entrypoint.s…"   postgres   40 minutes ago   Up 40 minutes (healthy)     5432/tcp
+fullstack-redis      redis:7-alpine           "docker-entrypoint.s…"   redis      40 minutes ago   Up 40 minutes (healthy)     6379/tcp
+
+--- Frontend response ---
+{"message": "Welcome to DevOps App", "day": 31}
+--- Backend health ---
+{
+  "status": "healthy",
+  "redis": "unavailable",
+  "timestamp": "2026-08-20T08:11:23.806659"
+}
+--- Visit counter (Redis working) ---
+{
+  "error": "Redis unavailable"
+}{
+  "error": "Redis unavailable"
+}

@@ -1,0 +1,22 @@
+=== FIRST DOCKER COMPOSE ===
+ Network hello-compose_hello-network Created 
+ Network hello-compose_hello-network Created 
+ Container my-nginx Creating 
+ Container my-redis Creating 
+ Container my-nginx Created 
+ Container my-redis Created 
+ Container my-redis Starting 
+ Container my-nginx Starting 
+ Container my-redis Started 
+ Container my-nginx Started 
+
+--- Services status ---
+NAME       IMAGE            COMMAND                  SERVICE   CREATED          STATUS          PORTS
+my-nginx   nginx:alpine     "/docker-entrypoint.…"   web       23 seconds ago   Up 23 seconds   0.0.0.0:8700->80/tcp, [::]:8700->80/tcp
+my-redis   redis:7-alpine   "docker-entrypoint.s…"   cache     23 seconds ago   Up 23 seconds   6379/tcp
+
+--- Web server response ---
+HTTP Status: 200
+
+--- Redis ping ---
+PONG

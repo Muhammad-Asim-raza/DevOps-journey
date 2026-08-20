@@ -1,0 +1,81 @@
+# ================================================
+# docker-compose.yml - Hello Compose
+# Author: Asim Raza - Day 31
+# Your first Docker Compose file
+# ================================================
+
+# version: Compose file format version
+# 3.8 is stable and widely supported
+# Modern Docker doesn't require this field
+# but it's still good practice to include
+version: '3.8'
+
+# services: defines all containers in your stack
+# Each key under services = one container
+services:
+
+  # ── Service 1: Web Server ──
+  web:
+    # image: which Docker image to use
+    # Just like: docker run nginx:alpine
+    image: nginx:alpine
+
+    # container_name: give container specific name
+    # Without this: dirname_servicename_1
+    # With this: exactly "my-nginx"
+    container_name: my-nginx
+
+    # ports: map host ports to container ports
+    # Format: "HOST:CONTAINER"
+    # Same as: docker run -p 8700:80
+    ports:
+      - "8700:80"
+
+    # restart: container restart policy
+    # Same as: docker run --restart unless-stopped
+    restart: unless-stopped
+
+    # networks: which networks to connect to
+    # Container joins hello-network defined below
+    networks:
+      - hello-network
+
+  # ── Service 2: Redis Cache ──
+  cache:
+    image: redis:7-alpine
+
+    container_name: my-redis
+
+    # No ports: Redis is internal only
+    # Only web service can reach it
+    # Not exposed to host machine
+
+    restart: unless-stopped
+
+    networks:
+      - hello-network
+
+    # command: override the image's CMD
+    # redis-server --appendonly yes
+    # --appendonly yes = enable persistence
+    command: redis-server --appendonly yes
+
+    # volumes: persist Redis data
+    volumes:
+      - redis-data:/data
+
+# networks: define custom networks
+# All services connect to hello-network
+# Docker automatically creates this
+networks:
+  hello-network:
+    # driver: bridge is default
+    # could also be: overlay, macvlan
+    driver: bridge
+
+# volumes: define named volumes
+# redis-data persists Redis AOF file
+volumes:
+  redis-data:
+    # driver: local = stored on host
+    driver: local
