@@ -1,4 +1,4 @@
-=== FULL STACK COMPOSE APP ===
+===== FULL STACK COMPOSE APP ===
 --- Services status ---
 NAME                 IMAGE                    COMMAND                  SERVICE    CREATED          STATUS                      PORTS
 fullstack-backend    fullstack-backend:v1.0   "python3 app.py"         backend    40 minutes ago   Up 40 minutes (healthy)     5000/tcp
