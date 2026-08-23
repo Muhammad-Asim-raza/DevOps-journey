@@ -18,5 +18,5 @@ my-redis   redis:7-alpine   "docker-entrypoint.s…"   cache     23 seconds ago 
 --- Web server response ---
 HTTP Status: 200
 
---- Redis ping ---
+----- Redis ping ---
 PONG
