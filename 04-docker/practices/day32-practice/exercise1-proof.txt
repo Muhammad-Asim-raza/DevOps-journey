@@ -1,0 +1,10 @@
+=== SAMPLE APP IMAGE ===
+registry-demo:latest                                                                                  1c4b262c9dea        187MB         45.5MB   U    
+registry-demo:v1.0.0                                                                                  1c4b262c9dea        187MB         45.5MB   U    
+
+Image labels:
+maintainer=Asim Raza
+org.opencontainers.image.created=2026-08-24T05:43:07Z
+org.opencontainers.image.revision=6f8598f
+org.opencontainers.image.version=1.0.0
+

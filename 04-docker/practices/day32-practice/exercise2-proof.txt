@@ -1,0 +1,16 @@
+=== DOCKER HUB WORKFLOW ===
+--- Local images tagged for registry ---
+asimmehsood/registry-demo:v1.0.0                                                                      1c4b262c9dea        187MB         45.5MB        
+registry-demo:latest                                                                                  1c4b262c9dea        187MB         45.5MB        
+
+--- Image tagging strategy ---
+Tagging strategy:
+username/app:1.0.0   = exact semantic version (stable)
+username/app:1.0     = minor version alias
+username/app:latest  = latest (avoid in production)
+username/app:abc1234 = git commit hash (reproducible)
+username/app:staging = environment tag
+
+Production rule:
+ALWAYS pin to specific version
+username/app:1.0.0 NOT username/app:latest
