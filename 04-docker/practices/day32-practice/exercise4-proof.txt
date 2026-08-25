@@ -1,0 +1,13 @@
+=== SELF-HOSTED REGISTRY ===
+--- Registry API response ---
+{}260ae9d29510: Pushed
+35a2e474e398: Pushed
+daff6f8ae2ef: Pushed
+26c307b5e35a: Pushed
+v1.0.0: digest: sha256:1c4b262c9dea0a69b599074a45a30f4edbcdb848c92a22d964c56f2746804a71 size: 856
+
+--- Catalog (repos in registry) ---
+{"repositories":["registry-demo"]}
+
+--- Tags for registry-demo ---
+{"name":"registry-demo","tags":["v1.0.0"]}

@@ -1,0 +1,121 @@
+============================================
+   DOCKER REGISTRY REFERENCE
+   Author: Asim Raza - Day 32
+============================================
+
+[ REGISTRY TYPES ]
+  Docker Hub:  hub.docker.com (default)
+  ECR:         ACCOUNT.dkr.ecr.REGION.amazonaws.com
+  GCR:         REGION-docker.pkg.dev
+  ACR:         REGISTRY.azurecr.io
+  GitHub:      ghcr.io/USERNAME/IMAGE
+  Self-hosted: your.registry.com:5000
+
+[ IMAGE NAMING FORMAT ]
+  Official:    nginx:alpine
+  Docker Hub:  USERNAME/IMAGE:TAG
+  ECR:         ACCOUNT.dkr.ecr.REGION.amazonaws.com/IMAGE:TAG
+  Local:       localhost:5000/IMAGE:TAG
+  Custom host: registry.company.com/IMAGE:TAG
+
+[ CORE COMMANDS ]
+  docker login [REGISTRY]                = authenticate
+  docker login --password-stdin           = secure login
+  docker logout [REGISTRY]               = remove credentials
+  docker pull IMAGE:TAG                  = download image
+  docker push IMAGE:TAG                  = upload image
+  docker push IMAGE --all-tags           = push all tags
+  docker tag SOURCE TARGET               = add tag
+
+[ LOGIN EXAMPLES ]
+  # Docker Hub:
+  docker login
+
+  # Docker Hub with token:
+  echo TOKEN | docker login --username USER --password-stdin
+
+  # ECR:
+  aws ecr get-login-password --region REGION | \
+  docker login --username AWS --password-stdin REGISTRY
+
+  # GitHub Container Registry:
+  echo TOKEN | docker login ghcr.io --username USER --password-stdin
+
+  # Self-hosted:
+  docker login localhost:5000
+
+[ TAGGING STRATEGY ]
+  Semantic versioning (recommended):
+  myapp:1.0.0     = exact version (use in production)
+  myapp:1.0       = minor version
+  myapp:latest    = most recent (AVOID in production)
+
+  Git-based (fully reproducible):
+  myapp:abc1234   = git commit SHA
+  myapp:main-001  = branch + build number
+
+  Environment-based:
+  myapp:staging   = staging deployment
+  myapp:prod      = production deployment
+
+[ DOCKER HUB WORKFLOW ]
+  1. docker login
+  2. docker build -t USERNAME/app:v1.0 .
+  3. docker push USERNAME/app:v1.0
+  4. docker push USERNAME/app:latest
+  On another machine:
+  5. docker pull USERNAME/app:v1.0
+  6. docker run USERNAME/app:v1.0
+
+[ ECR WORKFLOW ]
+  1. aws ecr create-repository --repository-name app
+  2. aws ecr get-login-password | docker login ...
+  3. docker tag app:v1.0 ACCOUNT.dkr.ecr.REGION.amazonaws.com/app:v1.0
+  4. docker push ACCOUNT.dkr.ecr.REGION.amazonaws.com/app:v1.0
+  (Configure AWS CLI in Phase 6)
+
+[ SELF-HOSTED REGISTRY ]
+  # Start registry:
+  docker run -d -p 5000:5000 \
+    -v registry-data:/var/lib/registry \
+    registry:2
+
+  # Push to local registry:
+  docker tag myapp:v1.0 localhost:5000/myapp:v1.0
+  docker push localhost:5000/myapp:v1.0
+
+  # Registry API:
+  curl localhost:5000/v2/_catalog       (list repos)
+  curl localhost:5000/v2/app/tags/list  (list tags)
+
+[ SECURITY BEST PRACTICES ]
+  ✅ Use access tokens NOT passwords
+  ✅ Rotate tokens regularly
+  ✅ Use specific version tags in production
+  ✅ Enable image scanning (ECR has this)
+  ✅ Use lifecycle policies to clean old images
+  ✅ Private repos for internal images
+  ✅ Use --password-stdin not -p flag
+  ❌ Never use :latest in production
+  ❌ Never store credentials in code
+
+[ CURRENT LOCAL IMAGES ]
+IMAGE                                                                                                 ID             DISK USAGE   CONTENT SIZE   EXTRA
+asimmehsood/registry-demo:v1.0.0                                                                      1c4b262c9dea        187MB         45.5MB        
+day30-backend:v1                                                                                      77ac93e5d2b6        187MB         45.5MB        
+debug-builder:latest                                                                                  11ef9a954282        447MB          117MB        
+devops-node-app:v1.0                                                                                  52d7f0b021e1        181MB         44.9MB        
+devops-python-app:v1.0                                                                                674ea31e65c6        203MB         49.6MB        
+dockerignore-test:v1                                                                                  fd57fced81b9        181MB         44.9MB        
+fullstack-backend:v1.0                                                                                2709db07d0a7        207MB         50.3MB        
+gcr.io/k8s-minikube/kicbase:v0.0.50                                                                   b97074569ae9       1.94GB          545MB        
+gcr.io/k8s-minikube/kicbase@sha256:eb4fec00e8ad70adf8e6436f195cc429825ffb85f95afcdb5d8d9deb576f3e93   eb4fec00e8ad       1.94GB          545MB        
+localhost:5000/registry-demo:latest                                                                   1c4b262c9dea        187MB         45.5MB        
+localhost:5000/registry-demo:v1.0.0                                                                   1c4b262c9dea        187MB         45.5MB        
+localhost:5002/registry-demo:v1.0.0                                                                   1c4b262c9dea        187MB         45.5MB        
+multi-stage-app:v1.0                                                                                  c705ed86b14e        187MB         45.5MB        
+mysql:8.0                                                                                             7dcddc01f13b        1.1GB          249MB        
+
+============================================
+   REFERENCE COMPLETE
+============================================
