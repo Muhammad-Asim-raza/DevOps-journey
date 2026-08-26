@@ -1,0 +1,98 @@
+# ================================================
+# Dockerfile.secure
+# Security-Hardened Production Dockerfile
+# Author: Asim Raza - Day 33
+# ================================================
+
+FROM python:3.11-slim
+
+# ── SECURITY: Use specific version, never :latest ──
+# :latest = unknown security state
+# :3.11-slim = known version, auditable
+
+# ── METADATA ──
+LABEL maintainer="Asim Raza"
+LABEL security.non-root="true"
+LABEL security.read-only-fs="true"
+
+# ── UPDATE SYSTEM (critical security step) ──
+# Apply ALL security patches from base image
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+# apt-get upgrade -y = install security updates
+# This ensures base image is patched
+# ALWAYS do this in production Dockerfiles
+
+# ── SECURITY: Create non-root user ──
+# Never run as root (UID 0) in production
+# Create dedicated user with specific UID/GID
+RUN groupadd \
+        --gid 1001 \
+        --system \
+        appgroup && \
+    useradd \
+        --uid 1001 \
+        --gid appgroup \
+        --system \
+        --no-create-home \
+        --shell /bin/false \
+        appuser
+# --gid 1001 = specific GID (reproducible)
+# --uid 1001 = specific UID (reproducible)
+# --system = system account (no login shell)
+# --no-create-home = no home directory (minimal)
+# --shell /bin/false = cannot login interactively
+
+# ── ENVIRONMENT ──
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8000 \
+    APP_ENV=production
+# PYTHONDONTWRITEBYTECODE=1 = no .pyc files
+# = read-only filesystem compatible!
+# .pyc files would fail to write on read-only fs
+
+# ── WORKDIR ──
+WORKDIR /app
+
+# ── INSTALL DEPENDENCIES as root (needed) ──
+# Must be root to install system packages
+COPY requirements.txt* ./
+RUN pip install --no-cache-dir \
+    -r requirements.txt 2>/dev/null || true
+
+# ── COPY APPLICATION ──
+COPY app.py .
+
+# ── SET CORRECT OWNERSHIP ──
+# Change ownership BEFORE switching user
+# chown as root (last root operation)
+RUN chown -R appuser:appgroup /app && \
+    chmod 550 /app && \
+    chmod 440 /app/app.py
+# chmod 550 /app = rwxr-x--- (owner/group read+execute)
+# chmod 440 /app/app.py = r--r----- (read-only)
+# Minimal permissions = minimal attack surface
+
+# ── SECURITY: Switch to non-root user ──
+# All subsequent operations run as appuser
+# EXPOSE, CMD etc run as this user
+USER appuser
+
+# ── EXPOSE ──
+EXPOSE 8000
+
+# ── HEALTHCHECK ──
+HEALTHCHECK --interval=30s \
+            --timeout=5s \
+            --start-period=10s \
+            --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health \
+        || exit 1
+
+# ── CMD: exec form for signal handling ──
+CMD ["python3", "app.py"]

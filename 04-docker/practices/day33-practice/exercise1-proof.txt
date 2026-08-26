@@ -1,0 +1,17 @@
+=== NON-ROOT SECURITY ===
+--- Default containers run as root ---
+root
+root
+
+--- Our secure app runs as appuser ---
+UID: 1001, User: appuser, Root: False
+
+--- Security whoami endpoint ---
+{
+  "uid": 1001,
+  "gid": 1001,
+  "username": "appuser",
+  "group": "appgroup",
+  "is_root": false,
+  "secure": true
+}
