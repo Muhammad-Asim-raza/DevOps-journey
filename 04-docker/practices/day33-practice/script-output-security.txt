@@ -1,0 +1,120 @@
+============================================
+   DOCKER SECURITY REFERENCE
+   Author: Asim Raza - Day 33
+============================================
+
+[ THE 10 DOCKER SECURITY RULES ]
+
+  1. NEVER run as root
+     RUN useradd -m appuser && USER appuser
+
+  2. Use read-only filesystem
+     docker run --read-only myapp
+
+  3. Drop all capabilities
+     docker run --cap-drop ALL --cap-add NET_BIND_SERVICE
+
+  4. No new privileges
+     docker run --security-opt no-new-privileges:true
+
+  5. Never use :latest in production
+     myapp:v1.0.0 not myapp:latest
+
+  6. Scan images for vulnerabilities
+     trivy image myapp:v1.0.0
+
+  7. Keep base images updated
+     RUN apt-get update && apt-get upgrade -y
+
+  8. Never store secrets in images
+     Use: --env-file, Docker secrets, AWS SM
+
+  9. Never mount Docker socket
+     -v /var/run/docker.sock:/var/run/docker.sock
+     = full host takeover possible
+
+ 10. Set resource limits
+     --memory 512m --cpus 1.0
+
+[ SECURITY FLAGS REFERENCE ]
+
+  --read-only
+    Container filesystem is read-only
+
+  --cap-drop ALL
+    Drop all Linux capabilities
+
+  --cap-add CAP_NAME
+    Add back specific capability
+    Common ones: NET_BIND_SERVICE, CHOWN, SETUID
+
+  --security-opt no-new-privileges:true
+    Cannot gain new privileges via setuid
+
+  --security-opt seccomp=profile.json
+    Restrict system calls (advanced)
+
+  --pids-limit 100
+    Limit process count (prevents fork bombs)
+
+  --memory 512m
+    Limit RAM (prevents memory exhaustion)
+
+  --cpus 0.5
+    Limit CPU (prevents CPU exhaustion)
+
+  --tmpfs /tmp:rw,noexec,nosuid,size=64m
+    Allow temp writes in memory
+    noexec = cannot execute files
+    nosuid = ignore setuid bits
+    size = maximum size
+
+[ DOCKERFILE SECURITY CHECKLIST ]
+  ✅ FROM image:SPECIFIC_VERSION (not :latest)
+  ✅ RUN apt-get upgrade -y (update base packages)
+  ✅ RUN useradd --system --no-create-home appuser
+  ✅ USER appuser (switch before CMD)
+  ✅ COPY specific files (not COPY . .)
+  ✅ ENV PYTHONDONTWRITEBYTECODE=1 (for read-only fs)
+  ✅ HEALTHCHECK defined
+  ✅ No secrets in ENV or ARG
+  ✅ Minimal final image (slim/alpine)
+  ✅ Multi-stage build (no dev tools in prod)
+
+[ VULNERABILITY SCANNING ]
+  trivy image myapp:v1.0
+  trivy image --severity HIGH,CRITICAL myapp
+  trivy config ./  (scan Dockerfiles)
+  trivy fs --scanners secret ./
+
+[ SECRETS IN ORDER OF SECURITY ]
+  Worst to best:
+  1. In Dockerfile ENV    (worst - in image)
+  2. docker run -e        (in shell history)
+  3. docker-compose.yml   (in Git)
+  4. .env file            (not committed)
+  5. Docker secrets       (encrypted, Swarm)
+  6. Kubernetes secrets   (encrypted, k8s)
+  7. AWS Secrets Manager  (best - external)
+  8. HashiCorp Vault      (best - external)
+
+[ PRODUCTION SECURE RUN TEMPLATE ]
+docker run -d \
+  --name myapp \
+  --read-only \
+  --cap-drop ALL \
+  --cap-add NET_BIND_SERVICE \
+  --security-opt no-new-privileges:true \
+  --pids-limit 100 \
+  --memory 512m \
+  --memory-swap 512m \
+  --cpus 1.0 \
+  --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+  --env-file .env \
+  --restart unless-stopped \
+  -p 8080:8000 \
+  myapp:v1.0.0
+
+============================================
+   REFERENCE COMPLETE
+============================================

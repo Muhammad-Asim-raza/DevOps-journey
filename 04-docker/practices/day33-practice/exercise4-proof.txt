@@ -1,0 +1,5 @@
+=== IMAGE VULNERABILITY SCANNING ===
+--- Trivy version ---
+Version: 0.71.2
+
+--- Scanning secure-app ---

@@ -1,0 +1,6 @@
+=== READ-ONLY FILESYSTEM ===
+WRITE BLOCKED (secure!): OSError
+
+--- tmpfs allows temp writes ---
+tmpfs write OK
+etc write blocked (good!)
