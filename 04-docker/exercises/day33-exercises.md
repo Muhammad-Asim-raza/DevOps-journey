@@ -160,7 +160,6 @@ docker run -d \
 All 5 exercises completed on Jul 21 2026
 
 Scripts written:
-- docker-security-audit.sh (automated audit)
 - docker-security-reference.sh (reference)
 
 Images:
@@ -172,7 +171,6 @@ Proof files:
 - exercise3-proof.txt (capabilities)
 - exercise4-proof.txt (Trivy scanning)
 - exercise5-proof.txt (secrets)
-- script-output-security-audit.txt
 - script-output-security.txt
 
 Key concepts mastered:
