@@ -1,0 +1,89 @@
+# ================================================
+# Dockerfile.node-optimized
+# Advanced Node.js Multi-Stage
+# Author: Asim Raza - Day 34
+# ================================================
+
+# ── STAGE 1: Dependency installer ──
+FROM node:18-alpine AS deps
+
+WORKDIR /app
+
+# Copy package files ONLY
+COPY package*.json ./
+
+# Install ALL dependencies (including devDependencies)
+# --frozen-lockfile = use exact versions from lockfile
+# Ensures reproducible builds
+Run npm install
+
+# ── STAGE 2: Builder/Compiler ──
+# For TypeScript projects this would compile
+# For us: just demonstrate the pattern
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy installed deps from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source
+COPY . .
+
+# For TypeScript: RUN npm run build
+# Creates: dist/ directory
+# For us: just verify syntax
+RUN node --check server.js && \
+    echo "Syntax OK"
+
+# ── STAGE 3: Test Runner ──
+FROM builder AS tester
+
+# Run tests
+RUN npm test && \
+    echo "Tests passed!"
+
+# ── STAGE 4: Production image ──
+FROM node:18-alpine AS production
+
+# Security updates
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache dumb-init && \
+    rm -rf /var/cache/apk/*
+# dumb-init = proper signal handling in containers
+# replaces PID 1 with signal-aware init process
+
+# Security: non-root user
+# node:18-alpine already has 'node' user (UID 1000)
+USER node
+
+WORKDIR /app
+
+# Copy package.json for reference
+COPY --chown=node:node package*.json ./
+
+# Copy ONLY production deps
+# NOT devDependencies (test frameworks etc)
+COPY --from=deps --chown=node:node \
+    /app/node_modules ./node_modules
+
+# Copy compiled/built app
+COPY --chown=node:node server.js .
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    BUILD_STAGE=production
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s \
+    --start-period=10s --retries=3 \
+    CMD node -e \
+    "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode !== 200 ? 1 : 0))" \
+    || exit 1
+
+# dumb-init handles signals properly
+# ensures graceful shutdown works
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "server.js"]

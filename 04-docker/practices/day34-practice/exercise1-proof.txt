@@ -1,0 +1,13 @@
+=== PYTHON MULTI-STAGE OPTIMIZATION ===
+--- Image sizes ---
+python-optimized:v1	215MB
+python-baseline:v1	1.62GB
+
+--- Optimized runs as non-root ---
+UID: 1001
+
+--- Stages in Dockerfile ---
+FROM python:3.11-slim AS dependency-builder
+FROM dependency-builder AS test-runner
+FROM dependency-builder AS security-check
+FROM python:3.11-slim AS production

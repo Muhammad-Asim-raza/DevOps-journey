@@ -1,0 +1,13 @@
+{
+  "name": "node-optimized",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node -e \"require('./server.js'); setTimeout(() => process.exit(0), 100)\""
+  },
+  "dependencies": {
+    "express": "4.21.2"
+  }
+}
+
+

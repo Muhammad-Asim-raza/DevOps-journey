@@ -1,0 +1,9 @@
+=== NODE.JS MULTI-STAGE ===
+node-baseline:v1                                                                                      f0953bd78972       1.58GB          398MB        
+node-optimized:v1                                                                                     89a0d9d3764c        197MB         49.1MB        
+
+Stages:
+FROM node:18-alpine AS deps
+FROM node:18-alpine AS builder
+FROM builder AS tester
+FROM node:18-alpine AS production
