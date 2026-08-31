@@ -1,0 +1,57 @@
+# syntax=docker/dockerfile:1
+# ================================================
+# Dockerfile.parallel
+# Parallel Stage Builds with BuildKit
+# Author: Asim Raza - Day 34
+# ================================================
+
+FROM python:3.11-slim AS base
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ── These two stages run IN PARALLEL ──
+# BuildKit automatically detects independence
+# Runs them simultaneously
+
+FROM base AS dependency-stage
+WORKDIR /deps
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --prefix=/deps -r requirements.txt
+
+FROM base AS config-stage
+WORKDIR /config
+# Imagine: compiling config, processing templates
+RUN echo '{"env": "production", "version": "1.0.0"}' \
+    > config.json
+
+FROM base AS asset-stage
+WORKDIR /assets
+# Imagine: compiling CSS, minifying JS
+RUN echo "compiled-assets" > bundle.txt
+
+# ── Production: combines all parallel outputs ──
+FROM python:3.11-slim AS production
+
+LABEL maintainer="Asim Raza"
+LABEL build-type="parallel-stages"
+
+RUN groupadd --gid 1001 appgroup && \
+    useradd --uid 1001 --gid appgroup \
+    --system --no-create-home appuser
+
+WORKDIR /app
+
+# Pull results from ALL parallel stages
+COPY --from=dependency-stage /deps /usr/local
+COPY --from=config-stage /config/config.json ./config.json
+COPY --from=asset-stage /assets/bundle.txt ./bundle.txt
+
+# Copy app
+COPY app.py .
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+ENV PORT=8000 PYTHONUNBUFFERED=1
+EXPOSE 8000
+CMD ["python3", "app.py"]

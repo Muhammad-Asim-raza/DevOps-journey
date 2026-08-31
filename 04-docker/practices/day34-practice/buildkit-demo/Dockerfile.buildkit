@@ -1,0 +1,67 @@
+# ================================================
+# Dockerfile.buildkit
+# Advanced BuildKit Features
+# Author: Asim Raza - Day 34
+# ================================================
+
+# syntax=docker/dockerfile:1
+# ↑ REQUIRED: enables BuildKit syntax
+#   must be FIRST LINE of Dockerfile
+#   tells Docker to use BuildKit parser
+
+FROM python:3.11-slim AS base
+
+WORKDIR /app
+
+# ── FEATURE 1: Cache Mounts ──
+# Cache mounts persist between builds
+# pip cache = don't re-download packages
+# MASSIVE speedup on repeated builds
+
+COPY requirements.txt .
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+# --mount=type=cache = persist this directory
+#   target=/root/.cache/pip = pip download cache
+#   First build: downloads packages (slow)
+#   Subsequent builds: uses cached downloads (fast!)
+#   Cache NOT stored in image layers
+#   Cache NOT in final image
+#   Only used during BUILD
+
+# Without cache mount:
+# Build 1: Download 50MB packages (30 seconds)
+# Build 2: Download 50MB packages (30 seconds)
+# Build 3: Download 50MB packages (30 seconds)
+
+# With cache mount:
+# Build 1: Download 50MB packages (30 seconds)
+# Build 2: Use cache (3 seconds!)
+# Build 3: Use cache (3 seconds!)
+
+FROM base AS production
+
+# ── FEATURE 2: Heredoc syntax (cleaner RUN) ──
+# Requires BuildKit
+# Multiple commands in one RUN without &&
+RUN <<EOF
+groupadd --gid 1001 appgroup
+useradd --uid 1001 --gid appgroup \
+    --system --no-create-home \
+    --shell /bin/false appuser
+EOF
+# Much cleaner than:
+# RUN groupadd... && useradd...
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+ENV PORT=8000 PYTHONUNBUFFERED=1
+EXPOSE 8000
+
+CMD ["python3", "app.py"]

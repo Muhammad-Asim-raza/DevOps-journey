@@ -1,0 +1,113 @@
+============================================
+   MULTI-STAGE BUILD REFERENCE
+   Author: Asim Raza - Day 34
+============================================
+
+[ WHAT IS MULTI-STAGE BUILD ]
+  Use multiple FROM instructions in one Dockerfile
+  Each FROM = new stage (clean environment)
+  COPY --from=stagename = copy between stages
+  Only LAST stage goes into final image
+  Earlier stages are temporary (discarded)
+
+[ SYNTAX ]
+# Named stage
+FROM image AS stage-name
+
+# Build something in this stage
+RUN build-commands...
+
+# Final stage
+FROM minimal-image AS production
+
+# Copy ONLY what you need from build stage
+COPY --from=stage-name /built/artifact /app/
+
+# Nothing else from stage-name is in final image!
+
+[ STAGE NAMING CONVENTIONS ]
+  FROM image AS base        = shared base
+  FROM base AS builder      = build/compile
+  FROM builder AS tester    = run tests
+  FROM base AS production   = final image
+  FROM base AS dev          = development env
+
+[ BUILD SPECIFIC STAGE ]
+  docker build --target builder -t myapp-builder .
+  = only build up to 'builder' stage
+  = useful for: running tests only
+                development environments
+                debugging build issues
+
+[ BUILDKIT FEATURES ]
+
+  Enable BuildKit:
+  export DOCKER_BUILDKIT=1
+  OR add to /etc/docker/daemon.json:
+  {"features": {"buildkit": true}}
+
+  Cache mount (pip/npm cache):
+  RUN --mount=type=cache,target=/root/.cache/pip \
+      pip install -r requirements.txt
+
+  Secret mount (API keys at build time):
+  RUN --mount=type=secret,id=mykey \
+      cat /run/secrets/mykey
+  Build: docker build --secret id=mykey,src=keyfile .
+
+  SSH agent forwarding (private repos):
+  RUN --mount=type=ssh \
+      git clone git@github.com:private/repo.git
+  Build: docker build --ssh default .
+
+  Heredoc syntax (cleaner scripts):
+  RUN <<EOF
+  apt-get update
+  apt-get install -y curl wget
+  EOF
+
+[ COMMON PATTERNS ]
+
+  Pattern 1: Compiler + Runtime
+  FROM golang:1.21 AS builder
+  RUN go build -o myapp
+  FROM scratch AS production
+  COPY --from=builder /app/myapp /
+  CMD ["/myapp"]
+
+  Pattern 2: Dependencies + App
+  FROM python:3.11-slim AS deps
+  RUN pip install --prefix=/install -r requirements.txt
+  FROM python:3.11-slim AS production
+  COPY --from=deps /install /usr/local
+  COPY app.py .
+
+  Pattern 3: With Testing
+  FROM builder AS test
+  RUN pytest tests/
+  FROM builder AS production
+  (test stage must pass or production skipped)
+
+[ SIZE REDUCTION CHECKLIST ]
+  ✅ Use :slim or :alpine base images
+  ✅ Multi-stage (no build tools in prod)
+  ✅ COPY --from (only needed files)
+  ✅ apt-get clean in same RUN layer
+  ✅ pip install --no-cache-dir
+  ✅ npm install --production
+  ✅ .dockerignore (exclude unnecessary files)
+  ✅ PYTHONDONTWRITEBYTECODE=1
+  ✅ Remove test files from production
+  ✅ Use BuildKit cache mounts
+
+[ CURRENT IMAGES ]
+IMAGE                                                                                                 ID             DISK USAGE   CONTENT SIZE   EXTRA
+buildkit-demo:v1                                                                                      abe2338f3320        216MB         52.3MB        
+node-optimized:v1                                                                                     89a0d9d3764c        197MB         49.1MB        
+parallel-demo:v1                                                                                      b8b2651fc824        199MB         48.3MB        
+python-optimized:v1                                                                                   4eb05316a824        215MB         52.9MB        
+secure-app:v1.0                                                                                       0acc5bf9d3b2        228MB         56.8MB        
+
+============================================
+   REFERENCE COMPLETE
+============================================

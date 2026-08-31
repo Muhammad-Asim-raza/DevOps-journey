@@ -1,0 +1,20 @@
+=== BUILDKIT FEATURES ===
+--- Images built ---
+buildkit-demo:v1                                                                                      abe2338f3320        216MB         52.3MB        
+parallel-demo:v1                                                                                      b8b2651fc824        199MB         48.3MB        
+
+--- BuildKit cache mount benefit ---
+Without cache mount:
+  Every build downloads all packages again
+  Build time: 30-120 seconds for large deps
+
+With --mount=type=cache,target=/root/.cache/pip:
+  First build: downloads (slow)
+  All subsequent: uses cache (very fast!)
+  Cache NOT stored in image layers
+  Image stays small
+
+--- Parallel stages completed ---
+app.py
+bundle.txt
+config.json
