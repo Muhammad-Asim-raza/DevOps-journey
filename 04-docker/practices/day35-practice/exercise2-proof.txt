@@ -1,0 +1,17 @@
+=== GRACEFUL SHUTDOWN ===
+--- Running state ---
+{
+  "service": "graceful-shutdown-demo",
+  "active_requests": 1,
+  "shutting_down": false
+}
+--- Stopping gracefully ---
+grace-proof
+
+--- Shutdown logs ---
+[2026-08-31T07:22:40.678908] "GET / HTTP/1.1" 200 -
+[2026-08-31T07:22:46.081423] "GET /health HTTP/1.1" 200 -
+[2026-08-31T07:22:52.243696] SIGTERM received. Starting graceful shutdown...
+Waiting up to 30s for 0 active requests...
+Graceful shutdown complete!
+

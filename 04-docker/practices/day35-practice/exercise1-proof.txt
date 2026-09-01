@@ -1,0 +1,19 @@
+=== HEALTH CHECKS DEEP DIVE ===
+--- Health status ---
+Health Status: healthy
+
+--- /health endpoint ---
+{
+  "status": "healthy",
+  "timestamp": "2026-08-31T06:57:00.276352"
+}
+--- /ready endpoint ---
+{
+  "status": "ready",
+  "services": {
+    "database": true,
+    "cache": true,
+    "app": true
+  },
+  "message": "Ready to receive traffic"
+}
