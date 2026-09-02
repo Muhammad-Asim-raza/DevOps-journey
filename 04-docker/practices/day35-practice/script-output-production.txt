@@ -1,0 +1,139 @@
+============================================
+   DOCKER PRODUCTION PATTERNS
+   Author: Asim Raza - Day 35
+============================================
+
+[ PRODUCTION READINESS CHECKLIST ]
+
+  IMAGE:
+  ✅ Specific version tag (never :latest)
+  ✅ Multi-stage build (minimal size)
+  ✅ Non-root user (USER appuser)
+  ✅ Health check defined
+  ✅ No secrets in image
+  ✅ Labels with version/date/commit
+  ✅ Vulnerability scanned (trivy)
+
+  CONTAINER:
+  ✅ --read-only filesystem
+  ✅ --cap-drop ALL
+  ✅ --security-opt no-new-privileges
+  ✅ --memory and --cpus limits
+  ✅ --restart unless-stopped
+  ✅ Log rotation configured
+  ✅ --stop-timeout sufficient
+
+  ARCHITECTURE:
+  ✅ Custom networks (not default bridge)
+  ✅ DB on internal network only
+  ✅ Only proxy exposed (-p flag)
+  ✅ Named volumes for data
+
+[ HEALTH CHECK PATTERNS ]
+
+  HTTP (most common):
+  HEALTHCHECK --interval=30s --timeout=5s \
+    --start-period=20s --retries=3 \
+    CMD curl -f http://localhost/health
+
+  TCP (databases, non-HTTP):
+  HEALTHCHECK CMD nc -z localhost 5432
+
+  Custom Python:
+  HEALTHCHECK CMD python3 -c \
+    "import urllib.request; \
+     urllib.request.urlopen('http://localhost/health')"
+
+  PostgreSQL:
+  HEALTHCHECK CMD pg_isready -U user -d db
+
+  Redis:
+  HEALTHCHECK CMD redis-cli ping
+
+[ GRACEFUL SHUTDOWN ]
+
+  In Dockerfile:
+  STOPSIGNAL SIGTERM
+
+  In docker run:
+  docker stop --time 30 container
+  (default: 10 seconds - often too short)
+
+  In Compose:
+  stop_grace_period: 35s
+
+  In application:
+  signal.signal(signal.SIGTERM, handle_sigterm)
+  - Stop accepting new requests
+  - Finish in-flight requests
+  - Close DB connections
+  - Exit cleanly
+
+[ LOG CONFIGURATION ]
+
+  Per container:
+  docker run \
+    --log-driver json-file \
+    --log-opt max-size=10m \
+    --log-opt max-file=3 \
+    myapp:v1.0
+
+  In Compose:
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+  Log drivers:
+  json-file = local files (default)
+  awslogs   = AWS CloudWatch
+  fluentd   = Fluentd aggregator
+  syslog    = system syslog
+  none      = discard logs
+
+[ COMPOSE YAML ANCHORS ]
+
+  Define once:
+  x-logging: &logging
+    driver: json-file
+    options:
+      max-size: 10m
+
+  Use anywhere:
+  services:
+    web:
+      logging: *logging  ← uses anchor
+    api:
+      logging: *logging  ← uses same anchor
+
+[ NETWORK SECURITY PATTERN ]
+
+  networks:
+    frontend:
+      driver: bridge
+    backend:
+      driver: bridge
+      internal: true  ← no internet access!
+
+  nginx: [frontend]           (internet-facing)
+  app:   [frontend, backend]  (bridge)
+  db:    [backend]            (isolated)
+
+  Result: DB cannot be reached from internet
+          DB cannot make outbound requests
+
+[ REQUIRED VARIABLES ]
+
+  # Fail if not set:
+  DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+
+  # Use default if not set:
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+  # Use default, but warn in docs:
+  APP_VERSION: ${APP_VERSION:-1.0.0}
+
+============================================
+   REFERENCE COMPLETE
+============================================

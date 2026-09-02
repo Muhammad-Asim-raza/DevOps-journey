@@ -1,0 +1,13 @@
+=== LOG MANAGEMENT ===
+--- Structured JSON logs ---
+{"timestamp": "2026-09-01T07:36:22.382772", "level": "INFO", "logger": "app", "message": "Application starting on port 8000", "service": "logging-demo", "version": "1.0.0"}
+{"timestamp": "2026-09-01T07:36:48.903075", "level": "INFO", "logger": "app", "message": "Request received", "service": "logging-demo", "version": "1.0.0"}
+{"timestamp": "2026-09-01T07:36:48.903263", "level": "INFO", "logger": "app", "message": "Info: normal operation", "service": "logging-demo", "version": "1.0.0"}
+{"timestamp": "2026-09-01T07:36:48.903344", "level": "WARNING", "logger": "app", "message": "Warning: something unusual", "service": "logging-demo", "version": "1.0.0"}
+{"timestamp": "2026-09-01T07:36:48.903927", "level": "INFO", "logger": "app", "message": "Request completed", "service": "logging-demo", "version": "1.0.0"}
+{"timestamp": "2026-09-01T07:42:30.352268", "level": "INFO", "logger": "app", "message": "Request received", "service": "logging-demo", "version": "1.0.0"}
+{"timestamp": "2026-09-01T07:42:30.352491", "level": "ERROR", "logger": "app", "message": "Application error: Simulated application error", "service": "logging-demo", "version": "1.0.0", "exception": "Traceback (most recent call last):\n  File \"/app/app.py\", line 78, in do_GET\n    raise ValueError(\nValueError: Simulated application error"}
+{"timestamp": "2026-09-01T07:42:30.353724", "level": "INFO", "logger": "app", "message": "Request completed", "service": "logging-demo", "version": "1.0.0"}
+
+--- Log driver info ---
+Log Driver: json-file
