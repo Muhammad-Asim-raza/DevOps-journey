@@ -1,0 +1,58 @@
+# ================================================
+# prometheus.yml - Prometheus Configuration
+# Author: Asim Raza - Day 36
+# ================================================
+
+global:
+  scrape_interval: 15s
+  # How often to collect metrics
+  # Default: 1 minute
+  # 15s = good balance for dev
+
+  evaluation_interval: 15s
+  # How often to evaluate alert rules
+
+  external_labels:
+    environment: 'docker-day36'
+    monitor: 'devops-journey'
+
+# ── ALERTING ──
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']
+
+# ── ALERT RULES ──
+rule_files:
+  - "alert_rules.yml"
+
+# ── SCRAPE CONFIGS ──
+# Prometheus pulls metrics FROM these targets
+scrape_configs:
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # cAdvisor: container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    # Provides:
+    # container_cpu_usage_seconds_total
+    # container_memory_usage_bytes
+    # container_network_receive_bytes_total
+    # etc
+
+  # Our application metrics
+  - job_name: 'metrics-app'
+    static_configs:
+      - targets: ['metrics-app:8000']
+    metrics_path: '/metrics'
+    # Scrapes /metrics endpoint we built
+
+  # Node exporter: host metrics (if running)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']

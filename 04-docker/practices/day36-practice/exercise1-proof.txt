@@ -1,0 +1,11 @@
+=== BUILT-IN DOCKER MONITORING ===
+--- docker stats snapshot ---
+NAME            CPU %     MEM USAGE / LIMIT   MEM %
+monitor-app     1.23%     4.395MiB / 256MiB   1.72%
+monitor-redis   0.75%     5.516MiB / 128MiB   4.31%
+monitor-web     0.00%     11.75MiB / 256MiB   4.59%
+
+--- Container inspect ---
+Memory Limit: 256 MB
+CPUs: 0.5
+Network: ['bridge']

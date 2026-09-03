@@ -1,0 +1,52 @@
+=== MONITORING STACK ===
+--- Services running ---
+NAME               IMAGE                              COMMAND                  SERVICE       CREATED          STATUS                    PORTS
+day36-app          metrics-app:v1                     "python3 app.py"         metrics-app   23 minutes ago   Up 23 minutes (healthy)   0.0.0.0:8401->8000/tcp, [::]:8401->8000/tcp
+day36-cadvisor     gcr.io/cadvisor/cadvisor:v0.47.2   "/usr/bin/cadvisor -…"   cadvisor      23 minutes ago   Up 23 minutes (healthy)   0.0.0.0:8402->8080/tcp, [::]:8402->8080/tcp
+day36-grafana      grafana/grafana:10.2.0             "/run.sh"                grafana       23 minutes ago   Up 23 minutes             0.0.0.0:8404->3000/tcp, [::]:8404->3000/tcp
+day36-loki         grafana/loki:2.9.0                 "/usr/bin/loki -conf…"   loki          23 minutes ago   Up 23 minutes             0.0.0.0:8405->3100/tcp, [::]:8405->3100/tcp
+day36-prometheus   prom/prometheus:v2.48.0            "/bin/prometheus --c…"   prometheus    23 minutes ago   Up 23 minutes             0.0.0.0:8403->9090/tcp, [::]:8403->9090/tcp
+
+--- App metrics (Prometheus format) ---
+# TYPE http_requests_total counter
+http_requests_total 0
+# TYPE http_requests_total counter
+http_requests_total{path="/",method="GET"} 82
+# TYPE http_requests_total counter
+http_requests_total{method="GET",path="/load"} 287
+# TYPE http_requests_total counter
+http_requests_total{method="GET",path="/health"} 102
+# TYPE http_errors_total counter
+http_errors_total{type="simulated"} 65
+# TYPE http_requests_total counter
+http_requests_total{path="/error",method="GET"} 65
+# TYPE http_requests_total counter
+http_requests_total{path="/metrics",method="GET"} 22
+# TYPE app_active_connections gauge
+
+--- Prometheus targets ---
+cadvisor                  up
+metrics-app               up
+prometheus                up
+
+--- Prometheus query: up metric ---
+{
+    "status": "success",
+    "data": {
+        "resultType": "vector",
+        "result": [
+            {
+                "metric": {
+                    "__name__": "up",
+                    "instance": "cadvisor:8080",
+                    "job": "cadvisor"
+                },
+                "value": [
+                    1788338482.782,
+                    "1"
+                ]
+            },
+            {
+                "metric": {
+                    "__name__": "up",
+                    "instance": "localhost:9090",

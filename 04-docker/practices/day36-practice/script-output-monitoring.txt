@@ -1,0 +1,104 @@
+============================================
+   DOCKER MONITORING REFERENCE
+   Author: Asim Raza - Day 36
+============================================
+
+[ THREE PILLARS OF OBSERVABILITY ]
+  Metrics  = numbers over time (WHAT)
+    CPU, memory, request rate, error rate
+    Tool: Prometheus + Grafana
+
+  Logs     = events with context (WHY)
+    Errors, warnings, user actions
+    Tool: Loki + Grafana
+
+  Traces   = request flow (WHERE)
+    Which service is slow?
+    Tool: Jaeger, Zipkin, AWS X-Ray
+
+[ BUILT-IN DOCKER MONITORING ]
+  docker stats                     = live all containers
+  docker stats --no-stream         = snapshot
+  docker stats CONTAINER           = specific container
+  docker stats --format ...        = custom format
+  docker inspect CONTAINER         = full container info
+  docker logs -f CONTAINER         = follow logs
+  docker events                    = real-time events
+  docker events --since 1h         = last hour
+  docker events --filter type=container
+
+[ PROMETHEUS STACK ]
+  cAdvisor:   container metrics exporter
+  Prometheus: time-series database + scraper
+  Grafana:    visualization dashboards
+  Loki:       log aggregation
+  Promtail:   log shipper to Loki
+  AlertMgr:   alert routing
+
+[ KEY PROMQL QUERIES ]
+  # CPU usage %:
+  rate(container_cpu_usage_seconds_total[5m]) * 100
+
+  # Memory usage MB:
+  container_memory_usage_bytes / 1024 / 1024
+
+  # Memory % of limit:
+  (container_memory_usage_bytes /
+   container_spec_memory_limit_bytes) * 100
+
+  # Network RX rate:
+  rate(container_network_receive_bytes_total[5m])
+
+  # Container restarts in 1h:
+  changes(container_start_time_seconds[1h])
+
+  # Is container up?
+  up
+
+  # HTTP error rate:
+  rate(http_errors_total[5m]) /
+  rate(http_requests_total[5m])
+
+  # Request latency p99:
+  histogram_quantile(0.99,
+    rate(http_request_duration_seconds_bucket[5m]))
+
+[ ALERT RULE PATTERN ]
+  - alert: ContainerDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Container down: {{ $labels.job }}"
+
+[ LOG MONITORING ]
+  Structured JSON logs = machine parseable
+  Log levels: DEBUG INFO WARNING ERROR CRITICAL
+  Send to Loki via Promtail or log driver
+
+  Loki log driver for Docker:
+  docker run \
+    --log-driver loki \
+    --log-opt loki-url=http://localhost:3100/loki/api/v1/push \
+    myapp:v1.0
+
+[ DOCKER EVENTS ]
+  docker events                     = live stream
+  docker events --since 30m         = last 30 min
+  docker events --filter event=die  = crashes only
+  docker events --filter type=container
+  docker events --format '{{json .}}' = JSON output
+
+[ CURRENT MONITORING STACK STATUS ]
+
+[ MONITORING STACK URLS ]
+  App:        http://localhost:8401
+  cAdvisor:   http://localhost:8402
+  Prometheus: http://localhost:8403
+  Grafana:    http://localhost:8404
+  Loki:       http://localhost:8405
+
+============================================
+   REFERENCE COMPLETE
+============================================
