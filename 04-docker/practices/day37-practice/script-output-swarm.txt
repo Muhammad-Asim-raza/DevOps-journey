@@ -1,0 +1,136 @@
+============================================
+   DOCKER SWARM REFERENCE
+   Author: Asim Raza - Day 37
+============================================
+
+[ SWARM INITIALIZATION ]
+  docker swarm init --advertise-addr IP
+  docker swarm join --token TOKEN MANAGER:2377
+  docker swarm join-token worker
+  docker swarm join-token manager
+  docker swarm leave --force
+
+[ NODE MANAGEMENT ]
+  docker node ls                    = list nodes
+  docker node inspect NODE          = node details
+  docker node inspect self --pretty = this node
+  docker node promote NODE          = → manager
+  docker node demote NODE           = → worker
+  docker node update --availability drain NODE
+    = stop new tasks, migrate existing
+  docker node update --availability active NODE
+    = re-enable node
+
+[ SERVICE COMMANDS ]
+  docker service create             = create service
+  docker service ls                 = list services
+  docker service ps SERVICE         = list tasks
+  docker service inspect SERVICE    = full details
+  docker service logs SERVICE       = combined logs
+  docker service update             = update service
+  docker service scale S=N          = scale replicas
+  docker service rollback SERVICE   = manual rollback
+  docker service rm SERVICE         = remove service
+
+[ SERVICE CREATE FLAGS ]
+  --name NAME                       = service name
+  --replicas N                      = replica count
+  --publish H:C                     = publish port
+  --network NAME                    = connect network
+  --secret NAME                     = mount secret
+  --constraint 'node.role==worker'  = placement
+  --update-parallelism N            = update batch
+  --update-delay Ns                 = update wait
+  --update-failure-action rollback  = auto rollback
+  --rollback-parallelism N
+  --limit-memory 256M
+  --limit-cpu 0.5
+  --restart-condition on-failure
+  --restart-max-attempts 3
+
+[ ROLLING UPDATES ]
+  docker service update \
+    --image myapp:v2 myservice
+
+  docker service update \
+    --update-parallelism 2 \
+    --update-delay 30s \
+    --update-failure-action rollback \
+    --image myapp:v2 myservice
+
+  docker service rollback myservice  = manual rollback
+
+[ SWARM SECRETS ]
+  echo 'value' | docker secret create name -
+  docker secret ls                  = list names only
+  docker secret inspect name        = metadata only
+  docker secret rm name             = delete
+  Accessible in container: /run/secrets/name
+
+[ OVERLAY NETWORKS ]
+  docker network create \
+    --driver overlay \
+    --attachable mynet
+
+  Use in service: --network mynet
+  Services use DNS by name (same as bridge)
+  Multi-host: VXLAN tunneling auto
+
+[ STACK DEPLOYMENT ]
+  docker stack deploy -c file.yml NAME
+  docker stack ls                   = list stacks
+  docker stack services NAME        = stack services
+  docker stack ps NAME              = stack tasks
+  docker stack rm NAME              = remove stack
+
+  Stack compose file: add deploy: section
+  deploy:
+    replicas: 3
+    update_config:
+      parallelism: 1
+      delay: 10s
+    resources:
+      limits:
+        memory: 256M
+
+[ PLACEMENT CONSTRAINTS ]
+  node.role == manager
+  node.role == worker
+  node.hostname == server01
+  node.labels.region == us-east
+  engine.labels.storage == ssd
+
+  Add label: docker node update \
+    --label-add region=us-east NODE
+
+[ SWARM vs SINGLE HOST ]
+  Single host:    docker run / docker compose
+  Swarm:          docker service / docker stack
+
+  Swarm advantages:
+  ✅ Multi-host spreading
+  ✅ Self-healing (restart failed replicas)
+  ✅ Rolling updates
+  ✅ Auto rollback on failure
+  ✅ Routing mesh (any port on any node)
+  ✅ Encrypted overlay networks
+  ✅ Secrets management
+
+[ CURRENT SWARM STATUS ]
+   Swarm: active
+    NodeID: 6vfvchd6tezalhkdjo2olq4nk
+    Managers: 1
+    Nodes: 1
+    Autolock Managers: false
+
+  Services:
+  ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+  uzgtoeneweit   webapp    replicated   4/4        swarm-app:v2   *:8501->8000/tcp
+
+  Nodes:
+  ID                            HOSTNAME          STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+  6vfvchd6tezalhkdjo2olq4nk *   DESKTOP-OF0SJ5C   Ready     Active         Leader           29.7.2
+
+============================================
+   REFERENCE COMPLETE
+============================================

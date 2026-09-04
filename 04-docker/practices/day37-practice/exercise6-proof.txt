@@ -1,0 +1,25 @@
+=== SWARM SECRETS ===
+Creating secrets...
+dozmvx3ruwkmf9fho8r1sntyt
+yfztbepi0cz14sw1t9uoq3l69
+
+--- Secret list (values hidden) ---
+ID                          NAME             DRIVER    CREATED                  UPDATED
+dozmvx3ruwkmf9fho8r1sntyt   app_db_pass                31 seconds ago           31 seconds ago
+yfztbepi0cz14sw1t9uoq3l69   app_redis_pass             Less than a second ago   Less than a second ago
+
+--- Secret inspect (no value shown) ---
+[
+    {
+        "ID": "dozmvx3ruwkmf9fho8r1sntyt",
+        "Version": {
+            "Index": 131
+        },
+        "CreatedAt": "2026-09-03T07:56:18.743739205Z",
+        "UpdatedAt": "2026-09-03T07:56:18.743739205Z",
+        "Spec": {
+            "Name": "app_db_pass",
+            "Labels": {}
+        }
+    }
+]

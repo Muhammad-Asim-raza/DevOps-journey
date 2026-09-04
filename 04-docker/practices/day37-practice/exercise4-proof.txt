@@ -1,0 +1,37 @@
+=== ROLLING UPDATES AND ROLLBACKS ===
+--- Service status ---
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+uzgtoeneweit   webapp    replicated   4/4        swarm-app:v2   *:8501->8000/tcp
+
+--- Task distribution ---
+NAME           IMAGE                 CURRENT STATE
+webapp.1       swarm-app:v2          Running 2 minutes ago
+ \_ webapp.1   swarm-app:v3-broken   Failed 2 minutes ago
+ \_ webapp.1   swarm-app:v2          Shutdown 2 minutes ago
+ \_ webapp.1   swarm-app:v1          Shutdown 6 minutes ago
+webapp.2       swarm-app:v2          Running 6 minutes ago
+ \_ webapp.2   swarm-app:v1          Shutdown 6 minutes ago
+webapp.3       swarm-app:v2          Running 6 minutes ago
+ \_ webapp.3   swarm-app:v1          Shutdown 6 minutes ago
+webapp.4       swarm-app:v2          Running 2 minutes ago
+ \_ webapp.4   swarm-app:v3-broken   Failed 2 minutes ago
+ \_ webapp.4   swarm-app:v2          Shutdown 2 minutes ago
+ \_ webapp.4   swarm-app:v1          Shutdown 6 minutes ago
+
+--- App version after operations ---
+{
+  "version": "2.0.0",
+  "color": "green",
+  "hostname": "40b4b6843b2d",
+  "status": "OK",
+  "new_feature": "enabled"
+}
+--- Update config ---
+
+Update Config:
+  Parallelism: 2
+  Delay: 10s
+  FailureAction: rollback
+Rollback Config:
+  Parallelism: 2
+  Delay: 5s

@@ -1,0 +1,13 @@
+=== OVERLAY NETWORKS ===
+--- All networks in swarm ---
+NETWORK ID     NAME                              DRIVER    SCOPE
+dcbefe9fce90   bridge                            bridge    local
+edb9fb9bbc76   docker_gwbridge                   bridge    local
+fe1969ae3a6b   full-stack-app_backend-network    bridge    local
+3121d981595c   full-stack-app_frontend-network   bridge    local
+e7d9cb36e87a   host                              host      local
+ixf86hmqpf9u   ingress                           overlay   swarm
+46fe972896de   minikube                          bridge    local
+9af2595e8df7   none                              null      local
+
+--- app-network details ---

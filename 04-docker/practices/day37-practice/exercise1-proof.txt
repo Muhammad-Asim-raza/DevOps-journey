@@ -1,0 +1,32 @@
+=== SWARM INITIALIZATION ===
+ Swarm: active
+  NodeID: 6vfvchd6tezalhkdjo2olq4nk
+  Managers: 1
+  Nodes: 1
+  Autolock Managers: false
+
+--- Node list ---
+ID                            HOSTNAME          STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+6vfvchd6tezalhkdjo2olq4nk *   DESKTOP-OF0SJ5C   Ready     Active         Leader           29.7.2
+
+--- Node details ---
+ID:			6vfvchd6tezalhkdjo2olq4nk
+Hostname:              	DESKTOP-OF0SJ5C
+Joined at:             	2026-09-03 05:44:24.138795678 +0000 utc
+Status:
+ State:			Ready
+ Availability:         	Active
+ Address:		127.0.0.1
+Manager Status:
+ Address:		127.0.0.1:2377
+ Raft Status:		Reachable
+ Leader:		Yes
+Platform:
+ Operating System:	linux
+ Architecture:		x86_64
+Resources:
+ CPUs:			12
+ Memory:		3.528GiB
+Plugins:
+ Log:		awslogs, fluentd, gcplogs, gelf, journald, json-file, local, splunk, syslog
+ Network:		bridge, host, ipvlan, macvlan, null, overlay

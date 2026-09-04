@@ -1,0 +1,16 @@
+=== SERVICE SCALING ===
+--- Scale to 5 replicas ---
+ID             NAME      IMAGE          NODE              DESIRED STATE   CURRENT STATE            ERROR     PORTS
+kb7c1vwio4x7   web.1     nginx:alpine   DESKTOP-OF0SJ5C   Running         Running 27 minutes ago             
+xzlyoeofaj4a   web.2     nginx:alpine   DESKTOP-OF0SJ5C   Running         Running 27 minutes ago             
+qumkcr0l47v4   web.3     nginx:alpine   DESKTOP-OF0SJ5C   Running         Running 15 seconds ago             
+z6s3kfeffgro   web.4     nginx:alpine   DESKTOP-OF0SJ5C   Running         Running 15 seconds ago             
+q1ec95ie57ed   web.5     nginx:alpine   DESKTOP-OF0SJ5C   Running         Running 15 seconds ago             
+
+--- Scale down to 2 ---
+ID             NAME      IMAGE          NODE              DESIRED STATE   CURRENT STATE            ERROR     PORTS
+kb7c1vwio4x7   web.1     nginx:alpine   DESKTOP-OF0SJ5C   Running         Running 27 minutes ago             
+xzlyoeofaj4a   web.2     nginx:alpine   DESKTOP-OF0SJ5C   Running         Running 27 minutes ago             
+
+--- Service still responding ---
+HTTP 200 - OK
