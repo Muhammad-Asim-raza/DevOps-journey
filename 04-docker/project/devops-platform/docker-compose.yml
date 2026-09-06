@@ -1,0 +1,276 @@
+# ================================================
+# docker-compose.yml - DevOps Platform
+# Day 38 - Docker Phase Project
+# Author: Asim Raza
+# Combines: Days 26-37 Docker knowledge
+# ================================================
+
+version: '3.8'
+
+# ── YAML Anchors (Day 35 pattern) ──
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+
+  # ────────────────────────────────────────
+  # NGINX - Reverse Proxy (Day 30 networking)
+  # ────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: platform-nginx
+    <<: *restart
+    ports:
+      - "8600:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-qO-",
+             "http://localhost/nginx-health"]
+      interval: 15s
+      timeout:  5s
+      retries:  3
+      start_period: 10s
+
+  # ────────────────────────────────────────
+  # API - Python Backend (Day 28 Dockerfile)
+  # ────────────────────────────────────────
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: production
+    image: devops-platform-api:v1.0.0
+    container_name: platform-api
+    <<: *restart
+
+    environment:
+      PORT:         "5000"
+      APP_ENV:      "${APP_ENV:-production}"
+      APP_VERSION:  "${APP_VERSION:-1.0.0}"
+      LOG_LEVEL:    "${LOG_LEVEL:-INFO}"
+      DB_HOST:      postgres
+      DB_PORT:      "5432"
+      DB_NAME:      "${POSTGRES_DB:-platformdb}"
+      DB_USER:      "${POSTGRES_USER:-platform}"
+      DB_PASSWORD:  "${POSTGRES_PASSWORD}"
+      REDIS_HOST:   redis
+      REDIS_PORT:   "6379"
+      PYTHONUNBUFFERED:        "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    networks:
+      - frontend
+      - backend
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # Day 33: Security hardening
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+
+    # Day 35: Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus:   '0.5'
+        reservations:
+          memory: 128M
+
+    # Day 35: Graceful shutdown
+    stop_grace_period: 30s
+
+    logging: *logging
+
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request; \
+              urllib.request.urlopen( \
+                'http://localhost:5000/health',timeout=4)"]
+      interval: 15s
+      timeout:  5s
+      retries:  3
+      start_period: 20s
+
+  # ────────────────────────────────────────
+  # POSTGRES - Database (Day 29 volumes)
+  # ────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: platform-postgres
+    <<: *restart
+
+    environment:
+      POSTGRES_DB:       "${POSTGRES_DB:-platformdb}"
+      POSTGRES_USER:     "${POSTGRES_USER:-platform}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?required}"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    networks:
+      - backend
+
+    logging: *logging
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus:   '0.5'
+
+    healthcheck:
+      test: ["CMD-SHELL",
+             "pg_isready -U ${POSTGRES_USER:-platform} \
+              -d ${POSTGRES_DB:-platformdb}"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+      start_period: 30s
+
+  # ────────────────────────────────────────
+  # REDIS - Cache (Day 29 volumes)
+  # ────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: platform-redis
+    <<: *restart
+
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?required}
+      --appendonly yes
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --loglevel notice
+
+    volumes:
+      - redis-data:/data
+
+    networks:
+      - backend
+
+    logging: *logging
+
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+          cpus:   '0.25'
+
+    healthcheck:
+      test: ["CMD", "redis-cli",
+             "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ────────────────────────────────────────
+  # CADVISOR - Container Metrics (Day 36)
+  # ────────────────────────────────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: platform-cadvisor
+    <<: *restart
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - monitoring
+    command:
+      - '--housekeeping_interval=15s'
+      - '--docker_only=true'
+
+  # ────────────────────────────────────────
+  # PROMETHEUS - Metrics DB (Day 36)
+  # ────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: platform-prometheus
+    <<: *restart
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "8601:9090"
+    networks:
+      - monitoring
+      - backend
+    depends_on:
+      - cadvisor
+
+  # ────────────────────────────────────────
+  # GRAFANA - Dashboards (Day 36)
+  # ────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: platform-grafana
+    <<: *restart
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-DevOps2026!}"
+      GF_SECURITY_ADMIN_USER:    admin
+      GF_USERS_ALLOW_SIGN_UP:    "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    ports:
+      - "8602:3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+# ────────────────────────────────────────
+# NETWORKS (Day 30 isolation pattern)
+# ────────────────────────────────────────
+networks:
+  frontend:
+    driver: bridge
+    # nginx + api
+
+  backend:
+    driver: bridge
+    # api + postgres + redis + prometheus
+
+  monitoring:
+    driver: bridge
+    # cadvisor + prometheus + grafana
+
+# ────────────────────────────────────────
+# VOLUMES (Day 29 persistence)
+# ────────────────────────────────────────
+volumes:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:

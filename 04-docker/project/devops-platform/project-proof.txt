@@ -1,0 +1,54 @@
+=== DOCKER PHASE PROJECT ===
+--- Services ---
+NAME                  IMAGE                              COMMAND                  SERVICE      CREATED        STATUS                      PORTS
+platform-api          devops-platform-api:v1.0.0         "python3 app.py"         api          25 hours ago   Up 13 minutes (healthy)     5000/tcp
+platform-cadvisor     gcr.io/cadvisor/cadvisor:v0.47.2   "/usr/bin/cadvisor -…"   cadvisor     25 hours ago   Up 12 minutes (healthy)     8080/tcp
+platform-grafana      grafana/grafana:10.2.0             "/run.sh"                grafana      25 hours ago   Up 13 minutes               0.0.0.0:8602->3000/tcp, [::]:8602->3000/tcp
+platform-nginx        nginx:1.25-alpine                  "/docker-entrypoint.…"   nginx        24 hours ago   Up 13 minutes (unhealthy)   0.0.0.0:8600->80/tcp, [::]:8600->80/tcp
+platform-postgres     postgres:15-alpine                 "docker-entrypoint.s…"   postgres     25 hours ago   Up 12 minutes (healthy)     5432/tcp
+platform-prometheus   prom/prometheus:v2.48.0            "/bin/prometheus --c…"   prometheus   25 hours ago   Up 13 minutes               0.0.0.0:8601->9090/tcp, [::]:8601->9090/tcp
+platform-redis        redis:7-alpine                     "docker-entrypoint.s…"   redis        25 hours ago   Up 12 minutes (healthy)     6379/tcp
+
+--- API Health ---
+{
+  "status": "healthy",
+  "timestamp": "2026-09-06T08:40:56.804208"
+}
+--- API Ready ---
+{
+  "status": "ready",
+  "redis": "up",
+  "postgres": "up"
+}
+--- API Status ---
+{
+  "requests_total": 133,
+  "errors_total": 0,
+  "uptime_s": 842.4,
+  "redis_connected": true,
+  "postgres_connected": true
+}
+--- Prometheus targets ---
+  api                  → up
+  cadvisor             → up
+  prometheus           → up
+╔══════════════════════════════════════╗
+║    PLATFORM HEALTH CHECK             ║
+╚══════════════════════════════════════╝
+
+[ API Endpoints ]
+  ✅ Home (HTTP 200)
+  ✅ Health (HTTP 200)
+  ✅ Ready (HTTP 200)
+  ✅ Liveness (HTTP 200)
+  ✅ Metrics (HTTP 200)
+  ✅ Info (HTTP 200)
+  ✅ Status (HTTP 200)
+
+[ Monitoring ]
+  ✅ Prometheus (HTTP 200)
+  ✅ Grafana (HTTP 200)
+
+[ Summary ]
+  Score: 9/9
+  ✅ Platform fully operational
