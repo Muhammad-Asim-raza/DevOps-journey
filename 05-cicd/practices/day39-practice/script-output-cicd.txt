@@ -1,0 +1,81 @@
+============================================
+   CI/CD COMPLETE REFERENCE
+   Author: Asim Raza - Day 39
+============================================
+
+[ WHAT IS CI/CD ]
+  Continuous Integration:
+    Merge code often + automated tests
+    Catch bugs early (before they compound)
+
+  Continuous Delivery:
+    Always deployable + human approves prod
+
+  Continuous Deployment:
+    Fully automated + auto-deploys to prod
+
+[ CI/CD PIPELINE STAGES ]
+  1. Source    → git push triggers pipeline
+  2. Build     → compile, install deps
+  3. Test      → unit, integration tests
+  4. Security  → SAST, dependency scan
+  5. Image     → docker build + push
+  6. Staging   → deploy + smoke tests
+  7. Production→ deploy (auto or approved)
+  8. Notify    → Slack, email, PagerDuty
+
+[ CI/CD TOOLS WE STUDY ]
+  GitHub Actions  → Days 40-45
+  Jenkins         → Days 46-47
+  GitLab CI       → Day 48
+  ArgoCD (GitOps) → Day 49
+
+[ KEY METRICS (DORA) ]
+  Deployment Frequency   → how often
+  Lead Time for Changes  → commit → prod
+  Change Failure Rate    → % broken deploys
+  Time to Restore        → recovery time
+
+  Elite: daily deploys, <1hr lead time
+  Low:   monthly deploys, months lead time
+
+[ DEPLOYMENT STRATEGIES ]
+  Rolling     → update batch by batch
+  Blue-Green  → switch traffic instantly
+  Canary      → 5% → 100% gradually
+  Feature Flag→ deploy off, enable later
+
+[ WHAT CI/CD REPLACES ]
+  Manual SSH into server
+  Manual git pull
+  Manual restart
+  Manual testing
+  Deployment fear
+  2am emergencies (mostly)
+
+[ CI/CD FILE LOCATIONS ]
+  GitHub Actions:  .github/workflows/*.yml
+  GitLab CI:       .gitlab-ci.yml
+  Jenkins:         Jenkinsfile
+  CircleCI:        .circleci/config.yml
+  Travis CI:       .travis.yml
+
+[ PHASE 5 PLAN ]
+  Day 39: What is CI/CD (TODAY)
+  Day 40: GitHub Actions fundamentals
+  Day 41: Workflows jobs steps triggers
+  Day 42: Secrets and env management
+  Day 43: Build and test automation
+  Day 44: Docker in GitHub Actions
+  Day 45: Deploy automation
+  Day 46: Jenkins setup
+  Day 47: Jenkins pipelines
+  Day 48: GitLab CI
+  Day 49: ArgoCD GitOps
+  Day 50: Deployment strategies
+  Day 51: CI/CD security scanning
+  Day 52: CI/CD PHASE PROJECT
+
+============================================
+   REFERENCE COMPLETE
+============================================

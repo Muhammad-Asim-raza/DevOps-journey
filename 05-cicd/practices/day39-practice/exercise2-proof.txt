@@ -1,0 +1,114 @@
+============================================
+   CI/CD VOCABULARY REFERENCE
+   Author: Asim Raza - Day 39
+============================================
+
+[ CORE TERMS ]
+
+  Pipeline
+    Series of automated stages that code goes through
+    from commit to production
+
+  Stage / Job
+    One logical step in the pipeline
+    e.g., Test, Build, Deploy
+
+  Runner / Agent
+    The server/VM that EXECUTES pipeline steps
+    GitHub: GitHub-hosted runners (free)
+    Jenkins: agents on your own servers
+
+  Artifact
+    Output of a build stage
+    e.g., .jar file, Docker image, .zip file
+    Passed between pipeline stages
+
+  Trigger
+    Event that starts a pipeline
+    push, pull_request, schedule, manual
+
+  Build
+    Compiling/packaging your application
+
+  Deployment
+    Putting the built artifact into an environment
+
+  Environment
+    Where the app runs: dev, staging, production
+
+[ TESTING TERMS ]
+
+  Unit Tests
+    Test individual functions/classes in isolation
+    Fast, many of them, developer writes them
+
+  Integration Tests
+    Test multiple components working together
+    e.g., API + Database interaction
+
+  E2E Tests (End-to-End)
+    Test the whole system like a real user
+    Selenium, Cypress, Playwright
+    Slow, fewer of them
+
+  Smoke Tests
+    Quick basic tests after deployment
+    'Is the app running at all?'
+
+  Regression Tests
+    Ensure old features still work
+    Run after every change
+
+[ DEPLOYMENT TERMS ]
+
+  Rolling Deployment
+    Update instances one batch at a time
+    Zero downtime
+
+  Blue-Green Deployment
+    Two identical environments (blue=old, green=new)
+    Switch traffic from blue to green instantly
+    Instant rollback: switch back to blue
+
+  Canary Deployment
+    Send 5% of traffic to new version first
+    Monitor for problems
+    Gradually increase to 100%
+    Rollback affects only 5% if caught early
+
+  Feature Flags
+    Deploy code but keep feature OFF
+    Enable for specific users/percentage
+    Decouple deployment from release
+
+[ QUALITY TERMS ]
+
+  SAST (Static Application Security Testing)
+    Scan SOURCE CODE for vulnerabilities
+    Before running the app
+    Tool: bandit, SonarQube, Semgrep
+
+  DAST (Dynamic Application Security Testing)
+    Scan RUNNING APP for vulnerabilities
+    Tool: OWASP ZAP, Burp Suite
+
+  SCA (Software Composition Analysis)
+    Check DEPENDENCIES for known CVEs
+    Tool: Snyk, OWASP Dependency-Check
+
+  Code Coverage
+    Percentage of code executed by tests
+    Threshold: typically 80% minimum
+
+[ DORA METRICS ]
+  Deployment Frequency = how often you deploy
+  Lead Time = commit → production time
+  Change Failure Rate = % of deployments failing
+  Recovery Time = how long to fix failure
+
+  Elite: deploy daily, lead time < 1 hour
+  Low:   monthly, lead time months
+
+============================================
+   VOCABULARY COMPLETE
+============================================

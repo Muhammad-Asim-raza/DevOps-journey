@@ -1,0 +1,15 @@
+=== MANUAL vs CI/CD COMPARISON ===
+--- Manual deployment problems ---
+Manual:
+- 2 days planning and coordination
+- 45 minutes deployment window
+- 10-45 minutes downtime
+- High failure rate (40%)
+- Stress and burnout
+
+CI/CD:
+- 0 minutes planning
+- 7 minutes total pipeline
+- 0 minutes downtime (rolling updates)
+- Low failure rate (<5%)
+- No stress, deploy with confidence
