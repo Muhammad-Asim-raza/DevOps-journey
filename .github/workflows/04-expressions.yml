@@ -1,0 +1,116 @@
+# ================================================
+# 04-expressions.yml
+# GitHub Actions Expressions and Contexts
+# Author: Asim Raza - Day 40
+# ================================================
+
+name: 04 - Expressions and Contexts
+
+on:
+  push:
+    branches: [main]
+    paths: ['05-cicd/**', '.github/workflows/04-expressions.yml']
+  workflow_dispatch:
+
+jobs:
+  expressions-demo:
+    name: 🧮 Expressions Demo
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── GITHUB CONTEXT ──
+      - name: GitHub context variables
+        run: |
+          echo "=== GITHUB CONTEXT ==="
+          echo "github.event_name:    ${{ github.event_name }}"
+          echo "github.ref:           ${{ github.ref }}"
+          echo "github.ref_name:      ${{ github.ref_name }}"
+          echo "github.ref_type:      ${{ github.ref_type }}"
+          echo "github.sha:           ${{ github.sha }}"
+          echo "github.actor:         ${{ github.actor }}"
+          echo "github.repository:    ${{ github.repository }}"
+          echo "github.repository_owner: ${{ github.repository_owner }}"
+          echo "github.run_id:        ${{ github.run_id }}"
+          echo "github.run_number:    ${{ github.run_number }}"
+          echo "github.workflow:      ${{ github.workflow }}"
+          echo "github.job:           ${{ github.job }}"
+          echo "github.action:        ${{ github.action }}"
+
+      # ── RUNNER CONTEXT ──
+      - name: Runner context variables
+        run: |
+          echo "=== RUNNER CONTEXT ==="
+          echo "runner.os:    ${{ runner.os }}"
+          echo "runner.arch:  ${{ runner.arch }}"
+          echo "runner.name:  ${{ runner.name }}"
+          echo "runner.temp:  ${{ runner.temp }}"
+          echo "runner.tool_cache: ${{ runner.tool_cache }}"
+
+      # ── ENV CONTEXT ──
+      - name: Environment context
+        env:
+          MY_VAR: "hello-world"
+        run: |
+          echo "=== ENV CONTEXT ==="
+          echo "MY_VAR: ${{ env.MY_VAR }}"
+          echo "GITHUB_ENV: $GITHUB_ENV"
+
+      # ── EXPRESSIONS ──
+      - name: Expression operators
+        run: |
+          echo "=== EXPRESSIONS ==="
+
+          # Comparison
+          echo "Is main: ${{ github.ref_name == 'main' }}"
+          echo "Not main: ${{ github.ref_name != 'main' }}"
+
+          # Logical
+          echo "AND: ${{ github.ref_name == 'main' && github.event_name == 'push' }}"
+          echo "OR: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}"
+          echo "NOT: ${{ !cancelled() }}"
+
+          # Functions
+          echo "contains: ${{ contains(github.ref, 'main') }}"
+          echo "startsWith: ${{ startsWith(github.ref, 'refs/heads/') }}"
+          echo "endsWith: ${{ endsWith(github.ref, 'main') }}"
+
+      # ── STATUS FUNCTIONS ──
+      - name: Status check functions
+        if: always()
+        run: |
+          echo "=== STATUS FUNCTIONS ==="
+          echo "success():   ${{ success() }}"
+          echo "failure():   ${{ failure() }}"
+          echo "always():    ${{ always() }}"
+          echo "cancelled(): ${{ cancelled() }}"
+
+      # ── DYNAMIC VALUES ──
+      - name: Set dynamic env vars
+        run: |
+          # Set env var for subsequent steps
+          echo "DEPLOY_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+          echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+          # GITHUB_ENV = file that persists vars
+          # to subsequent steps in same job
+
+      - name: Use dynamic env vars
+        run: |
+          echo "Deploy date: $DEPLOY_DATE"
+          echo "Short SHA: $SHORT_SHA"
+          # Available because set in previous step via GITHUB_ENV
+
+      # ── GITHUB OUTPUT ──
+      - name: Set step outputs
+        id: outputs-demo
+        run: |
+          echo "value1=hello" >> $GITHUB_OUTPUT
+          echo "value2=world" >> $GITHUB_OUTPUT
+          echo "number=42" >> $GITHUB_OUTPUT
+
+      - name: Use step outputs
+        run: |
+          echo "value1: ${{ steps.outputs-demo.outputs.value1 }}"
+          echo "value2: ${{ steps.outputs-demo.outputs.value2 }}"
+          echo "number: ${{ steps.outputs-demo.outputs.number }}"

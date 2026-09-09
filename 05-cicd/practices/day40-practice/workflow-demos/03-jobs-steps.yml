@@ -1,0 +1,191 @@
+# ================================================
+# 03-jobs-steps.yml
+# Jobs and Steps In Depth
+# Author: Asim Raza - Day 40
+# ================================================
+
+name: 03 - Jobs and Steps Deep Dive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/03-jobs-steps.yml'
+  workflow_dispatch:
+
+jobs:
+
+  # ── Parallel jobs (no needs:) ──
+  job-a:
+    name: 🅰️ Job A (parallel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "Job A running in parallel with Job B"
+          sleep 2
+          echo "Job A complete"
+
+  job-b:
+    name: 🅱️ Job B (parallel)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "Job B running in parallel with Job A"
+          sleep 3
+          echo "Job B complete"
+
+  # ── Sequential job (needs both A and B) ──
+  job-c:
+    name: 🔢 Job C (after A and B)
+    runs-on: ubuntu-latest
+    needs: [job-a, job-b]
+    # Waits for BOTH job-a AND job-b to pass
+    steps:
+      - run: echo "Job C runs after A and B both succeed"
+
+  # ── Demonstrate step types ──
+  step-types:
+    name: 🔧 Step Types Demo
+    runs-on: ubuntu-latest
+
+    env:
+      # Job-level env var
+      JOB_NAME: step-types-demo
+
+    steps:
+
+      # TYPE 1: uses (pre-built action)
+      - name: "Type 1: uses action"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # fetch-depth: 0 = full history
+          # needed for: git log, git tags
+
+      # TYPE 2: run (single line)
+      - name: "Type 2: run single line"
+        run: echo "Simple single command"
+
+      # TYPE 3: run (multi-line with |)
+      - name: "Type 3: run multi-line"
+        run: |
+          echo "Line 1"
+          echo "Line 2"
+          DATE=$(date +%Y-%m-%d)
+          echo "Date: $DATE"
+          ls -la
+
+      # TYPE 4: run with step-level env
+      - name: "Type 4: step-level env vars"
+        env:
+          STEP_SECRET: "step-only-value"
+          ANOTHER_VAR: "hello"
+        run: |
+          echo "Step var: $STEP_SECRET"
+          echo "Another: $ANOTHER_VAR"
+          echo "Job var: $JOB_NAME"
+
+      # TYPE 5: id and outputs
+      - name: "Type 5: step with id"
+        id: get-version
+        run: |
+          VERSION="1.0.${{ github.run_number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Generated version: $VERSION"
+        # GITHUB_OUTPUT = special file for outputs
+        # key=value written here accessible later
+
+      - name: "Use previous step output"
+        run: |
+          echo "Version from previous step:"
+          echo "${{ steps.get-version.outputs.version }}"
+          # steps.STEP_ID.outputs.KEY
+
+      # TYPE 6: conditional step
+      - name: "Type 6: conditional (always runs)"
+        if: always()
+        # always() = run even if previous step failed
+        run: echo "This always runs (like finally in try/catch)"
+
+      - name: "Only if previous success"
+        if: success()
+        run: echo "Only if all previous steps succeeded"
+
+      - name: "Only if something failed"
+        if: failure()
+        run: echo "Run cleanup or notification on failure"
+
+      # TYPE 7: continue-on-error
+      - name: "Type 7: continue on error"
+        continue-on-error: true
+        # If this step fails: job continues anyway
+        # Step shows as warning, not failure
+        run: |
+          echo "This step fails on purpose"
+          exit 1
+
+      - name: "After the failing step"
+        run: |
+          echo "This runs even after the failing step!"
+          echo "Because of continue-on-error: true"
+
+      # TYPE 8: timeout
+      - name: "Type 8: with timeout"
+        timeout-minutes: 1
+        # Fail this step if it takes > 1 minute
+        run: |
+          echo "Long running task (would timeout)"
+          sleep 2
+          echo "Done in time"
+
+      # TYPE 9: working-directory
+      - name: "Type 9: working directory"
+        working-directory: /tmp
+        run: |
+          echo "Running in: $(pwd)"
+          ls -la
+
+      # TYPE 10: shell selection
+      - name: "Type 10: specify shell"
+        shell: bash
+        # bash is default on Linux
+        # Other options: sh, python, pwsh
+        run: echo "Explicitly using bash"
+
+  # ── Job outputs ──
+  produce-outputs:
+    name: 📤 Produce Outputs
+    runs-on: ubuntu-latest
+    outputs:
+      deploy-env: ${{ steps.set-env.outputs.env }}
+      version: ${{ steps.set-ver.outputs.version }}
+
+    steps:
+      - name: Set environment
+        id: set-env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+          else
+            echo "env=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set version
+        id: set-ver
+        run: |
+          echo "version=v1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+  consume-outputs:
+    name: 📥 Consume Job Outputs
+    runs-on: ubuntu-latest
+    needs: produce-outputs
+
+    steps:
+      - name: Use job outputs
+        run: |
+          echo "Environment: ${{ needs.produce-outputs.outputs.deploy-env }}"
+          echo "Version: ${{ needs.produce-outputs.outputs.version }}"
+          # needs.JOB_ID.outputs.OUTPUT_NAME

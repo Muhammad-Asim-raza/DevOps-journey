@@ -1,0 +1,28 @@
+=== GITHUB ACTIONS WORKFLOWS ===
+--- Workflows created ---
+total 48
+drwxr-xr-x 2 asim-raza asim-raza 4096 Sep  9 11:01 .
+drwxr-xr-x 3 asim-raza asim-raza 4096 Aug  7 11:48 ..
+-rw-r--r-- 1 asim-raza asim-raza 9982 Sep  8 10:06 01-anatomy.yml
+-rw-r--r-- 1 asim-raza asim-raza 3197 Sep  9 10:00 02-triggers.yml
+-rw-r--r-- 1 asim-raza asim-raza 5295 Sep  9 10:35 03-jobs-steps.yml
+-rw-r--r-- 1 asim-raza asim-raza 4175 Sep  9 11:01 04-expressions.yml
+-rw-r--r-- 1 asim-raza asim-raza 5857 Sep  9 11:02 05-real-ci-pipeline.yml
+
+--- Workflow trigger types used ---
+/home/asim-raza/DevOps-journey/.github/workflows/01-anatomy.yml:  pull_request:
+/home/asim-raza/DevOps-journey/.github/workflows/01-anatomy.yml:  push:
+/home/asim-raza/DevOps-journey/.github/workflows/01-anatomy.yml:  schedule:
+/home/asim-raza/DevOps-journey/.github/workflows/01-anatomy.yml:  workflow_dispatch:
+/home/asim-raza/DevOps-journey/.github/workflows/02-triggers.yml:  pull_request:
+/home/asim-raza/DevOps-journey/.github/workflows/02-triggers.yml:  push:
+/home/asim-raza/DevOps-journey/.github/workflows/02-triggers.yml:  release:
+/home/asim-raza/DevOps-journey/.github/workflows/02-triggers.yml:  schedule:
+/home/asim-raza/DevOps-journey/.github/workflows/02-triggers.yml:  workflow_dispatch:
+/home/asim-raza/DevOps-journey/.github/workflows/03-jobs-steps.yml:  push:
+/home/asim-raza/DevOps-journey/.github/workflows/03-jobs-steps.yml:  workflow_dispatch:
+/home/asim-raza/DevOps-journey/.github/workflows/04-expressions.yml:  push:
+/home/asim-raza/DevOps-journey/.github/workflows/04-expressions.yml:  workflow_dispatch:
+/home/asim-raza/DevOps-journey/.github/workflows/05-real-ci-pipeline.yml:  pull_request:
+/home/asim-raza/DevOps-journey/.github/workflows/05-real-ci-pipeline.yml:  push:
+/home/asim-raza/DevOps-journey/.github/workflows/05-real-ci-pipeline.yml:  workflow_dispatch:

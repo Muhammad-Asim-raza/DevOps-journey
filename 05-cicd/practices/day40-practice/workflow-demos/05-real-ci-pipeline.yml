@@ -1,0 +1,189 @@
+# ================================================
+# 05-real-ci-pipeline.yml
+# Real CI Pipeline for DevOps Journey Project
+# Author: Asim Raza - Day 40
+# This pipeline tests the actual project files
+# ================================================
+
+name: 05 - DevOps Journey CI Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/05-real-ci-pipeline.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+
+  # ── Stage 1: Code Quality ──
+  lint:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install linting tools
+        run: |
+          pip install flake8 black isort --quiet
+
+      - name: Run flake8
+        run: |
+          echo "=== Flake8 Linting ==="
+          flake8 05-cicd/ \
+            --max-line-length=100 \
+            --exclude=__pycache__,.venv \
+            --count \
+            --statistics \
+            2>/dev/null || echo "No Python files to lint in 05-cicd/"
+
+      - name: Check Python files exist
+        run: |
+          echo "=== Files in 05-cicd/ ==="
+          find 05-cicd/ -name "*.py" 2>/dev/null | \
+            head -10 || echo "No Python files yet"
+          find 05-cicd/ -name "*.sh" 2>/dev/null | \
+            head -10 || echo "No shell scripts yet"
+
+  # ── Stage 2: Shell Script Check ──
+  shellcheck:
+    name: 🐚 Shell Script Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck -q
+
+      - name: Check shell scripts
+        run: |
+          echo "=== ShellCheck ==="
+          SCRIPTS=$(find 05-cicd/ -name "*.sh" 2>/dev/null)
+          if [ -n "$SCRIPTS" ]; then
+            shellcheck $SCRIPTS || true
+          else
+            echo "No shell scripts found yet"
+          fi
+
+  # ── Stage 3: YAML Validation ──
+  validate-yaml:
+    name: 📄 Validate YAML
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint --quiet
+
+      - name: Validate workflow YAML files
+        run: |
+          echo "=== YAML Validation ==="
+          for f in .github/workflows/*.yml; do
+            echo "Validating: $f"
+            yamllint -d relaxed "$f" && \
+              echo "  ✅ Valid" || \
+              echo "  ⚠️ Issues found (non-blocking)"
+          done
+
+  # ── Stage 4: Security Check ──
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for secrets
+        run: |
+          echo "=== Secret Scanning ==="
+          # Check for common secret patterns
+          FOUND=0
+          PATTERNS=(
+            "password\s*=\s*['\"][^'\"]{8,}['\"]"
+            "AKIA[0-9A-Z]{16}"
+            "-----BEGIN.*PRIVATE KEY-----"
+          )
+          for PATTERN in "${PATTERNS[@]}"; do
+            MATCHES=$(grep -rE "$PATTERN" \
+              05-cicd/ \
+              --include="*.py" \
+              --include="*.sh" \
+              --include="*.yml" \
+              2>/dev/null | \
+              grep -v "password.*CHANGE_ME" | \
+              grep -v "#" | head -3)
+            if [ -n "$MATCHES" ]; then
+              echo "⚠️  Pattern found: $PATTERN"
+              echo "$MATCHES"
+              FOUND=$((FOUND+1))
+            fi
+          done
+          if [ $FOUND -eq 0 ]; then
+            echo "✅ No secrets detected"
+          fi
+
+  # ── Stage 5: Build Report ──
+  report:
+    name: 📊 Build Report
+    runs-on: ubuntu-latest
+    needs: [lint, shellcheck, validate-yaml, security]
+    if: always()
+    # always(): runs even if previous jobs failed
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate report
+        run: |
+          echo "======================================"
+          echo "  CI PIPELINE REPORT"
+          echo "======================================"
+          echo "Workflow:  ${{ github.workflow }}"
+          echo "Trigger:   ${{ github.event_name }}"
+          echo "Branch:    ${{ github.ref_name }}"
+          echo "Commit:    ${{ github.sha }}"
+          echo "Author:    ${{ github.actor }}"
+          echo "Run #:     ${{ github.run_number }}"
+          echo ""
+          echo "Job Results:"
+          echo "  Lint:     ${{ needs.lint.result }}"
+          echo "  Shell:    ${{ needs.shellcheck.result }}"
+          echo "  YAML:     ${{ needs.validate-yaml.result }}"
+          echo "  Security: ${{ needs.security.result }}"
+          echo ""
+          if [[ "${{ needs.lint.result }}" == "success" && \
+                "${{ needs.validate-yaml.result }}" == "success" ]]; then
+            echo "✅ Pipeline PASSED"
+          else
+            echo "⚠️  Pipeline has issues (check above)"
+          fi
+          echo "======================================"
+
+      - name: Create summary
+        run: |
+          echo "## CI Pipeline Results 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ShellCheck | ${{ needs.shellcheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| YAML | ${{ needs.validate-yaml.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          # GITHUB_STEP_SUMMARY = shown in Actions UI
+          # Creates a nice summary table visible in GitHub

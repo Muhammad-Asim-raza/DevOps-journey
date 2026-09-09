@@ -1,0 +1,41 @@
+=== WORKFLOW CONCEPTS ===
+Concepts demonstrated across 5 workflows:
+
+01-anatomy.yml:
+- All trigger types
+- permissions, concurrency
+- Jobs: parallel + sequential (needs:)
+- Matrix strategy
+- Artifacts upload/download
+- Step types: uses, run, env, id
+- Conditional steps (if:)
+
+02-triggers.yml:
+- push with paths/paths-ignore
+- pull_request with types
+- schedule (cron)
+- workflow_dispatch with inputs
+- release, repository_dispatch
+
+03-jobs-steps.yml:
+- Parallel jobs
+- Sequential jobs (needs:)
+- Step with id and outputs
+- continue-on-error
+- timeout-minutes
+- working-directory
+- Job outputs consumed by other jobs
+
+04-expressions.yml:
+- All context variables (github, runner, env)
+- Expression operators: ==, !=, &&, ||, !
+- Functions: contains, startsWith, endsWith
+- Status: success(), failure(), always()
+- GITHUB_ENV (persist vars between steps)
+- GITHUB_OUTPUT (step outputs)
+
+05-real-ci-pipeline.yml:
+- Real 5-stage CI pipeline
+- Lint + shellcheck + yaml + security
+- Report job (always() condition)
+- GITHUB_STEP_SUMMARY (dashboard table)

@@ -1,0 +1,89 @@
+============================================
+   GITHUB ACTIONS REFERENCE
+   Author: Asim Raza - Day 40
+============================================
+
+[ FILE LOCATION ]
+  .github/workflows/name.yml
+  ANY .yml file here = a workflow
+  One repo can have unlimited workflows
+
+[ TRIGGER TYPES (on:) ]
+  push:                 = on git push
+  pull_request:         = on PR events
+  workflow_dispatch:    = manual button
+  schedule: cron: ...  = time-based
+  release:             = GitHub release
+  repository_dispatch: = API trigger
+  workflow_call:       = called by other workflow
+
+[ RUNNER OPTIONS ]
+  ubuntu-latest     = Ubuntu 22.04 (most used)
+  macos-latest      = macOS
+  windows-latest    = Windows
+  self-hosted       = your own server
+
+[ STEP TYPES ]
+  uses: action@version  = pre-built action
+  run: command          = shell command
+  run: |                = multi-line command
+    line1
+    line2
+
+[ KEY CONTEXTS ]
+  github.event_name    = push/pull_request/etc
+  github.ref_name      = branch name
+  github.sha           = commit hash
+  github.actor         = who triggered
+  github.run_number    = build number
+  runner.os            = Linux/macOS/Windows
+  env.MY_VAR           = env variable
+  secrets.MY_SECRET    = encrypted secret
+  steps.ID.outputs.KEY = step output
+  needs.JOB.outputs.KEY= job output
+
+[ SPECIAL FILES ]
+  $GITHUB_OUTPUT  = set step outputs
+                   echo 'key=val' >> $GITHUB_OUTPUT
+  $GITHUB_ENV     = set env vars for next steps
+                   echo 'VAR=val' >> $GITHUB_ENV
+  $GITHUB_STEP_SUMMARY = add to job summary page
+                   echo '## Title' >> $GITHUB_STEP_SUMMARY
+
+[ CONDITIONAL EXECUTION (if:) ]
+  if: github.ref_name == 'main'
+  if: github.event_name == 'push'
+  if: success()
+  if: failure()
+  if: always()      = runs even if failed
+  if: cancelled()
+  if: contains(github.ref, 'main')
+
+[ JOB CONTROL ]
+  needs: [job-a, job-b]   = sequential
+  if: always()            = run even on fail
+  continue-on-error: true = don't fail job
+  timeout-minutes: 10     = fail after 10 min
+  strategy.matrix: ...    = parallel versions
+  strategy.fail-fast: false
+
+[ MOST USED ACTIONS ]
+  actions/checkout@v4          = get code
+  actions/setup-python@v4      = install Python
+  actions/setup-node@v4        = install Node
+  actions/cache@v3             = cache deps
+  actions/upload-artifact@v3   = save files
+  actions/download-artifact@v3 = get files
+  docker/login-action@v3       = registry login
+  docker/build-push-action@v5  = build + push
+
+[ WORKFLOWS CREATED TODAY ]
+01-anatomy.yml
+02-triggers.yml
+03-jobs-steps.yml
+04-expressions.yml
+05-real-ci-pipeline.yml
+
+============================================
+   REFERENCE COMPLETE
+============================================
