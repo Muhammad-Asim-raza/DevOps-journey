@@ -1,0 +1,137 @@
+# ================================================
+# 09-environments.yml
+# GitHub Deployment Environments
+# Author: Asim Raza - Day 41
+# ================================================
+
+name: 09 - Deployment Environments
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/09-environments.yml'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deployment target'
+        type: choice
+        default: staging
+        options: [staging, production]
+
+jobs:
+
+  # ── Build (no environment) ──
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      image-tag: ${{ steps.ver.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate version
+        id: ver
+        run: |
+          VERSION="1.0.${{ github.run_number }}"
+          TAG="devops-app:${{ github.sha }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Built: $VERSION ($TAG)"
+
+      - name: Build artifact
+        run: |
+          mkdir -p dist
+          echo "Version: ${{ steps.ver.outputs.version }}" > dist/info.txt
+          echo "Commit: ${{ github.sha }}" >> dist/info.txt
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: app-${{ github.run_number }}
+          path: dist/
+
+  # ── Deploy to Staging ──
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: staging
+      # environment: staging = uses staging environment
+      # In GitHub UI: Settings → Environments
+      # Can configure:
+      # - Required reviewers (approval gate)
+      # - Wait timer
+      # - Environment secrets
+      url: https://staging.devops-journey.example.com
+      # url: shown as link in deployment history
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: app-${{ github.run_number }}
+          path: ./artifact
+
+      - name: Deploy to staging
+        run: |
+          echo "=== STAGING DEPLOYMENT ==="
+          echo "Version: ${{ needs.build.outputs.version }}"
+          echo "Image: ${{ needs.build.outputs.image-tag }}"
+          echo "URL: https://staging.devops-journey.example.com"
+          echo ""
+          cat ./artifact/info.txt
+          echo ""
+          echo "✅ Staging deployment complete"
+          echo "Deployment recorded in GitHub environment history"
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests on staging..."
+          echo "✅ Health check passed"
+          echo "✅ API responding"
+          echo "✅ Database connected"
+
+  # ── Deploy to Production ──
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging]
+    environment:
+      name: production
+      # production environment can have:
+      # Required reviewers = someone must approve
+      # Wait timer = delay after staging
+      url: https://devops-journey.example.com
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: app-${{ github.run_number }}
+          path: ./artifact
+
+      - name: Production deployment
+        run: |
+          echo "=== PRODUCTION DEPLOYMENT ==="
+          echo "VERSION: ${{ needs.build.outputs.version }}"
+          echo ""
+          cat ./artifact/info.txt
+          echo ""
+          echo "Rolling update started..."
+          echo "Replica 1/3: Updated ✅"
+          echo "Replica 2/3: Updated ✅"
+          echo "Replica 3/3: Updated ✅"
+          echo ""
+          echo "✅ Production deployment complete"
+          echo "URL: https://devops-journey.example.com"
+
+      - name: Create deployment record
+        run: |
+          echo "Recording deployment..."
+          echo "Version: ${{ needs.build.outputs.version }}"
+          echo "Time: $(date -u)"
+          echo "By: ${{ github.actor }}"
+          echo "Commit: ${{ github.sha }}"

@@ -1,0 +1,197 @@
+# ================================================
+# 10-advanced-patterns.yml
+# Advanced Workflow Patterns
+# Author: Asim Raza - Day 41
+# Fan-out, Fan-in, Dynamic matrix, Skip CI
+# ================================================
+
+name: 10 - Advanced Patterns
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/10-advanced-patterns.yml'
+  workflow_dispatch:
+
+jobs:
+
+  # ── PATTERN 1: Dynamic Matrix ──
+  # Generate matrix values from a script
+  generate-matrix:
+    name: 🔢 Generate Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate dynamic matrix
+        id: set-matrix
+        run: |
+          # Build matrix dynamically based on conditions
+          # Could read from a file, database, or any source
+
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            # Full matrix for main branch
+            MATRIX='{"include":[
+              {"name":"fast","python":"3.11","timeout":5},
+              {"name":"compat-310","python":"3.10","timeout":8},
+              {"name":"latest","python":"3.12","timeout":5}
+            ]}'
+          else
+            # Minimal matrix for feature branches
+            MATRIX='{"include":[
+              {"name":"fast","python":"3.11","timeout":5}
+            ]}'
+          fi
+
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "Generated matrix: $MATRIX"
+
+  # ── Fan-out: Run dynamic matrix jobs ──
+  test-dynamic:
+    name: 🧪 Test ${{ matrix.name }}
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+      # fromJSON() converts JSON string to object
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Run test suite
+        run: |
+          echo "=== ${{ matrix.name }} Tests ==="
+          echo "Python: ${{ matrix.python }}"
+          python --version
+          echo "✅ Tests passed"
+
+  # ── Fan-in: Collect all matrix results ──
+  collect-results:
+    name: 📊 Collect Results (Fan-in)
+    runs-on: ubuntu-latest
+    needs: test-dynamic
+    # Waits for ALL matrix jobs to complete
+    if: always()
+    # Runs even if some matrix jobs failed
+
+    steps:
+      - name: Analyze results
+        run: |
+          echo "=== ALL TEST RESULTS ==="
+          echo "Matrix tests result: ${{ needs.test-dynamic.result }}"
+          # success = all passed
+          # failure = at least one failed
+          # cancelled = cancelled
+
+          if [[ "${{ needs.test-dynamic.result }}" == "success" ]]; then
+            echo "✅ All matrix jobs passed"
+          else
+            echo "⚠️ Some matrix jobs failed"
+          fi
+
+  # ── PATTERN 2: Skip CI ──
+  # Allow skipping pipeline with commit message
+  check-skip:
+    name: 🔍 Check Skip Flag
+    runs-on: ubuntu-latest
+    outputs:
+      should-skip: ${{ steps.skip.outputs.should-skip }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for skip flag in commit message
+        id: skip
+        run: |
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          echo "Commit message: $COMMIT_MSG"
+
+          # Check for skip patterns
+          if echo "$COMMIT_MSG" | grep -qiE '\[skip ci\]|\[ci skip\]|--no-ci'; then
+            echo "should-skip=true" >> $GITHUB_OUTPUT
+            echo "⏭️  CI skip requested"
+          else
+            echo "should-skip=false" >> $GITHUB_OUTPUT
+            echo "✅ CI will run"
+          fi
+
+  skippable-job:
+    name: 🔄 Skippable Work
+    runs-on: ubuntu-latest
+    needs: check-skip
+    if: needs.check-skip.outputs.should-skip != 'true'
+    # Only runs if commit message does NOT have [skip ci]
+
+    steps:
+      - run: echo "Running because CI was not skipped"
+
+  # ── PATTERN 3: Debug Mode ──
+  debug-mode:
+    name: 🐛 Debug Mode
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_STEP_DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+      # Set ACTIONS_STEP_DEBUG=true in Secrets
+      # to enable verbose debug logging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable runner debug logging
+        run: |
+          echo "Debug mode: ${{ runner.debug }}"
+          if [[ "${{ runner.debug }}" == "1" ]]; then
+            echo "🐛 DEBUG MODE ACTIVE"
+            set -x  # Echo all commands
+          fi
+          echo "Normal output"
+
+      - name: Debug: show all environment
+        if: runner.debug == '1'
+        run: |
+          echo "=== Full Environment (debug mode) ==="
+          env | sort
+
+  # ── PATTERN 4: Job outputs as workflow summary ──
+  workflow-summary:
+    name: 📋 Workflow Summary
+    runs-on: ubuntu-latest
+    needs: [test-dynamic, collect-results]
+    if: always()
+
+    steps:
+      - name: Create workflow summary
+        run: |
+          # GITHUB_STEP_SUMMARY adds content to
+          # the job's Summary tab in GitHub Actions UI
+
+          cat >> $GITHUB_STEP_SUMMARY << 'SUMMARY'
+          ## 🚀 Workflow Results
+
+          | Pattern | Status |
+          |---------|--------|
+          | Dynamic Matrix | ✅ Generated and ran |
+          | Fan-out/Fan-in | ✅ Parallel → collect |
+          | Skip CI check | ✅ Checked commit msg |
+          | Debug mode | ✅ Configurable |
+
+          ### Key Concepts Demonstrated
+          - **Dynamic matrix**: matrix generated at runtime
+          - **Fan-out**: one job spawns many parallel jobs
+          - **Fan-in**: collect results from all parallel jobs
+          - **Skip CI**: `[skip ci]` in commit message
+          - **Step summary**: this very table!
+          SUMMARY
+
+          echo "Summary written to GitHub Actions UI"

@@ -1,0 +1,178 @@
+# ================================================
+# 06-reusable-called.yml
+# REUSABLE workflow - called by other workflows
+# Author: Asim Raza - Day 41
+#
+# This workflow cannot be triggered directly
+# Only triggered when called with workflow_call
+# ================================================
+
+name: 06 - Reusable Workflow (Called)
+
+# workflow_call makes this reusable
+on:
+  workflow_call:
+    # Inputs: parameters callers pass in
+    inputs:
+      python-version:
+        description: 'Python version to use'
+        required: false
+        default: '3.11'
+        type: string
+
+      environment:
+        description: 'Target environment'
+        required: true
+        type: string
+
+      run-security-scan:
+        description: 'Whether to run security scan'
+        required: false
+        default: true
+        type: boolean
+
+      app-name:
+        description: 'Application name'
+        required: false
+        default: 'my-app'
+        type: string
+
+    # Secrets: sensitive values callers pass in
+    # caller cannot expose these in logs
+    secrets:
+      deploy-token:
+        required: false
+        description: 'Deployment authentication token'
+
+    # Outputs: values this workflow returns to caller
+    outputs:
+      build-version:
+        description: 'The version that was built'
+        value: ${{ jobs.build.outputs.version }}
+
+      deployed-url:
+        description: 'URL of deployed application'
+        value: ${{ jobs.deploy.outputs.url }}
+
+jobs:
+
+  # ── Lint Job ──
+  lint:
+    name: 🔍 Lint (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Run linting
+        run: |
+          echo "=== Linting for ${{ inputs.app-name }} ==="
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Python: ${{ inputs.python-version }}"
+          pip install flake8 --quiet
+          echo "✅ Lint check passed"
+
+  # ── Test Job ──
+  test:
+    name: 🧪 Test (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Run tests
+        run: |
+          echo "=== Tests for ${{ inputs.app-name }} ==="
+          pip install pytest --quiet
+          echo "✅ All tests passed"
+          echo "Coverage: 87%"
+
+  # ── Optional Security Scan ──
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    if: inputs.run-security-scan == true
+    # Only runs if caller requested security scan
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Security scan
+        run: |
+          echo "=== Security scan ==="
+          echo "Scanning ${{ inputs.app-name }}"
+          echo "✅ No critical vulnerabilities"
+
+  # ── Build Job ──
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: always() && needs.test.result == 'success'
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate version
+        id: version
+        run: |
+          VERSION="${{ inputs.app-name }}-${{ inputs.environment }}-${{ github.run_number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Built version: $VERSION"
+
+      - name: Build artifact
+        run: |
+          mkdir -p dist
+          echo "App: ${{ inputs.app-name }}" > dist/manifest.txt
+          echo "Version: ${{ steps.version.outputs.version }}" >> dist/manifest.txt
+          echo "Environment: ${{ inputs.environment }}" >> dist/manifest.txt
+          echo "Built at: $(date -u)" >> dist/manifest.txt
+          cat dist/manifest.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.app-name }}-${{ inputs.environment }}
+          path: dist/
+          retention-days: 3
+
+  # ── Deploy Job ──
+  deploy:
+    name: 🚀 Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: build
+
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.app-name }}-${{ inputs.environment }}
+          path: ./artifact
+
+      - name: Deploy
+        id: deploy
+        run: |
+          echo "=== Deploying to ${{ inputs.environment }} ==="
+          cat ./artifact/manifest.txt
+          echo ""
+          URL="https://${{ inputs.app-name }}-${{ inputs.environment }}.example.com"
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "✅ Deployed to: $URL"
+          echo "Token provided: ${{ secrets.deploy-token != '' }}"

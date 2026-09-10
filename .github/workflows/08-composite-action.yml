@@ -1,0 +1,82 @@
+# ================================================
+# 08-composite-action.yml
+# Using Composite Actions
+# Author: Asim Raza - Day 41
+# ================================================
+
+name: 08 - Composite Action Demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/08-composite-action.yml'
+      - '.github/actions/**'
+  workflow_dispatch:
+
+jobs:
+
+  job-without-composite:
+    name: ❌ Without Composite (Repetitive)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Repeating the same 4 steps in every job:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+      - run: pip install -r requirements.txt --quiet 2>/dev/null || true
+      # ↑ These 3 steps repeated in every job = maintenance nightmare
+
+      - name: Actual work
+        run: echo "Finally doing actual work after setup..."
+
+  job-with-composite:
+    name: ✅ With Composite (Clean)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ONE step replaces the 3 repeated steps above
+      - name: Setup Python project
+        id: setup
+        uses: ./.github/actions/setup-python-project
+        # uses: local action (relative path)
+        # ./.github/actions/action-name/action.yml
+        with:
+          python-version: '3.11'
+          install-dev: 'false'
+
+      - name: Use setup outputs
+        run: |
+          echo "Python: ${{ steps.setup.outputs.python-version }}"
+          echo "Cache hit: ${{ steps.setup.outputs.cache-hit }}"
+
+      - name: Actual work
+        run: echo "Clean! Setup in one line!"
+
+  # Same composite used in multiple jobs
+  job-with-composite-211:
+    name: ✅ Python 3.10 with Composite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python-project
+        with:
+          python-version: '3.10'
+      - run: python --version
+
+  job-with-composite-312:
+    name: ✅ Python 3.12 with Composite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-python-project
+        with:
+          python-version: '3.12'
+      - run: python --version

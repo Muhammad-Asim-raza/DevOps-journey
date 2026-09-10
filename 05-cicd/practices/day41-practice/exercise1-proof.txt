@@ -1,0 +1,20 @@
+=== REUSABLE WORKFLOWS ===
+--- Reusable workflow (called) ---
+06-reusable-called.yml:
+  Triggered by: workflow_call ONLY
+  Inputs: python-version, environment, run-security-scan, app-name
+  Secrets: deploy-token
+  Outputs: build-version, deployed-url
+  Jobs: lint → test → security (optional) → build → deploy
+
+07-reusable-caller.yml:
+  Triggered by: push to main
+  Calls: 06-reusable-called.yml
+  Passes: inputs and secrets
+  Reads: outputs from called workflow
+  Runs: staging then production pipeline
+
+Benefits:
+  One definition, called from any repo
+  Update once → all callers updated
+  DRY principle for CI/CD

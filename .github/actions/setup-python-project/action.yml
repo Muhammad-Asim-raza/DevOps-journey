@@ -1,0 +1,91 @@
+# ================================================
+# action.yml - Composite Action
+# Setup Python Project (reusable steps)
+# Author: Asim Raza - Day 41
+# ================================================
+
+name: 'Setup Python Project'
+description: 'Setup Python, install deps, configure caching'
+author: 'Asim Raza'
+
+# Inputs this action accepts
+inputs:
+  python-version:
+    description: 'Python version'
+    required: false
+    default: '3.11'
+
+  requirements-file:
+    description: 'Path to requirements file'
+    required: false
+    default: 'requirements.txt'
+
+  install-dev:
+    description: 'Install dev dependencies'
+    required: false
+    default: 'false'
+
+# Outputs this action produces
+outputs:
+  python-version:
+    description: 'Installed Python version'
+    value: ${{ steps.setup.outputs.python-version }}
+
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+# runs: composite = this is a composite action
+runs:
+  using: composite
+  # using: composite tells GitHub this action
+  # runs steps in the caller's job runner
+  # (not a separate runner like docker actions)
+
+  steps:
+
+    - name: Set up Python
+      id: setup
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Cache pip dependencies
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ inputs.python-version }}-${{ hashFiles(inputs.requirements-file) }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ inputs.python-version }}-
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      shell: bash
+      # shell: REQUIRED in composite actions
+      run: |
+        echo "Installing from: ${{ inputs.requirements-file }}"
+        if [ -f "${{ inputs.requirements-file }}" ]; then
+          pip install --upgrade pip --quiet
+          pip install -r ${{ inputs.requirements-file }} --quiet
+          echo "✅ Dependencies installed"
+        else
+          echo "ℹ️  No requirements file found, skipping"
+        fi
+
+    - name: Install dev dependencies
+      if: inputs.install-dev == 'true'
+      shell: bash
+      run: |
+        if [ -f "requirements-dev.txt" ]; then
+          pip install -r requirements-dev.txt --quiet
+          echo "✅ Dev dependencies installed"
+        fi
+
+    - name: Show environment info
+      shell: bash
+      run: |
+        echo "=== Python Environment ==="
+        python --version
+        pip --version
+        echo "Cache hit: ${{ steps.cache.outputs.cache-hit }}"

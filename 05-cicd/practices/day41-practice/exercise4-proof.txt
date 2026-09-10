@@ -1,0 +1,24 @@
+=== ADVANCED PATTERNS ===
+Pattern 1: Dynamic Matrix
+- generate-matrix job outputs JSON string
+- test-dynamic reads it with fromJSON()
+- matrix built at runtime (not hardcoded)
+- Different matrix for main vs feature branches
+
+Pattern 2: Fan-out / Fan-in
+- Fan-out: one trigger → many parallel jobs
+  (generate-matrix → test-dynamic matrix)
+- Fan-in: many parallel → one collector
+  (all test-dynamic → collect-results)
+- collect-results uses: needs: test-dynamic
+  with: if: always()
+
+Pattern 3: Skip CI
+- [skip ci] in commit message skips pipeline
+- Check with: github.event.head_commit.message
+- Useful for: README updates, documentation
+
+Pattern 4: GITHUB_STEP_SUMMARY
+- Write markdown to $GITHUB_STEP_SUMMARY
+- Appears in GitHub Actions job summary tab
+- Tables, headers, lists all supported

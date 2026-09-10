@@ -1,0 +1,71 @@
+# ================================================
+# 07-reusable-caller.yml
+# CALLER workflow - calls the reusable workflow
+# Author: Asim Raza - Day 41
+# ================================================
+
+name: 07 - Reusable Workflow (Caller)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/07-reusable-caller.yml'
+  workflow_dispatch:
+    inputs:
+      target-env:
+        description: 'Environment to deploy'
+        type: choice
+        default: staging
+        options: [staging, production]
+
+jobs:
+
+  # ── Call reusable workflow for staging ──
+  staging-pipeline:
+    name: 📦 Staging Pipeline
+    uses: ./.github/workflows/06-reusable-called.yml
+    # uses: PATH/TO/WORKFLOW.yml
+    # For same repo: ./.github/workflows/name.yml
+    # For other repo: owner/repo/.github/workflows/name.yml@branch
+    with:
+      python-version: '3.11'
+      environment: staging
+      run-security-scan: true
+      app-name: devops-journey-app
+    secrets:
+      deploy-token: ${{ secrets.DEPLOY_TOKEN }}
+      # Pass secrets from this repo to called workflow
+
+  # ── Use outputs from called workflow ──
+  post-staging:
+    name: 📊 After Staging
+    runs-on: ubuntu-latest
+    needs: staging-pipeline
+    if: success()
+
+    steps:
+      - name: Use reusable workflow outputs
+        run: |
+          echo "=== Staging Results ==="
+          echo "Build version: ${{ needs.staging-pipeline.outputs.build-version }}"
+          echo "Deployed URL: ${{ needs.staging-pipeline.outputs.deployed-url }}"
+          echo "Ready for production promotion!"
+
+  # ── Production only on main branch ──
+  production-pipeline:
+    name: 🌟 Production Pipeline
+    uses: ./.github/workflows/06-reusable-called.yml
+    needs: post-staging
+    if: |
+      github.ref_name == 'main' &&
+      (github.event.inputs.target-env == 'production' ||
+       github.event_name == 'push')
+    with:
+      python-version: '3.11'
+      environment: production
+      run-security-scan: true
+      app-name: devops-journey-app
+    secrets:
+      deploy-token: ${{ secrets.DEPLOY_TOKEN }}

@@ -1,0 +1,21 @@
+=== COMPOSITE ACTIONS ===
+Composite Action: .github/actions/setup-python-project/action.yml
+
+What it does:
+1. actions/setup-python@v4 (install Python)
+2. actions/cache@v3 (cache pip packages)
+3. pip install -r requirements.txt
+4. Optional: pip install -r requirements-dev.txt
+
+Inputs: python-version, requirements-file, install-dev
+Outputs: python-version, cache-hit
+
+Used in workflow as:
+- uses: ./.github/actions/setup-python-project
+  with:
+    python-version: '3.11'
+
+Benefits:
+- DRY: setup logic defined once
+- Consistent: same setup in every job
+- Easy to update: change one file

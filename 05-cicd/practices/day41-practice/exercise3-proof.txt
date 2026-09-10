@@ -1,0 +1,25 @@
+=== DEPLOYMENT ENVIRONMENTS ===
+GitHub Environments:
+
+staging:
+  - Auto-deploy (no approval)
+  - Environment-specific secrets
+  - Deployment URL tracking
+  - History in GitHub UI
+
+production:
+  - REQUIRED: reviewer must approve
+  - Optional wait timer (5 min)
+  - Environment-specific secrets
+  - Full deployment audit trail
+
+Workflow pattern:
+build → deploy-staging → (approval) → deploy-production
+
+Key:
+environment:
+  name: staging
+  url: https://staging.example.com
+
+The url: appears as clickable link
+in GitHub deployment history
