@@ -1,0 +1,205 @@
+# ================================================
+# 14-env-configuration.yml
+# Multi-Environment Configuration Management
+# Author: Asim Raza - Day 42
+# ================================================
+
+name: 14 - Environment Configuration
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/14-env-configuration.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        default: staging
+        options: [dev, staging, production]
+
+jobs:
+
+  # ── Determine configuration based on branch ──
+  determine-config:
+    name: 🔧 Determine Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.config.outputs.environment }}
+      deploy-url: ${{ steps.config.outputs.deploy-url }}
+      replicas: ${{ steps.config.outputs.replicas }}
+      log-level: ${{ steps.config.outputs.log-level }}
+      should-deploy: ${{ steps.config.outputs.should-deploy }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set configuration based on trigger
+        id: config
+        run: |
+          # Determine environment from branch/input
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ inputs.environment }}"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            ENV="production"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            ENV="staging"
+          else
+            ENV="dev"
+          fi
+
+          # Environment-specific configuration
+          case "$ENV" in
+            dev)
+              DEPLOY_URL="https://dev.example.com"
+              REPLICAS="1"
+              LOG_LEVEL="DEBUG"
+              SHOULD_DEPLOY="false"
+              ;;
+            staging)
+              DEPLOY_URL="https://staging.example.com"
+              REPLICAS="2"
+              LOG_LEVEL="INFO"
+              SHOULD_DEPLOY="true"
+              ;;
+            production)
+              DEPLOY_URL="https://app.example.com"
+              REPLICAS="5"
+              LOG_LEVEL="WARNING"
+              SHOULD_DEPLOY="true"
+              ;;
+          esac
+
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "deploy-url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "replicas=$REPLICAS" >> $GITHUB_OUTPUT
+          echo "log-level=$LOG_LEVEL" >> $GITHUB_OUTPUT
+          echo "should-deploy=$SHOULD_DEPLOY" >> $GITHUB_OUTPUT
+
+          echo "=== Configuration Set ==="
+          echo "Environment: $ENV"
+          echo "URL: $DEPLOY_URL"
+          echo "Replicas: $REPLICAS"
+          echo "Log Level: $LOG_LEVEL"
+
+  # ── Apply configuration ──
+  apply-config:
+    name: 🚀 Apply ${{ needs.determine-config.outputs.environment }} Config
+    runs-on: ubuntu-latest
+    needs: determine-config
+    if: needs.determine-config.outputs.should-deploy == 'true'
+
+    environment: ${{ needs.determine-config.outputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show resolved configuration
+        env:
+          # Environment-specific secret (different per environment)
+          DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+        run: |
+          echo "=== Deploying to: ${{ needs.determine-config.outputs.environment }} ==="
+          echo ""
+          echo "Configuration:"
+          echo "  URL:       ${{ needs.determine-config.outputs.deploy-url }}"
+          echo "  Replicas:  ${{ needs.determine-config.outputs.replicas }}"
+          echo "  Log Level: ${{ needs.determine-config.outputs.log-level }}"
+          echo ""
+          echo "Secrets:"
+          echo "  DB_CONNECTION: ${DB_CONNECTION:+[SET]}"
+          echo "  REDIS_URL:     ${REDIS_URL:+[SET]}"
+          echo ""
+          echo "Applying configuration..."
+
+      - name: Create environment config file
+        env:
+          DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+        run: |
+          # Generate environment config
+          cat > app-config.yml << YAML
+          app:
+            name: devops-platform
+            environment: ${{ needs.determine-config.outputs.environment }}
+            replicas: ${{ needs.determine-config.outputs.replicas }}
+            log_level: ${{ needs.determine-config.outputs.log-level }}
+            url: ${{ needs.determine-config.outputs.deploy-url }}
+          YAML
+
+          echo "Generated app-config.yml:"
+          cat app-config.yml
+          echo ""
+          echo "Note: Secrets are injected at runtime"
+          echo "NOT stored in this config file"
+
+  # ── Show how to handle multiple config files ──
+  config-files:
+    name: 📁 Config Files Pattern
+    runs-on: ubuntu-latest
+    needs: determine-config
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Environment config file strategy
+        run: |
+          echo "=== Config File Best Practice ==="
+          echo ""
+          echo "Repository structure:"
+          echo "  config/"
+          echo "    base.yml           ← shared config"
+          echo "    dev.yml            ← dev overrides"
+          echo "    staging.yml        ← staging overrides"
+          echo "    production.yml     ← prod overrides"
+          echo ""
+          echo "In CI/CD:"
+          echo "  ENV=${{ needs.determine-config.outputs.environment }}"
+          echo "  Merge: base.yml + \${ENV}.yml"
+          echo ""
+          echo "Rule: NO secrets in these files"
+          echo "      Only non-sensitive config"
+
+      - name: Create example config files
+        run: |
+          mkdir -p config
+
+          cat > config/base.yml << 'EOF'
+          # Base configuration (non-sensitive)
+          app:
+            name: devops-platform
+            timeout: 30
+            max_retries: 3
+          
+          features:
+            caching: true
+            rate_limiting: true
+          EOF
+
+          cat > config/staging.yml << 'EOF'
+          # Staging overrides
+          app:
+            log_level: INFO
+            debug: false
+            replicas: 2
+          
+          features:
+            synthetic_data: true
+          EOF
+
+          cat > config/production.yml << 'EOF'
+          # Production overrides
+          app:
+            log_level: WARNING
+            debug: false
+            replicas: 5
+          
+          features:
+            synthetic_data: false
+          EOF
+
+          echo "Config files created:"
+          ls -la config/
