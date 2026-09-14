@@ -1,0 +1,16 @@
+=== OIDC AUTHENTICATION ===
+Workflow 13 (oidc-auth.yml):
+Traditional: Store AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+Problems: never expire, must rotate manually, if leaked = problem
+
+OIDC: GitHub issues JWT token per run
+AWS IAM verifies token authenticity
+Issues temporary credentials (1 hour)
+Credentials expire automatically
+
+No secrets stored!
+Configured in Phase 6 (AWS Days 53-70)
+
+permissions:
+  id-token: write  ← enables OIDC
+  contents: read

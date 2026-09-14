@@ -1,0 +1,142 @@
+# ================================================
+# 13-oidc-auth.yml
+# OIDC (OpenID Connect) Authentication
+# Author: Asim Raza - Day 42
+#
+# OIDC = Connect to cloud providers WITHOUT
+# storing long-lived credentials as secrets!
+# The future of secure CI/CD
+# ================================================
+
+name: 13 - OIDC Authentication
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/13-oidc-auth.yml'
+  workflow_dispatch:
+
+# OIDC requires id-token: write permission
+permissions:
+  id-token: write
+  # Allows GitHub to issue an OIDC token
+  # This token proves: "this is GitHub Actions
+  # running in repo X, on branch Y"
+
+  contents: read
+
+jobs:
+
+  # ── OIDC with AWS ──
+  aws-oidc:
+    name: 🔑 AWS via OIDC (No Static Keys!)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: OIDC concept explanation
+        run: |
+          echo "=== OIDC: How It Works ==="
+          echo ""
+          echo "Traditional (BAD):"
+          echo "  Store AWS_ACCESS_KEY_ID in GitHub Secrets"
+          echo "  Store AWS_SECRET_ACCESS_KEY in GitHub Secrets"
+          echo "  Keys never expire"
+          echo "  If GitHub is compromised: keys stolen"
+          echo "  Must rotate manually"
+          echo ""
+          echo "OIDC (GOOD):"
+          echo "  GitHub generates a JWT token per run"
+          echo "  Token contains: repo, branch, actor, workflow"
+          echo "  AWS IAM verifies: 'is this really GitHub?'"
+          echo "  AWS issues temporary credentials (1 hour)"
+          echo "  Token expires: no cleanup needed"
+          echo "  Credentials stolen: already expired"
+          echo ""
+          echo "No secrets stored anywhere!"
+
+      # This is the actual OIDC login action
+      # Commented out because we need AWS setup
+      # In production: uncomment and configure
+
+      # - name: Configure AWS credentials via OIDC
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: arn:aws:iam::123456789012:role/github-actions-role
+      #     # role-to-assume: IAM role that GitHub can assume
+      #     # The role has a trust policy allowing:
+      #     # "token.actions.githubusercontent.com"
+      #     role-session-name: GitHubActionsSession
+      #     aws-region: us-east-1
+      #
+      # After this step: AWS credentials available
+      # as environment variables temporarily
+      # They expire when the job ends
+      #
+      # - name: Use AWS (no keys stored!)
+      #   run: |
+      #     aws sts get-caller-identity
+      #     aws s3 ls
+      #     aws ecr get-login-password | docker login ...
+
+      - name: OIDC IAM Role setup guide
+        run: |
+          echo "=== Setting up OIDC with AWS ==="
+          echo ""
+          echo "Step 1: Create Identity Provider in AWS IAM"
+          echo "  Provider URL: token.actions.githubusercontent.com"
+          echo "  Audience: sts.amazonaws.com"
+          echo ""
+          echo "Step 2: Create IAM Role"
+          echo "  Trusted Entity: Web Identity"
+          echo "  Identity Provider: token.actions..."
+          echo "  Condition: repo:YOUR_ORG/YOUR_REPO:ref:refs/heads/main"
+          echo ""
+          echo "Step 3: Attach required permissions to role"
+          echo "  ECR: ecr:GetAuthorizationToken, etc."
+          echo "  S3: s3:GetObject, s3:PutObject"
+          echo "  ECS: ecs:UpdateService, etc."
+          echo ""
+          echo "Step 4: Use in workflow"
+          echo "  role-to-assume: arn:aws:iam::ACCOUNT:role/ROLE_NAME"
+          echo "  NO secrets needed!"
+          echo ""
+          echo "We configure this for real in Phase 6 (AWS)"
+
+  # ── Simulate OIDC token inspection ──
+  inspect-oidc:
+    name: 🔍 Inspect OIDC Token
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get OIDC token (educational)
+        run: |
+          echo "=== OIDC Token Claims ==="
+          echo ""
+          echo "GitHub OIDC token contains claims:"
+          echo "  iss: https://token.actions.githubusercontent.com"
+          echo "  repository: ${{ github.repository }}"
+          echo "  ref: ${{ github.ref }}"
+          echo "  actor: ${{ github.actor }}"
+          echo "  workflow: ${{ github.workflow }}"
+          echo "  event_name: ${{ github.event_name }}"
+          echo "  job_workflow_ref: ${{ github.job }}"
+          echo ""
+          echo "AWS IAM Trust Policy verifies these claims:"
+          echo '  "Condition": {'
+          echo '    "StringLike": {'
+          echo '      "token.actions.githubusercontent.com:sub":'
+          echo '      "repo:org/repo:ref:refs/heads/main"'
+          echo '    }'
+          echo '  }'
+          echo ""
+          echo "Only THIS repo on THIS branch can assume the role!"

@@ -1,0 +1,12 @@
+=== ENVIRONMENT CONFIGURATION ===
+Workflow 14 (env-configuration.yml):
+- Branch-based environment detection
+- dev / staging / production config
+- Different replicas per environment
+- Different log levels per environment
+- Environment-specific secrets (same name, diff values)
+- Config file strategy documented
+
+Pattern:
+determine-config → outputs environment/replicas/etc
+apply-config → reads outputs, uses env secrets

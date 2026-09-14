@@ -1,0 +1,18 @@
+=== SECRETS SCANNING ===
+Workflow 15 (secrets-scanning.yml):
+- Pattern scanning for common secrets
+  (AWS keys, GitHub tokens, passwords)
+- Sensitive file detection (.env, *.pem)
+- .gitignore coverage verification
+- GITHUB_STEP_SUMMARY security report
+
+Patterns scanned:
+AKIA[0-9A-Z]{16}     = AWS Access Key
+gh[pousr]_[...]{36}  = GitHub Token
+-----BEGIN * PRIVATE  = Private Key
+[Pp]assword\s*[=:]   = Generic password
+
+Tools mentioned:
+- gitleaks (open source)
+- GitHub Secret Scanning (built-in)
+- GitGuardian (commercial)

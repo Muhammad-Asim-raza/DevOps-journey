@@ -1,0 +1,18 @@
+=== SECRETS MANAGEMENT ===
+Workflow 12 (secrets-management.yml):
+- Secrets accessed via: ${{ secrets.NAME }}
+- Automatically masked in logs
+- Job-level, step-level env vars
+- Built-in GITHUB_TOKEN (no setup)
+- Dynamic masking: ::add-mask::VALUE
+- Safe patterns documented
+
+Secrets Hierarchy:
+Organization → Repository → Environment
+Precedence: Environment wins
+
+Never do:
+- Hardcode in YAML
+- Echo secret values directly
+- Store in artifact files
+- Commit .env files
