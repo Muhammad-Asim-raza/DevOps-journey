@@ -1,0 +1,88 @@
+=== TEST APP SETUP ===
+--- Test results ---
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/asim-raza/DevOps-journey/05-cicd/practices/day43-practice/test-app
+configfile: pytest.ini
+plugins: cov-7.1.0, xdist-3.8.0
+collecting ... collected 59 items
+
+tests/test_calculator.py::TestCalculatorBasic::test_add_positive_numbers PASSED [  1%]
+tests/test_calculator.py::TestCalculatorBasic::test_add_negative_numbers PASSED [  3%]
+tests/test_calculator.py::TestCalculatorBasic::test_add_zero PASSED      [  5%]
+tests/test_calculator.py::TestCalculatorBasic::test_add_floats PASSED    [  6%]
+tests/test_calculator.py::TestCalculatorBasic::test_subtract_positive PASSED [  8%]
+tests/test_calculator.py::TestCalculatorBasic::test_subtract_negative_result PASSED [ 10%]
+tests/test_calculator.py::TestCalculatorBasic::test_multiply_positive PASSED [ 11%]
+tests/test_calculator.py::TestCalculatorBasic::test_multiply_by_zero PASSED [ 13%]
+tests/test_calculator.py::TestCalculatorBasic::test_multiply_negative PASSED [ 15%]
+tests/test_calculator.py::TestCalculatorBasic::test_divide_normal PASSED [ 16%]
+tests/test_calculator.py::TestCalculatorBasic::test_divide_by_zero_raises PASSED [ 18%]
+tests/test_calculator.py::TestCalculatorBasic::test_divide_float_result PASSED [ 20%]
+tests/test_calculator.py::TestCalculatorBasic::test_power_positive PASSED [ 22%]
+tests/test_calculator.py::TestCalculatorBasic::test_power_zero_exponent PASSED [ 23%]
+tests/test_calculator.py::TestCalculatorBasic::test_power_one_base PASSED [ 25%]
+tests/test_calculator.py::TestCalculatorHistory::test_history_starts_empty PASSED [ 27%]
+tests/test_calculator.py::TestCalculatorHistory::test_history_records_operations PASSED [ 28%]
+tests/test_calculator.py::TestCalculatorHistory::test_history_format PASSED [ 30%]
+tests/test_calculator.py::TestCalculatorHistory::test_clear_history PASSED [ 32%]
+tests/test_calculator.py::TestCalculatorHistory::test_get_last_result PASSED [ 33%]
+tests/test_calculator.py::TestCalculatorHistory::test_get_last_result_no_history PASSED [ 35%]
+tests/test_calculator.py::TestCalculatorHistory::test_history_returns_copy PASSED [ 37%]
+tests/test_calculator.py::TestCalculatorEdgeCases::test_large_numbers PASSED [ 38%]
+tests/test_calculator.py::TestCalculatorEdgeCases::test_very_small_floats PASSED [ 40%]
+tests/test_calculator.py::TestCalculatorEdgeCases::test_chain_operations PASSED [ 42%]
+tests/test_validator.py::TestEmailValidation::test_valid_email_simple PASSED [ 44%]
+tests/test_validator.py::TestEmailValidation::test_valid_email_subdomain PASSED [ 45%]
+tests/test_validator.py::TestEmailValidation::test_valid_email_plus PASSED [ 47%]
+tests/test_validator.py::TestEmailValidation::test_invalid_no_at PASSED  [ 49%]
+tests/test_validator.py::TestEmailValidation::test_invalid_no_domain PASSED [ 50%]
+tests/test_validator.py::TestEmailValidation::test_invalid_empty PASSED  [ 52%]
+tests/test_validator.py::TestEmailValidation::test_invalid_not_string PASSED [ 54%]
+tests/test_validator.py::TestEmailValidation::test_invalid_spaces PASSED [ 55%]
+tests/test_validator.py::TestIPValidation::test_valid_ip_loopback PASSED [ 57%]
+tests/test_validator.py::TestIPValidation::test_valid_ip_broadcast PASSED [ 59%]
+tests/test_validator.py::TestIPValidation::test_valid_ip_zero PASSED     [ 61%]
+tests/test_validator.py::TestIPValidation::test_invalid_out_of_range PASSED [ 62%]
+tests/test_validator.py::TestIPValidation::test_invalid_too_few_octets PASSED [ 64%]
+tests/test_validator.py::TestIPValidation::test_invalid_letters PASSED   [ 66%]
+tests/test_validator.py::TestIPValidation::test_invalid_not_string PASSED [ 67%]
+tests/test_validator.py::TestPortValidation::test_valid_http PASSED      [ 69%]
+tests/test_validator.py::TestPortValidation::test_valid_https PASSED     [ 71%]
+tests/test_validator.py::TestPortValidation::test_valid_max PASSED       [ 72%]
+tests/test_validator.py::TestPortValidation::test_valid_min PASSED       [ 74%]
+tests/test_validator.py::TestPortValidation::test_invalid_zero PASSED    [ 76%]
+tests/test_validator.py::TestPortValidation::test_invalid_too_large PASSED [ 77%]
+tests/test_validator.py::TestPortValidation::test_valid_string_number PASSED [ 79%]
+tests/test_validator.py::TestPortValidation::test_invalid_letters PASSED [ 81%]
+tests/test_validator.py::TestSanitizeString::test_normal_string PASSED   [ 83%]
+tests/test_validator.py::TestSanitizeString::test_truncation PASSED      [ 84%]
+tests/test_validator.py::TestSanitizeString::test_custom_max_length PASSED [ 86%]
+tests/test_validator.py::TestSanitizeString::test_not_string_raises PASSED [ 88%]
+tests/test_validator.py::TestSanitizeString::test_removes_null_bytes PASSED [ 89%]
+tests/test_validator.py::TestURLValidation::test_valid_http PASSED       [ 91%]
+tests/test_validator.py::TestURLValidation::test_valid_https PASSED      [ 93%]
+tests/test_validator.py::TestURLValidation::test_valid_with_path PASSED  [ 94%]
+tests/test_validator.py::TestURLValidation::test_invalid_no_scheme PASSED [ 96%]
+tests/test_validator.py::TestURLValidation::test_invalid_ftp PASSED      [ 98%]
+tests/test_validator.py::TestURLValidation::test_invalid_not_string PASSED [100%]
+
+============================== 59 passed in 0.10s ==============================
+
+--- Coverage ---
+tests/test_calculator.py .........................                       [ 42%]
+tests/test_validator.py ..................................               [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.3-final-0 ________________
+
+Name                  Stmts   Miss  Cover   Missing
+---------------------------------------------------
+src/__init__.py           1      0   100%
+src/calculator.py        34      0   100%
+src/string_utils.py      27     27     0%   8-50
+src/validator.py         33      0   100%
+---------------------------------------------------
+TOTAL                    95     27    72%
+============================== 59 passed in 0.28s ==============================
