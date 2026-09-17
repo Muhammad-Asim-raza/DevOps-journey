@@ -1,0 +1,18 @@
+=== CACHING STRATEGY ===
+Cache methods:
+1. Built-in: setup-python with cache: pip
+   Simplest, recommended default
+
+2. Manual actions/cache@v3:
+   path: ~/.cache/pip
+   key: pip-OS-hash(requirements.txt)
+   restore-keys: pip-OS-
+
+3. Docker: cache-from: type=gha
+   Caches Docker layers between builds
+
+Key principles:
+- hashFiles() for dependency files
+- restore-keys as fallback
+- Cache invalidates when key changes
+- GitHub: 10GB per repo limit

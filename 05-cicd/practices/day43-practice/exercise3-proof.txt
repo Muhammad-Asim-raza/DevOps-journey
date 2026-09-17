@@ -1,0 +1,11 @@
+=== QUALITY GATES ===
+Quality gates implemented:
+Gate 1: Lint (0 errors allowed)
+Gate 2: Coverage >= 80%
+Gate 3: Test count >= 10
+Gate 4: Complexity < threshold (warning)
+
+Pipeline fails if Gate 1, 2, or 3 fail.
+Complexity is warning only.
+
+GITHUB_STEP_SUMMARY shows results table.

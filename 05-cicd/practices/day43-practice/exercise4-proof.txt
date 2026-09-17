@@ -1,0 +1,14 @@
+=== PARALLEL TESTING ===
+Strategy 1: pytest-xdist (-n auto)
+  Same runner, parallel processes
+  -n auto = detect CPU count automatically
+  Best for: medium test suites
+
+Strategy 2: Matrix runners
+  Different jobs for different test groups
+  True parallel (different VMs)
+  Best for: large test suites, different envs
+
+Fan-in: collect job waits for all
+  needs: [parallel-same-job, parallel-matrix]
+  if: always()

@@ -1,0 +1,89 @@
+============================================
+   BUILD AND TEST AUTOMATION REFERENCE
+   Author: Asim Raza - Day 43
+============================================
+
+[ TEST PYRAMID ]
+  Unit Tests (70%):  fast, isolated, many
+  Integration (20%): medium, multiple components
+  E2E Tests (10%):   slow, full system, few
+
+  CI trigger:
+  Every push     → unit tests (fast gate)
+  PR to main     → unit + integration
+  Merge to main  → all including E2E
+
+[ PYTEST COMMANDS ]
+  pytest tests/                          basic
+  pytest tests/ -v                       verbose
+  pytest tests/ -n auto                  parallel
+  pytest tests/ --cov=src                coverage
+  pytest tests/ --cov-fail-under=80      coverage gate
+  pytest tests/ --junit-xml=results.xml  CI reports
+  pytest tests/ --html=report.html       HTML report
+  pytest tests/ -k 'test_add'            filter tests
+  pytest tests/ -m unit                  by marker
+  pytest tests/ --tb=short               short tracebacks
+
+[ COVERAGE REPORTS ]
+  --cov=src                 measure src/ directory
+  --cov-report=term-missing show uncovered lines
+  --cov-report=xml          for SonarQube/Codecov
+  --cov-report=html         human-readable
+  --cov-fail-under=80       fail if below 80%
+
+[ QUALITY GATES ]
+  Coverage minimum: 80% (adjust per team)
+  Lint errors: 0 (strict)
+  Test count: depends on project size
+  Complexity: radon cc -n C
+
+  All gates must pass before:
+  - Merging to main branch
+  - Building Docker image
+  - Deploying to staging
+
+[ CACHING STRATEGY ]
+  Python (recommended):
+  - uses: actions/setup-python@v4
+    with:
+      cache: pip
+
+  Manual cache:
+  key: pip-${{ hashFiles('requirements.txt') }}
+  restore-keys: pip-
+
+  Docker layers:
+  cache-from: type=gha
+  cache-to: type=gha,mode=max
+
+[ PARALLEL TESTING ]
+  Same job (xdist):
+  pytest -n auto    # use all CPUs
+  pytest -n 4       # use 4 workers
+
+  Different jobs (matrix):
+  strategy:
+    matrix:
+      test-group: [unit, integration, e2e]
+
+  Collect results:
+  needs: [unit, integration, e2e]
+  if: always()
+
+[ ARTIFACTS ]
+  Upload:
+  - uses: actions/upload-artifact@v3
+    with:
+      name: test-results
+      path: results.xml
+      retention-days: 7
+
+  Download:
+  - uses: actions/download-artifact@v3
+    with:
+      name: test-results
+
+============================================
+   REFERENCE COMPLETE
+============================================

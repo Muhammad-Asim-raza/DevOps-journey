@@ -1,0 +1,222 @@
+# ================================================
+# 18-quality-gates.yml
+# Quality Gates - Automatic Pass/Fail Thresholds
+# Author: Asim Raza - Day 43
+# ================================================
+
+name: 18 - Quality Gates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/18-quality-gates.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Quality thresholds
+env:
+  MIN_COVERAGE: '80'
+  MAX_COMPLEXITY: '10'
+  MIN_TEST_COUNT: '10'
+  MAX_LINT_ERRORS: '0'
+
+jobs:
+
+  quality-gates:
+    name: 🚦 Quality Gates
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install tools
+        run: |
+          pip install \
+            pytest pytest-cov \
+            flake8 radon \
+            --quiet
+          # radon = code complexity analyzer
+
+      - name: Gate 1 — Lint (zero errors allowed)
+        id: lint-gate
+        run: |
+          echo "=== Gate 1: Lint ==="
+          ERROR_COUNT=$(flake8 \
+            05-cicd/practices/day43-practice/test-app/src/ \
+            --max-line-length=88 \
+            --count \
+            --statistics \
+            2>/dev/null | tail -1 | \
+            grep -oE '^[0-9]+' || echo "0")
+
+          echo "Lint errors: $ERROR_COUNT"
+          echo "Maximum allowed: ${{ env.MAX_LINT_ERRORS }}"
+
+          if [ "${ERROR_COUNT:-0}" -gt \
+               "${{ env.MAX_LINT_ERRORS }}" ]; then
+            echo "❌ Gate 1 FAILED: $ERROR_COUNT lint errors"
+            echo "lint-passed=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Gate 1 PASSED: No lint errors"
+            echo "lint-passed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gate 2 — Coverage (minimum 80%)
+        id: coverage-gate
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          echo ""
+          echo "=== Gate 2: Coverage ==="
+
+          # Run tests with coverage
+          python -m pytest tests/ \
+            --cov=src \
+            --cov-report=xml:coverage.xml \
+            -q 2>&1 | tail -5
+
+          # Extract coverage percentage
+          COVERAGE=$(python3 -c "
+import xml.etree.ElementTree as ET
+try:
+    tree = ET.parse('coverage.xml')
+    rate = float(tree.getroot().get('line-rate', 0)) * 100
+    print(f'{rate:.1f}')
+except:
+    print('0')
+          ")
+
+          echo "Coverage: ${COVERAGE}%"
+          echo "Minimum: ${{ env.MIN_COVERAGE }}%"
+
+          # Use awk for float comparison (bc not always available)
+          PASSES=$(awk \
+            "BEGIN{print ($COVERAGE >= ${{ env.MIN_COVERAGE }}) ? 1 : 0}")
+
+          if [ "$PASSES" -eq 1 ]; then
+            echo "✅ Gate 2 PASSED: ${COVERAGE}% >= ${{ env.MIN_COVERAGE }}%"
+            echo "coverage-passed=true" >> $GITHUB_OUTPUT
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Gate 2 FAILED: ${COVERAGE}% < ${{ env.MIN_COVERAGE }}%"
+            echo "coverage-passed=false" >> $GITHUB_OUTPUT
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gate 3 — Test Count (minimum 10 tests)
+        id: count-gate
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          echo ""
+          echo "=== Gate 3: Test Count ==="
+
+          TEST_COUNT=$(python -m pytest tests/ \
+            --collect-only -q 2>/dev/null | \
+            grep "selected" | \
+            grep -oE '^[0-9]+' || echo "0")
+
+          echo "Tests found: $TEST_COUNT"
+          echo "Minimum required: ${{ env.MIN_TEST_COUNT }}"
+
+          if [ "${TEST_COUNT:-0}" -ge \
+               "${{ env.MIN_TEST_COUNT }}" ]; then
+            echo "✅ Gate 3 PASSED: $TEST_COUNT tests"
+            echo "count-passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Gate 3 FAILED: Only $TEST_COUNT tests"
+            echo "count-passed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gate 4 — Complexity Check
+        id: complexity-gate
+        run: |
+          echo ""
+          echo "=== Gate 4: Cyclomatic Complexity ==="
+
+          # radon cc = cyclomatic complexity
+          # -n C = only show C+ grade (complex)
+          COMPLEX=$(radon cc \
+            05-cicd/practices/day43-practice/test-app/src/ \
+            -n C \
+            2>/dev/null || echo "")
+
+          if [ -z "$COMPLEX" ]; then
+            echo "✅ Gate 4 PASSED: No overly complex functions"
+            echo "complexity-passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  Gate 4 WARNING: Complex functions found:"
+            echo "$COMPLEX"
+            echo "complexity-passed=true" >> $GITHUB_OUTPUT
+            # Warning only, not blocking
+          fi
+
+      - name: Quality Gates Summary
+        if: always()
+        run: |
+          echo ""
+          echo "=== QUALITY GATES SUMMARY ==="
+          echo ""
+
+          LINT="${{ steps.lint-gate.outputs.lint-passed }}"
+          COVERAGE="${{ steps.coverage-gate.outputs.coverage-passed }}"
+          COUNT="${{ steps.count-gate.outputs.count-passed }}"
+          COMPLEXITY="${{ steps.complexity-gate.outputs.complexity-passed }}"
+          COV_PCT="${{ steps.coverage-gate.outputs.coverage }}"
+
+          [ "$LINT" == "true" ] && \
+            echo "✅ Gate 1: Lint - PASSED" || \
+            echo "❌ Gate 1: Lint - FAILED"
+
+          [ "$COVERAGE" == "true" ] && \
+            echo "✅ Gate 2: Coverage ${COV_PCT}% - PASSED" || \
+            echo "❌ Gate 2: Coverage ${COV_PCT}% - FAILED"
+
+          [ "$COUNT" == "true" ] && \
+            echo "✅ Gate 3: Test Count - PASSED" || \
+            echo "❌ Gate 3: Test Count - FAILED"
+
+          [ "$COMPLEXITY" == "true" ] && \
+            echo "✅ Gate 4: Complexity - PASSED" || \
+            echo "⚠️  Gate 4: Complexity - WARNING"
+
+          echo ""
+          echo "---"
+
+          # Fail if any critical gate failed
+          if [[ "$LINT" != "true" || \
+                "$COVERAGE" != "true" || \
+                "$COUNT" != "true" ]]; then
+            echo "❌ PIPELINE FAILED: Quality gates not met"
+            echo "Fix the issues above before merging"
+
+            echo "## ❌ Quality Gates Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Lint | ${LINT:-false} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Coverage | ${COVERAGE:-false} (${COV_PCT}%) |" >> $GITHUB_STEP_SUMMARY
+            echo "| Test Count | ${COUNT:-false} |" >> $GITHUB_STEP_SUMMARY
+
+            exit 1
+          else
+            echo "✅ ALL QUALITY GATES PASSED!"
+            echo "Code is ready for deployment"
+
+            echo "## ✅ All Quality Gates Passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Gate | Result |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Lint | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+            echo "| Coverage | ✅ ${COV_PCT}% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Test Count | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+            echo "| Complexity | ✅ Checked |" >> $GITHUB_STEP_SUMMARY
+          fi

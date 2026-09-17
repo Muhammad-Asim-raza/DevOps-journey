@@ -1,0 +1,196 @@
+# ================================================
+# 17-caching-strategy.yml
+# Advanced Dependency Caching
+# Author: Asim Raza - Day 43
+# ================================================
+
+name: 17 - Caching Strategy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/17-caching-strategy.yml'
+  workflow_dispatch:
+
+jobs:
+
+  # ── Python caching (pip) ──
+  python-caching:
+    name: 🐍 Python pip Caching
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Method 1: Built into setup-python action
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: pip
+          # cache: pip = automatically caches pip
+          # Uses requirements*.txt as cache key
+          # Simplest approach - recommended
+
+      - name: Install and time first run
+        run: |
+          echo "Cache hit: ${{ steps.setup.outputs.cache-hit }}"
+          time pip install pytest pytest-cov flake8 --quiet
+          echo "Installed!"
+
+      # Method 2: Manual cache (more control)
+      - name: Cache pip packages manually
+        uses: actions/cache@v3
+        id: pip-cache
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/lib/python3.11/site-packages
+          key: |
+            pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+          # restore-keys: fallbacks if exact key not found
+          # More specific → less specific order
+
+      - name: Install with cache check
+        run: |
+          if [[ "${{ steps.pip-cache.outputs.cache-hit }}" == "true" ]]; then
+            echo "✅ Cache HIT - skipping download"
+          else
+            echo "❌ Cache MISS - downloading packages"
+            pip install pytest pytest-cov --quiet
+          fi
+
+  # ── Node.js caching (npm) ──
+  node-caching:
+    name: 📦 Node.js npm Caching
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # setup-node also has built-in caching
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+          # cache: npm, yarn, or pnpm
+          # Caches node_modules automatically
+
+      # Manual npm cache for more control
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: |
+            node-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-${{ runner.os }}-
+
+      - name: Show cache statistics
+        run: |
+          echo "=== npm cache info ==="
+          npm cache verify 2>/dev/null || echo "npm not configured here"
+
+  # ── Docker layer caching ──
+  docker-layer-cache:
+    name: 🐳 Docker Build Cache
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        # Buildx supports advanced caching
+
+      # GHA (GitHub Actions) cache for Docker layers
+      # First build: slow (all layers built)
+      # Subsequent builds: fast (layers from cache)
+
+      - name: Build with layer caching
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          # Don't push - just demonstrate caching
+          cache-from: type=gha
+          # type=gha = GitHub Actions cache
+          # Reuses layers from previous builds
+          cache-to: type=gha,mode=max
+          # mode=max = cache all layers
+          # (not just final stage)
+
+          # Other cache options:
+          # type=registry,ref=myrepo/cache  (registry cache)
+          # type=local,src=/tmp/cache       (local cache)
+          # type=s3,bucket=mybucket         (S3 cache)
+
+      - name: Cache statistics explanation
+        run: |
+          echo "=== Docker Layer Caching Benefits ==="
+          echo ""
+          echo "Without cache:"
+          echo "  FROM python:3.11-slim     → always pulled"
+          echo "  RUN apt-get install       → always run"
+          echo "  RUN pip install           → always downloaded"
+          echo "  Build time: 3-5 minutes"
+          echo ""
+          echo "With type=gha cache:"
+          echo "  FROM python:3.11-slim     → from cache ✅"
+          echo "  RUN apt-get install       → from cache ✅"
+          echo "  RUN pip install           → from cache ✅"
+          echo "  Build time: 15-30 seconds"
+
+  # ── Cache invalidation strategies ──
+  cache-invalidation:
+    name: 🔄 Cache Invalidation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache key strategies
+        run: |
+          echo "=== Cache Key Strategies ==="
+          echo ""
+          echo "hashFiles strategy (recommended):"
+          echo "  key: pip-\${{ hashFiles('requirements.txt') }}"
+          echo "  → Cache busted when requirements.txt changes"
+          echo "  → Stable when only code changes"
+          echo ""
+          echo "Date-based (use sparingly):"
+          echo "  key: pip-\${{ runner.os }}-\${{ steps.date.outputs.date }}"
+          echo "  → New cache daily (always fresh)"
+          echo "  → Slower builds (re-download daily)"
+          echo ""
+          echo "Version-based:"
+          echo "  key: pip-v2-\${{ hashFiles('requirements.txt') }}"
+          echo "  → Increment v2→v3 to manually bust cache"
+          echo ""
+          echo "restore-keys (fallback chain):"
+          echo "  key: pip-\${{ runner.os }}-\${{ hashFiles('reqs.txt') }}"
+          echo "  restore-keys: |"
+          echo "    pip-\${{ runner.os }}-"
+          echo "    pip-"
+          echo "  → Tries most specific first"
+          echo "  → Falls back to less specific"
+          echo "  → Better than no cache on miss"
+
+      - name: Cache size limits
+        run: |
+          echo ""
+          echo "=== GitHub Cache Limits ==="
+          echo "Per repository: 10 GB maximum"
+          echo "Per cache entry: 5 GB maximum"
+          echo "Eviction: LRU (least recently used)"
+          echo "TTL: 7 days without access"
+          echo ""
+          echo "Best practice:"
+          echo "  - Use hashFiles for precise cache keys"
+          echo "  - Add restore-keys for fallback"
+          echo "  - Monitor cache usage in Actions UI"

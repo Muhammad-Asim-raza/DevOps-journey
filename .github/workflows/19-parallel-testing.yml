@@ -1,0 +1,130 @@
+# ================================================
+# 19-parallel-testing.yml
+# Parallel Test Execution Strategies
+# Author: Asim Raza - Day 43
+# ================================================
+
+name: 19 - Parallel Testing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/19-parallel-testing.yml'
+  workflow_dispatch:
+
+jobs:
+
+  # ── Strategy 1: pytest-xdist (parallel in same job) ──
+  parallel-same-job:
+    name: ⚡ Parallel (Same Job, -n auto)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install with xdist
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: pip install -r requirements.txt --quiet
+
+      - name: Run tests in parallel (xdist)
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          echo "=== Parallel Tests with pytest-xdist ==="
+          echo "Using: -n auto (detects CPU count)"
+          echo ""
+          # -n auto = use all available CPUs
+          # -n 4 = use exactly 4 workers
+          python -m pytest tests/ \
+            -n auto \
+            -v \
+            --tb=short
+          echo ""
+          echo "✅ Parallel test run complete"
+
+  # ── Strategy 2: Matrix across runners ──
+  parallel-matrix:
+    name: 🔀 Parallel (${{ matrix.group }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: calculator
+            test-path: tests/test_calculator.py
+          - group: validator
+            test-path: tests/test_validator.py
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: pip install -r requirements.txt --quiet
+
+      - name: Run ${{ matrix.group }} tests
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          echo "=== Running: ${{ matrix.group }} ==="
+          python -m pytest ${{ matrix.test-path }} \
+            -v \
+            --tb=short \
+            --junit-xml=results-${{ matrix.group }}.xml
+
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: results-${{ matrix.group }}
+          path: |
+            05-cicd/practices/day43-practice/test-app/results-*.xml
+          retention-days: 3
+
+  # ── Collect results from all parallel jobs ──
+  collect:
+    name: 📊 Collect All Results
+    runs-on: ubuntu-latest
+    needs: [parallel-same-job, parallel-matrix]
+    if: always()
+
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v3
+        with:
+          path: ./results
+        continue-on-error: true
+
+      - name: Aggregate results
+        run: |
+          echo "=== All Test Group Results ==="
+          echo ""
+          echo "parallel-same-job: ${{ needs.parallel-same-job.result }}"
+          echo "parallel-matrix: ${{ needs.parallel-matrix.result }}"
+          echo ""
+
+          if [ -d results ]; then
+            echo "Result files downloaded:"
+            find results -name "*.xml" | head -10
+          fi
+
+          echo ""
+          if [[ "${{ needs.parallel-same-job.result }}" == "success" && \
+                "${{ needs.parallel-matrix.result }}" == "success" ]]; then
+            echo "✅ ALL test groups PASSED"
+          else
+            echo "❌ Some test groups FAILED"
+          fi

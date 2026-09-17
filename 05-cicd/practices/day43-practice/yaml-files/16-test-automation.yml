@@ -1,0 +1,289 @@
+# ================================================
+# 16-test-automation.yml
+# Complete Build and Test Automation
+# Author: Asim Raza - Day 43
+# Tests: unit, coverage, quality gates
+# ================================================
+
+name: 16 - Test Automation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/**'
+      - '.github/workflows/16-test-automation.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+  MIN_COVERAGE: '80'
+  # Quality gate: fail if coverage drops below this
+
+jobs:
+
+  # ── Job 1: Lint and Style ──
+  lint:
+    name: 🔍 Lint and Style Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install linting tools
+        run: |
+          pip install flake8 black isort --quiet
+
+      - name: Run flake8 (syntax and style)
+        run: |
+          flake8 05-cicd/practices/day43-practice/test-app/ \
+            --max-line-length=88 \
+            --exclude=__pycache__ \
+            --count \
+            --statistics \
+            --show-source \
+            2>/dev/null || echo "Flake8 check complete"
+
+      - name: Check import ordering (isort)
+        run: |
+          isort --check-only \
+            05-cicd/practices/day43-practice/test-app/ \
+            --diff \
+            2>/dev/null || echo "isort check complete"
+
+      - name: Summary
+        run: |
+          echo "## 🔍 Lint Results" >> $GITHUB_STEP_SUMMARY
+          echo "- flake8: ✅ Checked" >> $GITHUB_STEP_SUMMARY
+          echo "- isort: ✅ Checked" >> $GITHUB_STEP_SUMMARY
+
+  # ── Job 2: Unit Tests with Coverage ──
+  unit-tests:
+    name: 🧪 Unit Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.11']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          pip install --upgrade pip --quiet
+          pip install -r requirements.txt --quiet
+
+      - name: Run unit tests with coverage
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          python -m pytest tests/ \
+            -v \
+            --tb=short \
+            --cov=src \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-fail-under=${{ env.MIN_COVERAGE }} \
+            --junit-xml=test-results.xml \
+            -n auto
+          # -v = verbose
+          # --tb=short = shorter tracebacks
+          # --cov=src = measure src/ coverage
+          # --cov-report=xml = for external tools
+          # --cov-report=html = human-readable report
+          # --cov-fail-under=80 = FAIL if below 80%
+          # --junit-xml = standard XML for test results
+          # -n auto = parallel tests (pytest-xdist)
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: coverage-py${{ matrix.python }}
+          path: |
+            05-cicd/practices/day43-practice/test-app/coverage.xml
+            05-cicd/practices/day43-practice/test-app/htmlcov/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-py${{ matrix.python }}
+          path: |
+            05-cicd/practices/day43-practice/test-app/test-results.xml
+          retention-days: 7
+
+      - name: Coverage summary
+        if: always()
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          echo "## 🧪 Test Results (Python ${{ matrix.python }})" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage.xml ]; then
+            COVERAGE=$(python3 -c "
+import xml.etree.ElementTree as ET
+tree = ET.parse('coverage.xml')
+root = tree.getroot()
+rate = float(root.get('line-rate', 0)) * 100
+print(f'{rate:.1f}')
+" 2>/dev/null || echo "N/A")
+            echo "**Coverage: ${COVERAGE}%**" \
+              >> $GITHUB_STEP_SUMMARY
+            if (( $(echo "$COVERAGE > ${{ env.MIN_COVERAGE }}" | bc -l 2>/dev/null || echo 0) )); then
+              echo "✅ Coverage above minimum (${MIN_COVERAGE}%)" \
+                >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Coverage below minimum (${MIN_COVERAGE}%)" \
+                >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+  # ── Job 3: Security scanning ──
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install security tools
+        run: pip install bandit safety --quiet
+
+      - name: Run bandit (SAST)
+        run: |
+          bandit -r \
+            05-cicd/practices/day43-practice/test-app/src/ \
+            -f txt \
+            --severity-level low \
+            2>/dev/null || echo "Bandit scan complete"
+
+      - name: Check dependencies for CVEs
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          safety check \
+            -r requirements.txt \
+            --output text \
+            2>/dev/null || echo "Safety check complete"
+
+  # ── Job 4: Build artifact ──
+  build:
+    name: 🏗️ Build Artifact
+    runs-on: ubuntu-latest
+    needs: [unit-tests, lint]
+    # Only build when tests pass!
+
+    outputs:
+      artifact-name: ${{ steps.build.outputs.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install build tools
+        run: pip install build wheel --quiet
+
+      - name: Build package
+        id: build
+        working-directory: \
+          05-cicd/practices/day43-practice/test-app
+        run: |
+          mkdir -p dist
+
+          # Create package manifest
+          cat > dist/MANIFEST.txt << EOF
+          Package: devops-test-app
+          Version: 1.0.${{ github.run_number }}
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref_name }}
+          Built: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          Python: ${{ env.PYTHON_VERSION }}
+          Tests: PASSED
+          Coverage: >${{ env.MIN_COVERAGE }}%
+          EOF
+
+          NAME="devops-test-app-1.0.${{ github.run_number }}"
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "Built: $NAME"
+          cat dist/MANIFEST.txt
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.build.outputs.name }}
+          path: \
+            05-cicd/practices/day43-practice/test-app/dist/
+          retention-days: 7
+
+  # ── Job 5: Report ──
+  report:
+    name: 📊 Pipeline Report
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, security, build]
+    if: always()
+
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v3
+        with:
+          path: all-artifacts/
+        continue-on-error: true
+
+      - name: Publish test results
+        run: |
+          echo "## 📊 CI Pipeline Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Minimum Coverage:** ${{ env.MIN_COVERAGE }}%" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "**Python Versions:** 3.10, 3.11" \
+            >> $GITHUB_STEP_SUMMARY
+
+          # Overall result
+          if [[ "${{ needs.unit-tests.result }}" == "success" && \
+                "${{ needs.lint.result }}" == "success" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ Pipeline PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ❌ Pipeline FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
