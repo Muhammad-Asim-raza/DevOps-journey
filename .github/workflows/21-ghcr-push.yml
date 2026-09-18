@@ -1,0 +1,122 @@
+# ================================================
+# 21-ghcr-push.yml
+# Push to GitHub Container Registry (GHCR)
+# Author: Asim Raza - Day 44
+# GHCR = free for public repos, no external account
+# ================================================
+
+name: 21 - GHCR Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/practices/day44-practice/**'
+      - '.github/workflows/21-ghcr-push.yml'
+  workflow_dispatch:
+
+env:
+  # GHCR registry
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  # Produces: ghcr.io/muhammad-asim-raza/devops-journey
+  APP_DIR: 05-cicd/practices/day44-practice/docker-app
+
+jobs:
+
+  build-ghcr:
+    name: 🐳 Build and Push to GHCR
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      # packages: write = push to GHCR
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login to GHCR uses GITHUB_TOKEN
+      # No separate account needed!
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          # github.actor = who triggered the workflow
+          password: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN = auto-generated, no setup!
+          # Scoped to this repo's packages
+
+      - name: Docker metadata for GHCR
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+            type=semver,pattern={{version}}
+            type=ref,event=branch
+
+      - name: Build and push to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.APP_DIR }}
+          file: ${{ env.APP_DIR }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=1.0.${{ github.run_number }}
+            GIT_COMMIT=${{ github.sha }}
+            BUILD_TIME=${{ steps.date.outputs.date }}
+            GIT_BRANCH=${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        continue-on-error: true
+        # continue on error so lesson doesn't break
+        # if GHCR has issues
+
+      - name: GHCR vs Docker Hub comparison
+        run: |
+          echo "=== GHCR vs Docker Hub ==="
+          echo ""
+          echo "GHCR (ghcr.io):"
+          echo "  ✅ Built into GitHub (no extra account)"
+          echo "  ✅ Uses GITHUB_TOKEN (no credentials setup)"
+          echo "  ✅ Free for public repos"
+          echo "  ✅ Integrated with GitHub UI"
+          echo "  ✅ Package tied to repo"
+          echo "  ⚠️  Less widely recognized than Docker Hub"
+          echo ""
+          echo "Docker Hub (docker.io):"
+          echo "  ✅ Industry standard registry"
+          echo "  ✅ Public images free"
+          echo "  ✅ Widely recognized"
+          echo "  ✅ Rate limits lifted for many tools"
+          echo "  ⚠️  Needs separate account"
+          echo "  ⚠️  Free tier: 1 private repo"
+          echo ""
+          echo "AWS ECR (covered in Phase 6):"
+          echo "  ✅ Native AWS integration"
+          echo "  ✅ Fine-grained IAM control"
+          echo "  ✅ No rate limits"
+          echo "  ⚠️  Costs money"
+          echo "  ⚠️  Only accessible from AWS or explicit auth"
+
+      - name: Image visibility
+        run: |
+          echo ""
+          echo "=== GHCR Image Access ==="
+          echo "Public repos: images are public by default"
+          echo "Private repos: images are private"
+          echo ""
+          echo "Pull command:"
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo ""
+          echo "View packages at:"
+          echo "https://github.com/${{ github.repository }}/pkgs/container"

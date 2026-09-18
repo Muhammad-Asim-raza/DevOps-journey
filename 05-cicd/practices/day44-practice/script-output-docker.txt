@@ -1,0 +1,96 @@
+============================================
+   DOCKER IN GITHUB ACTIONS REFERENCE
+   Author: Asim Raza - Day 44
+============================================
+
+[ KEY ACTIONS ]
+  docker/setup-buildx-action@v3
+    Enables BuildKit, multi-platform
+
+  docker/setup-qemu-action@v3
+    Enables cross-platform builds
+    (arm64 on amd64 runner)
+
+  docker/login-action@v3
+    Login to any registry
+    Docker Hub: username + token
+    GHCR: github.actor + GITHUB_TOKEN
+    ECR: via OIDC (Phase 6)
+
+  docker/metadata-action@v5
+    Generates tags and labels
+    type=sha, type=semver, type=raw
+
+  docker/build-push-action@v5
+    Build + push in one step
+    Supports caching, multi-platform
+
+[ REGISTRY OPTIONS ]
+  Docker Hub:  docker.io/username/image
+  GHCR:        ghcr.io/org/repo
+  AWS ECR:     account.dkr.ecr.region.amazonaws.com/image
+  GCP GCR:     gcr.io/project/image
+
+  GHCR Auth:   GITHUB_TOKEN (automatic!)
+  Docker Hub:  DOCKERHUB_USERNAME + DOCKERHUB_TOKEN
+  ECR:         OIDC role (Phase 6)
+
+[ IMAGE TAGGING STRATEGY ]
+  git SHA (immutable):
+  sha-abc1234 = exact commit
+  Never changes, always traceable
+
+  semantic version (release):
+  v1.2.3 = human-readable release
+
+  latest (convenience):
+  latest = most recent main build
+  NEVER use in production deployments!
+
+  PR builds:
+  pr-42 = PR number
+  Test without polluting production tags
+
+[ BUILD ARGS PATTERN ]
+  In workflow:
+  build-args: |
+    APP_VERSION=${{ steps.ver.outputs.version }}
+    GIT_COMMIT=${{ github.sha }}
+    BUILD_TIME=$(date -u)
+    GIT_BRANCH=${{ github.ref_name }}
+
+  In Dockerfile:
+  ARG APP_VERSION=dev
+  ENV APP_VERSION=${APP_VERSION}
+
+[ CACHING LAYERS ]
+  cache-from: type=gha
+  cache-to: type=gha,mode=max
+
+  Without cache: 2-5 minutes per build
+  With cache: 15-30 seconds per build
+
+[ SECURITY SCANNING ]
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: my-image:tag
+    severity: CRITICAL,HIGH
+    exit-code: 1   # fail on CVEs
+
+[ MULTI-PLATFORM ]
+  1. Setup QEMU:    docker/setup-qemu-action
+  2. Setup Buildx:  docker/setup-buildx-action
+  3. Build:         platforms: linux/amd64,linux/arm64
+
+  Result: one tag, two architectures
+  Docker pulls correct one automatically
+
+[ WORKFLOWS CREATED TODAY ]
+20-docker-build-push.yml
+21-ghcr-push.yml
+22-multi-platform.yml
+23-complete-docker-pipeline.yml
+
+============================================
+   REFERENCE COMPLETE
+============================================

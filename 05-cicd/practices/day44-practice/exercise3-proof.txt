@@ -1,0 +1,17 @@
+=== GHCR vs DOCKER HUB ===
+GHCR (ghcr.io):
+  Login: uses GITHUB_TOKEN (no setup!)
+  URL: ghcr.io/owner/repo
+  Free for public repos
+  Integrated with GitHub UI
+
+Docker Hub (docker.io):
+  Login: DOCKERHUB_USERNAME + DOCKERHUB_TOKEN
+  URL: docker.io/username/image
+  Industry standard
+  Free tier: limited pulls
+
+Setup DOCKERHUB_TOKEN:
+  hub.docker.com → Account → Security
+  → New Access Token → copy
+  GitHub → Settings → Secrets → DOCKERHUB_TOKEN

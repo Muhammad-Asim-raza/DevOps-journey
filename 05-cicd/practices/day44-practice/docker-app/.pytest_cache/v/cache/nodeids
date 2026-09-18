@@ -1,0 +1,8 @@
+[
+  "tests/test_app.py::test_health_has_timestamp",
+  "tests/test_app.py::test_health_returns_healthy",
+  "tests/test_app.py::test_home_has_build_info",
+  "tests/test_app.py::test_home_returns_200",
+  "tests/test_app.py::test_ready_returns_ready",
+  "tests/test_app.py::test_version_returns_build_info"
+]

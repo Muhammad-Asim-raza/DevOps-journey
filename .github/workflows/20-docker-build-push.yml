@@ -1,0 +1,269 @@
+# ================================================
+# 20-docker-build-push.yml
+# Build, Scan, and Push Docker Image
+# Author: Asim Raza - Day 44
+# ================================================
+
+name: 20 - Docker Build and Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/practices/day44-practice/**'
+      - '.github/workflows/20-docker-build-push.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '05-cicd/practices/day44-practice/**'
+  workflow_dispatch:
+    inputs:
+      push-image:
+        description: 'Push image to registry?'
+        type: boolean
+        default: false
+
+env:
+  # Registry configuration
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ github.repository_owner }}/cicd-docker-demo
+  # Produces: asimraza/cicd-docker-demo
+
+  # App configuration
+  APP_DIR: 05-cicd/practices/day44-practice/docker-app
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ── Job 1: Run Tests First ──────────────────────
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: ${{ env.APP_DIR }}
+        run: pip install -r requirements.txt --quiet
+
+      - name: Run tests
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          python -m pytest tests/ \
+            -v \
+            --tb=short \
+            --cov=src \
+            --cov-fail-under=80 \
+            --junit-xml=test-results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-day44
+          path: ${{ env.APP_DIR }}/test-results.xml
+          retention-days: 7
+
+  # ── Job 2: Build and Push Image ─────────────────
+  build-push:
+    name: 🐳 Build and Push Image
+    runs-on: ubuntu-latest
+    needs: test
+    # Only build if tests pass
+
+    permissions:
+      contents: read
+      packages: write
+      # packages: write needed for GHCR
+      security-events: write
+      # security-events: write for scanning
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Generate version and tags ──
+      - name: Generate version
+        id: version
+        run: |
+          SHORT_SHA="${{ github.sha }}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          VERSION="1.0.${{ github.run_number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "build-time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+          echo "SHA: $SHORT_SHA"
+
+      # ── Docker metadata (tags and labels) ──
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # This action generates tags automatically:
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+            type=ref,event=pr
+            type=ref,event=branch
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ steps.version.outputs.build-time }}
+        # Generated tags example:
+        # docker.io/asimraza/cicd-docker-demo:sha-abc1234
+        # docker.io/asimraza/cicd-docker-demo:1.0.42
+        # docker.io/asimraza/cicd-docker-demo:latest
+
+      # ── Setup Docker Buildx ──
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        # Buildx enables:
+        # - Advanced caching (type=gha)
+        # - Multi-platform builds (amd64, arm64)
+        # - BuildKit features
+
+      # ── Login to Docker Hub ──
+      - name: Login to Docker Hub
+        if: |
+          github.event_name != 'pull_request' &&
+          secrets.DOCKERHUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          # DOCKERHUB_TOKEN = Docker Hub access token
+          # NOT your password! Create at:
+          # hub.docker.com → Account → Security
+          # → New Access Token → cicd-token
+
+      # ── Build (and optionally push) ──
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.APP_DIR }}
+          # context: directory with Dockerfile
+          
+          file: ${{ env.APP_DIR }}/Dockerfile
+          
+          push: ${{ github.event_name != 'pull_request' && secrets.DOCKERHUB_TOKEN != '' }}
+          # push: only on non-PR if token available
+          # PR builds: build but don't push
+
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+            GIT_COMMIT=${{ github.sha }}
+            BUILD_TIME=${{ steps.version.outputs.build-time }}
+            GIT_BRANCH=${{ github.ref_name }}
+
+          # ── Layer caching ──
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # type=gha = GitHub Actions cache
+          # mode=max = cache all intermediate layers
+          # Result: subsequent builds much faster
+
+          # ── Build provenance ──
+          provenance: true
+          # Adds SLSA provenance attestation
+          # Proves the image was built by GitHub Actions
+          # Supply chain security
+
+      # ── Show build results ──
+      - name: Build results
+        run: |
+          echo "=== BUILD COMPLETE ==="
+          echo "Digest: ${{ steps.build.outputs.digest }}"
+          echo ""
+          echo "Tags generated:"
+          echo "${{ steps.meta.outputs.tags }}" | \
+            tr ',' '\n' | sed 's/^/  /'
+          echo ""
+          echo "Labels:"
+          echo "${{ steps.meta.outputs.labels }}" | \
+            tr ',' '\n' | sed 's/^/  /' | head -5
+
+      # ── Security scan the built image ──
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+          # exit-code: 0 = don't fail pipeline on CVEs
+          # Change to 1 to block on CRITICAL CVEs
+          ignore-unfixed: true
+        continue-on-error: true
+        # If Trivy can't pull image (no auth): continue
+
+      - name: Upload Trivy scan results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: trivy-results-day44
+          path: trivy-results.sarif
+          retention-days: 7
+
+  # ── Job 3: Verify the pushed image ──
+  verify:
+    name: ✅ Verify Image
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Pull and test image
+        run: |
+          echo "=== VERIFYING IMAGE ==="
+          echo "Digest: ${{ needs.build-push.outputs.image-digest }}"
+          echo "Version: ${{ needs.build-push.outputs.version }}"
+          echo ""
+          echo "In production this would:"
+          echo "1. Pull the exact image by digest"
+          echo "2. Run smoke tests against it"
+          echo "3. Check /health returns 200"
+          echo "4. Verify /version shows correct commit"
+          echo "5. Run container security checks"
+
+      - name: Summary
+        run: |
+          echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.build-push.outputs.version }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Digest | \`${{ needs.build-push.outputs.image-digest }}\` |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Registry | ${{ env.REGISTRY }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Image | ${{ env.IMAGE_NAME }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Tags" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ needs.build-push.outputs.image-tag }}" \
+            | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

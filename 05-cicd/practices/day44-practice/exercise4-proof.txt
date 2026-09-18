@@ -1,0 +1,17 @@
+=== MULTI-PLATFORM BUILDS ===
+Platforms: linux/amd64, linux/arm64
+
+QEMU enables cross-compilation:
+  amd64 runner builds arm64 via emulation
+  Slower but works on any GitHub runner
+
+Steps required:
+1. setup-qemu-action (cross-compile support)
+2. setup-buildx-action (multi-platform builder)
+3. platforms: linux/amd64,linux/arm64 in build
+
+Result: one manifest list, two images
+Docker auto-selects correct architecture
+
+AWS Graviton (arm64) = 40% cheaper
+Apple M1/M2/M3 = native performance

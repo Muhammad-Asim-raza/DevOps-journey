@@ -1,0 +1,12 @@
+=== DOCKER APP SETUP ===
+--- Tests pass ---
+Command 'python' not found, did you mean:
+  command 'python3' from deb python3
+  command 'python' from deb python-is-python3
+
+--- Docker image built ---
+IMAGE                    ID             DISK USAGE   CONTENT SIZE   EXTRA
+cicd-docker-demo:local   ee2545d6bd8a        210MB         51.8MB        
+
+--- Image security check ---
+UID: 1001

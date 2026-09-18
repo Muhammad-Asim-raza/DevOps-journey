@@ -1,0 +1,125 @@
+# ================================================
+# 22-multi-platform.yml
+# Multi-Platform Docker Builds (amd64 + arm64)
+# Author: Asim Raza - Day 44
+# Builds for both Intel/AMD and Apple Silicon/ARM
+# ================================================
+
+name: 22 - Multi-Platform Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '05-cicd/practices/day44-practice/**'
+      - '.github/workflows/22-multi-platform.yml'
+  workflow_dispatch:
+
+env:
+  APP_DIR: 05-cicd/practices/day44-practice/docker-app
+
+jobs:
+
+  multi-platform:
+    name: 🏗️ Multi-Platform Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── QEMU: enables building for different architectures ──
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        # QEMU = Quick Emulator
+        # Allows building arm64 images on amd64 runner
+        # Translates CPU instructions at runtime
+        # Slower than native but works on any runner
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+          # Explicitly support both platforms
+
+      - name: Platform explanation
+        run: |
+          echo "=== MULTI-PLATFORM BUILD ==="
+          echo ""
+          echo "linux/amd64:"
+          echo "  Intel/AMD 64-bit processors"
+          echo "  Most cloud servers (EC2, GCE, Azure)"
+          echo "  Most developer laptops (Intel Mac, PC)"
+          echo ""
+          echo "linux/arm64:"
+          echo "  ARM 64-bit processors"
+          echo "  Apple Silicon (M1/M2/M3 Macs)"
+          echo "  AWS Graviton instances (cheaper!)"
+          echo "  Raspberry Pi 4+"
+          echo "  Many mobile/embedded devices"
+          echo ""
+          echo "WHY multi-platform matters:"
+          echo "  Developer has M2 Mac (arm64)"
+          echo "  Pulls amd64 image → runs via emulation"
+          echo "  Performance: 50% slower"
+          echo ""
+          echo "  With multi-platform image:"
+          echo "  Docker pulls correct platform automatically"
+          echo "  Native performance on all devices"
+
+      - name: Build multi-platform (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.APP_DIR }}
+          file: ${{ env.APP_DIR }}/Dockerfile
+          push: false
+          # Can't load multi-platform locally
+          # push: true required to push to registry
+          platforms: linux/amd64,linux/arm64
+          # Build for BOTH platforms
+          tags: multiplatform-demo:local
+          build-args: |
+            APP_VERSION=1.0.${{ github.run_number }}
+            GIT_COMMIT=${{ github.sha }}
+            BUILD_TIME=${{ steps.date.outputs.date }}
+            GIT_BRANCH=${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        continue-on-error: true
+
+      - name: Explain manifest lists
+        run: |
+          echo ""
+          echo "=== HOW MULTI-PLATFORM WORKS ==="
+          echo ""
+          echo "Docker creates a 'manifest list'"
+          echo "(also called 'fat manifest')"
+          echo ""
+          echo "myimage:v1.0 (manifest list)"
+          echo "  └── myimage:v1.0-amd64  (Intel/AMD image)"
+          echo "  └── myimage:v1.0-arm64  (ARM image)"
+          echo ""
+          echo "When you: docker pull myimage:v1.0"
+          echo "Docker checks: what CPU is this machine?"
+          echo "Downloads: the matching image automatically"
+          echo ""
+          echo "Inspect with:"
+          echo "docker manifest inspect myimage:v1.0"
+
+      - name: Platform-specific optimizations
+        run: |
+          echo ""
+          echo "=== PRODUCTION PLATFORM TIPS ==="
+          echo ""
+          echo "AWS Graviton (arm64):"
+          echo "  Up to 40% cheaper than x86"
+          echo "  Up to 20% better performance"
+          echo "  Ideal for: API servers, microservices"
+          echo ""
+          echo "Dockerfile for multi-platform:"
+          echo "  Use: python:3.11-slim (multi-platform base)"
+          echo "  Avoid: gcc compilation (slow on QEMU)"
+          echo "  Use: pre-built wheels for C extensions"
+          echo ""
+          echo "Test locally:"
+          echo "  docker buildx build --platform linux/arm64 ."
+          echo "  docker run --platform linux/arm64 myimage"

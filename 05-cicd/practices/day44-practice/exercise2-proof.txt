@@ -1,0 +1,18 @@
+=== DOCKER BUILD WORKFLOW ===
+Workflow 20 (docker-build-push.yml):
+Test → Build → Scan → Verify
+
+Key features:
+- docker/metadata-action generates tags automatically
+- type=sha: sha-abc1234 (immutable)
+- type=raw: 1.0.42 (version)
+- type=raw: latest (convenience)
+- build-args inject version/commit/time into image
+- cache-from/cache-to: type=gha (layer caching)
+- Trivy scan after build
+- GITHUB_STEP_SUMMARY report
+
+Push conditions:
+- PR: build only (no push)
+- Main: build + push
+- Only if DOCKERHUB_TOKEN secret set
