@@ -1,0 +1,17 @@
+=== DEPLOY SCRIPTS ===
+--- Scripts created ---
+total 20
+drwxr-xr-x 2 asim-raza asim-raza 4096 Sep 18 11:17 .
+drwxr-xr-x 3 asim-raza asim-raza 4096 Sep 18 11:18 ..
+-rwxr-xr-x 1 asim-raza asim-raza 3078 Sep 18 11:16 deploy.sh
+-rwxr-xr-x 1 asim-raza asim-raza 1210 Sep 18 11:17 rollback.sh
+-rwxr-xr-x 1 asim-raza asim-raza 1220 Sep 18 11:17 smoke-test.sh
+
+--- deploy.sh steps ---
+
+--- smoke-test.sh checks ---
+check "/"        "200" "Home endpoint"
+check "/health"  "200" "Health check"
+check "/ready"   "200" "Readiness check"
+check "/version" "200" "Version endpoint"
+check "/missing" "404" "404 handling"

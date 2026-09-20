@@ -1,0 +1,238 @@
+# ================================================
+# 25-deploy-production.yml
+# Production Deployment with Approval Gate
+# Author: Asim Raza - Day 45
+# ================================================
+
+name: 25 - Deploy to Production
+
+on:
+  # Triggered manually after staging passes
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Image tag to deploy (from staging)'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for deployment'
+        required: true
+        type: string
+
+  # Or called from staging pipeline
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+env:
+  APP_NAME: devops-platform
+
+jobs:
+
+  # ──────────────────────────────────────────────
+  # Pre-deployment checks
+  # ──────────────────────────────────────────────
+  pre-deploy-checks:
+    name: 🔍 Pre-Deployment Checks
+    runs-on: ubuntu-latest
+
+    outputs:
+      approved: ${{ steps.checks.outputs.approved }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run pre-deployment checks
+        id: checks
+        run: |
+          echo "=== PRE-DEPLOYMENT CHECKS ==="
+          PASSED=0
+          FAILED=0
+
+          # Check 1: Is it business hours?
+          HOUR=$(date -u +%H)
+          if [ "$HOUR" -ge 8 ] && [ "$HOUR" -lt 18 ]; then
+            echo "  ✅ Business hours (${HOUR}:00 UTC)"
+            PASSED=$((PASSED+1))
+          else
+            echo "  ⚠️  Outside business hours (${HOUR}:00 UTC)"
+            echo "  Allowing for demo, but warn in production"
+            PASSED=$((PASSED+1))
+          fi
+
+          # Check 2: Is image tag provided?
+          if [ -n "${{ inputs.image-tag }}" ]; then
+            echo "  ✅ Image tag provided: ${{ inputs.image-tag }}"
+            PASSED=$((PASSED+1))
+          else
+            echo "  ❌ No image tag provided"
+            FAILED=$((FAILED+1))
+          fi
+
+          # Check 3: Not deploying :latest to production
+          if echo "${{ inputs.image-tag }}" | grep -q ":latest$"; then
+            echo "  ❌ BLOCKED: Cannot deploy :latest to production!"
+            FAILED=$((FAILED+1))
+          else
+            echo "  ✅ Using specific image tag (not :latest)"
+            PASSED=$((PASSED+1))
+          fi
+
+          echo ""
+          echo "Checks: ${PASSED} passed, ${FAILED} failed"
+
+          if [ $FAILED -gt 0 ]; then
+            echo "approved=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "approved=true" >> $GITHUB_OUTPUT
+          fi
+
+  # ──────────────────────────────────────────────
+  # Production deployment (requires environment approval)
+  # ──────────────────────────────────────────────
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: pre-deploy-checks
+    if: needs.pre-deploy-checks.outputs.approved == 'true'
+
+    environment:
+      name: production
+      # In GitHub Settings → Environments → production:
+      # ✅ Required reviewers: [your-username]
+      # ✅ Wait timer: 5 minutes
+      # ✅ Deployment branches: main only
+      # Pipeline PAUSES here until approved!
+      url: https://devops-journey.example.com
+
+    outputs:
+      deploy-status: ${{ steps.deploy.outputs.status }}
+      rollback-tag:  ${{ steps.deploy.outputs.rollback-tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record deployment start
+        run: |
+          echo "=== PRODUCTION DEPLOYMENT STARTING ==="
+          echo "Image:   ${{ inputs.image-tag }}"
+          echo "Reason:  ${{ inputs.reason || 'Automated deploy' }}"
+          echo "By:      ${{ github.actor }}"
+          echo "Time:    $(date -u)"
+          echo "Run:     ${{ github.run_id }}"
+
+      - name: Rolling deployment to production
+        id: deploy
+        run: |
+          echo ""
+          echo "=== ROLLING UPDATE ==="
+          echo "Strategy: 1 replica at a time"
+          echo "Total: 6 replicas"
+          echo ""
+
+          ROLLBACK_TAG="previous-${{ env.APP_NAME }}:latest"
+          echo "rollback-tag=$ROLLBACK_TAG" >> $GITHUB_OUTPUT
+
+          # Simulate rolling update
+          for i in 1 2 3 4 5 6; do
+            echo "  Updating replica ${i}/6..."
+            sleep 0.5
+            echo "  ✅ Replica ${i}/6 healthy"
+          done
+
+          echo ""
+          echo "✅ All replicas updated"
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: Post-deploy health verification
+        run: |
+          echo ""
+          echo "=== PRODUCTION HEALTH VERIFICATION ==="
+          for check in \
+            "Health endpoint" \
+            "Database connected" \
+            "Cache (Redis) connected" \
+            "Response time < 200ms"; do
+            echo "  ✅ ${check}"
+            sleep 0.2
+          done
+
+      - name: Create GitHub deployment record
+        run: |
+          echo ""
+          echo "Recording deployment in GitHub..."
+          # In production use GitHub Deployments API:
+          # gh api repos/${{ github.repository }}/deployments \
+          #   -f ref=${{ github.sha }} \
+          #   -f environment=production \
+          #   -f description="v${{ inputs.version }}"
+
+      - name: Notify Slack - production
+        run: |
+          echo ""
+          echo "=== SLACK NOTIFICATION ==="
+          echo "🚀 *Production Deployed*"
+          echo "  Version: ${{ inputs.version || inputs.image-tag }}"
+          echo "  Image: ${{ inputs.image-tag }}"
+          echo "  Deployed by: ${{ github.actor }}"
+          echo "  Time: $(date -u)"
+          echo "  URL: https://devops-journey.example.com"
+          echo ""
+          echo "In production:"
+          echo "  POST ${{ secrets.SLACK_WEBHOOK_URL }}"
+
+  # ──────────────────────────────────────────────
+  # Post-deployment monitoring check
+  # ──────────────────────────────────────────────
+  post-deploy-monitor:
+    name: 📊 Post-Deploy Monitor
+    runs-on: ubuntu-latest
+    needs: deploy-production
+
+    steps:
+      - name: Monitor for 2 minutes
+        run: |
+          echo "=== POST-DEPLOYMENT MONITORING ==="
+          echo "Monitoring for 2 minutes..."
+          echo ""
+
+          for i in 1 2 3 4; do
+            echo "Minute ${i}/4 check:"
+
+            METRICS=(
+              "Error rate: 0.02% (✅ < 1%)"
+              "P99 latency: 145ms (✅ < 500ms)"
+              "CPU usage: 32% (✅ < 80%)"
+              "Memory: 45% (✅ < 85%)"
+            )
+
+            for metric in "${METRICS[@]}"; do
+              echo "  ${metric}"
+            done
+            echo ""
+            sleep 2
+          done
+
+          echo "✅ Deployment stable after monitoring period"
+
+      - name: Final summary
+        run: |
+          echo "## 🚀 Production Deployment Complete" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | \`${{ inputs.image-tag }}\` |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Deployed by | ${{ github.actor }} |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ✅ Success |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| URL | https://devops-journey.example.com |" \
+            >> $GITHUB_STEP_SUMMARY

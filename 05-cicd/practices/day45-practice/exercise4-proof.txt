@@ -1,0 +1,16 @@
+=== BLUE-GREEN + CANARY ===
+Blue-Green (26):
+BLUE = current production (all traffic)
+Deploy new to GREEN (0% traffic)
+Test GREEN thoroughly
+Switch LB: all traffic → GREEN
+Keep BLUE running (instant rollback = switch back)
+Retire BLUE after stable period
+
+Canary (27):
+Deploy new to 5% of traffic
+Monitor error rate and latency
+If healthy: 5% → 25% → 50% → 100%
+If unhealthy: 0% (auto-rollback)
+Only 5% of users affected on failure
+Auto-rollback without human intervention

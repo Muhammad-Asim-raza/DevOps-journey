@@ -1,0 +1,87 @@
+============================================
+   DEPLOY AUTOMATION REFERENCE
+   Author: Asim Raza - Day 45
+============================================
+
+[ DEPLOYMENT STRATEGIES ]
+
+  Recreate:    stop old → deploy new → start
+               Downtime: YES
+               Use: dev environments
+
+  Rolling:     update 1 instance at a time
+               Downtime: NO
+               Rollback: slow
+               Use: stateless APIs
+
+  Blue-Green:  deploy to idle env, switch
+               Downtime: NO
+               Rollback: instant (switch back)
+               Use: critical services
+
+  Canary:      5% → monitor → 100%
+               Downtime: NO
+               Rollback: instant (0% traffic)
+               Use: high-risk changes
+
+[ SSH DEPLOYMENT PATTERN ]
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.PROD_HOST }}
+    username: ${{ secrets.PROD_USER }}
+    key: ${{ secrets.PROD_SSH_KEY }}
+    script: |
+      docker pull $IMAGE
+      docker-compose up -d --no-deps app
+
+[ HEALTH CHECK PATTERN ]
+  MAX_WAIT=60
+  ELAPSED=0
+  while [ $ELAPSED -lt $MAX_WAIT ]; do
+    HTTP=$(curl -s -o /dev/null -w '%{http_code}' /health)
+    [ $HTTP = '200' ] && break
+    sleep 5; ELAPSED=$((ELAPSED+5))
+  done
+
+[ ROLLBACK PATTERN ]
+  Save current image before deploying:
+  ROLLBACK_TAG=$(docker inspect app --format '{{.Config.Image}}')
+
+  On failure:
+  docker rm -f app
+  docker run -d --name app $ROLLBACK_TAG
+
+[ SLACK NOTIFICATION ]
+  curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+    -H 'Content-type: application/json' \
+    --data '{
+      "text": "✅ Production deployed v1.0.42"
+    }'
+
+[ ENVIRONMENT PROMOTION ]
+  feature/ branch → (merge) → main
+  main → auto-deploy to staging
+  staging → (approval) → production
+
+  Concurrency:
+  staging: cancel-in-progress: false
+  production: cancel-in-progress: false
+  (never cancel deployments mid-flight)
+
+[ SECRETS NEEDED FOR REAL DEPLOYMENT ]
+  SSH_PRIVATE_KEY   = server SSH key
+  SSH_HOST          = server IP/hostname
+  SSH_USER          = deploy username
+  SLACK_WEBHOOK_URL = Slack webhook
+  DOCKERHUB_TOKEN   = registry push
+  (use GITHUB_TOKEN for GHCR)
+
+[ WORKFLOWS CREATED TODAY ]
+24-deploy-staging.yml
+25-deploy-production.yml
+26-blue-green-deploy.yml
+27-canary-rollback.yml
+
+============================================
+   REFERENCE COMPLETE
+============================================

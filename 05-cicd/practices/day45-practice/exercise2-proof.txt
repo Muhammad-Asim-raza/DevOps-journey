@@ -1,0 +1,16 @@
+=== STAGING DEPLOYMENT ===
+Workflow 24 (deploy-staging.yml):
+Build → Deploy Staging → Smoke Tests → Integration Tests
+
+Key patterns:
+- concurrency: cancel-in-progress: false
+  (never cancel in-progress deployments)
+- environment: staging with URL
+- Smoke tests after deploy
+- Integration tests on live staging
+- Slack notification (simulated)
+
+In production adds:
+- SSH deployment via appleboy/ssh-action
+- Real health check polling
+- Real Slack webhook notification

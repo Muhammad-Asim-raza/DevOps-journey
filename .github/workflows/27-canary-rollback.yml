@@ -1,0 +1,173 @@
+# ================================================
+# 27-canary-rollback.yml
+# Canary Deployment with Automatic Rollback
+# Author: Asim Raza - Day 45
+# ================================================
+
+name: 27 - Canary + Auto-Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'New version image'
+        required: true
+        type: string
+      canary-percent:
+        description: 'Canary traffic percentage'
+        type: choice
+        default: '5'
+        options: ['5', '10', '25', '50']
+
+jobs:
+
+  canary-deploy:
+    name: 🐤 Canary Deployment
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+      url: https://devops-journey.example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Canary concept
+        run: |
+          echo "=== CANARY DEPLOYMENT ==="
+          echo ""
+          echo "New image: ${{ inputs.image-tag }}"
+          echo "Initial traffic: ${{ inputs.canary-percent }}%"
+          echo ""
+          echo "Strategy:"
+          echo "  ${{ inputs.canary-percent }}% → new version (canary)"
+          echo "  $((100 - ${{ inputs.canary-percent }}))% → current (stable)"
+          echo ""
+          echo "Monitor for errors/latency"
+          echo "If healthy: increase to 25% → 50% → 100%"
+          echo "If problems: revert to 0% immediately"
+
+      - name: Phase 1 — Deploy canary (${{ inputs.canary-percent }}%)
+        id: canary
+        run: |
+          echo ""
+          echo "=== PHASE 1: ${{{ inputs.canary-percent }}% canary ==="
+          echo ""
+          echo "Deploying canary instance..."
+
+          # Real implementation in Kubernetes:
+          # kubectl set image deploy/app-canary \
+          #   app=${{ inputs.image-tag }}
+          # kubectl patch deploy/app-canary \
+          #   -p '{"spec":{"replicas": 1}}'
+          # kubectl patch svc/app \
+          #   -p '{"spec":{"selector":{"track":"canary"}}}'
+
+          # Real implementation with nginx:
+          # upstream backend {
+          #   server stable:8000 weight=95;
+          #   server canary:8000 weight=5;
+          # }
+
+          sleep 1
+          echo "  ✅ Canary deployed"
+          echo "  ${{ inputs.canary-percent }}% traffic → new version"
+
+      - name: Phase 2 — Monitor canary (5 minutes)
+        id: monitor
+        run: |
+          echo ""
+          echo "=== PHASE 2: MONITORING CANARY ==="
+          echo ""
+
+          # Simulate monitoring checks
+          CANARY_ERROR_RATE=0.5
+          STABLE_ERROR_RATE=0.2
+          THRESHOLD=2.0
+
+          for minute in 1 2 3; do
+            echo "Minute ${minute} metrics:"
+            echo "  Canary error rate: ${CANARY_ERROR_RATE}%"
+            echo "  Stable error rate: ${STABLE_ERROR_RATE}%"
+            echo "  Canary P99 latency: 145ms"
+            echo "  Threshold: ${THRESHOLD}%"
+
+            # Compare with awk (no bc dependency)
+            EXCEEDS=$(awk \
+              "BEGIN{print ($CANARY_ERROR_RATE > $THRESHOLD) ? 1 : 0}")
+
+            if [ "$EXCEEDS" -eq 1 ]; then
+              echo "  ❌ Error rate exceeds threshold!"
+              echo "canary-healthy=false" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              echo "  ✅ Within acceptable range"
+            fi
+            echo ""
+            sleep 1
+          done
+
+          echo "canary-healthy=true" >> $GITHUB_OUTPUT
+
+      - name: Phase 3a — Promote (if healthy)
+        if: steps.monitor.outputs.canary-healthy == 'true'
+        run: |
+          echo ""
+          echo "=== PHASE 3a: CANARY PROMOTION ==="
+          echo ""
+          echo "Canary is healthy! Progressively increasing..."
+          echo ""
+
+          for PERCENT in 25 50 100; do
+            echo "Increasing to ${PERCENT}%..."
+            sleep 0.5
+            echo "  ✅ ${PERCENT}% traffic on new version"
+          done
+
+          echo ""
+          echo "✅ CANARY FULLY PROMOTED TO 100%"
+          echo "  Old version retired"
+          echo "  New version: ${{ inputs.image-tag }}"
+
+      - name: Phase 3b — Rollback (if unhealthy)
+        if: steps.monitor.outputs.canary-healthy == 'false'
+        run: |
+          echo ""
+          echo "=== PHASE 3b: AUTOMATIC ROLLBACK ==="
+          echo ""
+          echo "🚨 Canary unhealthy — rolling back!"
+          echo ""
+          echo "  Setting canary traffic → 0%"
+          echo "  Removing canary instance"
+          echo "  100% traffic → stable version"
+          sleep 1
+          echo ""
+          echo "✅ ROLLBACK COMPLETE"
+          echo "  Users: experienced no degradation"
+          echo "  Only ${{ inputs.canary-percent }}% were affected"
+          echo "  Reverted in < 60 seconds"
+
+          # Fail the job to notify team
+          exit 1
+
+      - name: Summary
+        if: always()
+        run: |
+          HEALTHY="${{ steps.monitor.outputs.canary-healthy }}"
+          echo "## 🐤 Canary Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$HEALTHY" == "true" ]; then
+            echo "### ✅ Canary Promoted Successfully" \
+              >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🔄 Canary Rolled Back Automatically" \
+              >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Initial canary % | ${{ inputs.canary-percent }}% |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Image | \`${{ inputs.image-tag }}\` |" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "| Result | ${HEALTHY} |" >> $GITHUB_STEP_SUMMARY

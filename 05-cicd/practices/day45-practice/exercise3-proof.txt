@@ -1,0 +1,19 @@
+=== PRODUCTION DEPLOYMENT ===
+Workflow 25 (deploy-production.yml):
+Pre-checks → [Approval Gate] → Deploy → Monitor
+
+Pre-deployment checks:
+- Business hours check (warn outside hours)
+- Image tag provided (error if missing)
+- NOT :latest tag (block if latest)
+
+Approval gate:
+environment: production
+GitHub pauses job until required reviewer approves
+In Settings → Environments → production
+
+Post-deploy monitoring:
+- Error rate check
+- Latency check
+- CPU/memory check
+- Run for monitoring period before declaring success

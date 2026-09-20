@@ -1,0 +1,116 @@
+# ================================================
+# 26-blue-green-deploy.yml
+# Blue-Green Deployment Automation
+# Author: Asim Raza - Day 45
+# ================================================
+
+name: 26 - Blue-Green Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Image to deploy (green)'
+        required: true
+        type: string
+
+jobs:
+
+  blue-green:
+    name: 🔵🟢 Blue-Green Deploy
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+      url: https://devops-journey.example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Blue-Green concept
+        run: |
+          echo "=== BLUE-GREEN DEPLOYMENT ==="
+          echo ""
+          echo "CURRENT STATE:"
+          echo "  Load Balancer → BLUE (100% traffic)"
+          echo "  BLUE = current production (v1.0.41)"
+          echo "  GREEN = idle"
+          echo ""
+          echo "GOAL:"
+          echo "  Deploy v1.0.42 to GREEN"
+          echo "  Test GREEN thoroughly"
+          echo "  Switch LB: BLUE → GREEN"
+          echo "  Keep BLUE hot (instant rollback)"
+
+      - name: Step 1 — Deploy to green
+        run: |
+          echo ""
+          echo "[1/4] Deploying ${{ inputs.image-tag }} to GREEN"
+          echo ""
+
+          # docker run on green environment
+          echo "  docker run -d \\"
+          echo "    --name app-green \\"
+          echo "    -p 8001:8000 \\"
+          echo "    ${{ inputs.image-tag }}"
+          sleep 1
+          echo "  ✅ GREEN environment running on :8001"
+
+      - name: Step 2 — Test green
+        run: |
+          echo ""
+          echo "[2/4] Testing GREEN environment"
+          for test in \
+            "Health check (:8001/health)" \
+            "Response time < 200ms" \
+            "All API endpoints responding" \
+            "Database migrations OK"; do
+            echo "  ✅ ${test}"
+            sleep 0.3
+          done
+
+      - name: Step 3 — Switch traffic
+        run: |
+          echo ""
+          echo "[3/4] Switching load balancer"
+          echo "  Before: LB → BLUE (port 8000)"
+          echo "  After:  LB → GREEN (port 8001)"
+          echo ""
+          # In real nginx:
+          # sed -i 's/upstream blue/upstream green/' /etc/nginx/conf.d/app.conf
+          # nginx -s reload
+          # In AWS: update target group
+          # In Kubernetes: update service selector
+          sleep 1
+          echo "  ✅ Traffic switched to GREEN"
+          echo "  BLUE still running (warm rollback available)"
+
+      - name: Step 4 — Monitor and cleanup
+        run: |
+          echo ""
+          echo "[4/4] Post-switch monitoring"
+          sleep 2
+
+          ERROR_RATE="0.01%"
+          echo "  Error rate: ${ERROR_RATE} (✅ < 1%)"
+          echo "  P99 latency: 132ms (✅ < 500ms)"
+          echo ""
+          echo "  GREEN is stable. Retiring BLUE."
+          echo "  docker stop app-blue"
+          echo "  (or keep BLUE for 30 min for safety)"
+
+      - name: Summary
+        run: |
+          echo "## 🔵🟢 Blue-Green Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy to GREEN | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test GREEN | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Switch traffic | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Monitor | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed:** \`${{ inputs.image-tag }}\`" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "**Rollback:** \`docker stop app-green && docker rename app-blue app-green\`" \
+            >> $GITHUB_STEP_SUMMARY
