@@ -1,4 +1,4 @@
-=== PRODUCTION DEPLOYMENT ===
+=========== PRODUCTION DEPLOYMENT =============
 Workflow 25 (deploy-production.yml):
 Pre-checks → [Approval Gate] → Deploy → Monitor
 
