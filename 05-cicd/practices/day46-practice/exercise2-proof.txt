@@ -1,0 +1,30 @@
+=== JENKINS PLUGINS ===
+Essential Jenkins Plugins:
+
+PIPELINE:
+- Pipeline (core pipeline support)
+- Pipeline: Stage View (visualization)
+- Blue Ocean (modern UI)
+
+SOURCE:
+- Git (clone/checkout)
+- GitHub Integration (webhooks)
+
+BUILD:
+- Docker Pipeline (docker.build/push)
+- Maven Integration
+- NodeJS
+
+QUALITY:
+- JUnit (test reporting)
+- Credentials Binding
+
+UTILITY:
+- Timestamper
+- AnsiColor
+- Build Timeout
+- Workspace Cleanup
+
+Install Method (UI):
+Manage Jenkins → Plugins → Available plugins
+Search → Check → Install without restart

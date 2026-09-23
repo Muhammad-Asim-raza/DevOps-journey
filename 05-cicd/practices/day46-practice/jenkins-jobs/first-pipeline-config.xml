@@ -1,0 +1,79 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!--
+  Jenkins Job Configuration XML
+  Author: Asim Raza - Day 46
+  This XML represents the job config stored in:
+  /var/jenkins_home/jobs/JOBNAME/config.xml
+  
+  Usually you don't edit XML directly.
+  UI creates this automatically.
+  Shown here for understanding.
+-->
+<flow-definition plugin="workflow-job">
+  <description>My First Jenkins Pipeline - Day 46</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <!-- Discard old builds to save disk -->
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>30</daysToKeep>
+        <numToKeep>10</numToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+
+    <!-- Allow concurrent builds? Usually no -->
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+
+    <!-- Build parameters if needed -->
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>DEPLOY_ENV</name>
+          <defaultValue>staging</defaultValue>
+          <description>Target environment</description>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+    <script>
+      // Pipeline script from SCM is better practice
+      // This embeds pipeline directly in job config
+    </script>
+    <sandbox>true</sandbox>
+  </definition>
+
+  <!-- Better: Use SCM (Jenkinsfile from Git) -->
+  <!-- 
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition">
+    <scm class="hudson.plugins.git.GitSCM">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>https://github.com/user/repo.git</url>
+          <credentialsId>github-credentials</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/main</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+    </scm>
+    <scriptPath>Jenkinsfile</scriptPath>
+  </definition>
+  -->
+
+  <triggers>
+    <!-- Webhook trigger (GitHub pushes) -->
+    <com.cloudbees.jenkins.GitHubPushTrigger plugin="github"/>
+
+    <!-- OR: Poll SCM every 5 minutes -->
+    <!-- <hudson.triggers.SCMTrigger>
+      <spec>H/5 * * * *</spec>
+    </hudson.triggers.SCMTrigger> -->
+  </triggers>
+
+  <disabled>false</disabled>
+</flow-definition>

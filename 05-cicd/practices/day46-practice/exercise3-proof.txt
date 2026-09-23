@@ -1,0 +1,16 @@
+=== JENKINS JOB CONFIGURATION ===
+--- Job config XML created ---
+total 28
+drwxr-xr-x 2 asim-raza asim-raza 4096 Sep 23 12:14 .
+drwxr-xr-x 4 asim-raza asim-raza 4096 Sep 23 20:06 ..
+-rw-r--r-- 1 asim-raza asim-raza 2640 Sep 23 12:08 first-pipeline-config.xml
+-rwxr-xr-x 1 asim-raza asim-raza 5437 Sep 23 12:14 jenkins-ui-guide.sh
+-rw-r--r-- 1 asim-raza asim-raza 4188 Sep 23 12:14 ui-guide.txt
+
+--- Jenkins access verified ---
+Jenkins HTTP status: 403
+
+--- Jenkins container info ---
+Status: running
+Image: jenkins/jenkins:lts-jdk17
+Ports: {"50000/tcp":[{"HostIp":"0.0.0.0","HostPort":"50000"},{"HostIp":"::","HostPort":"50000"}],"8080/tcp":[{"HostIp":"0.0.0.0","HostPort":"8090"},{"HostIp":"::","HostPort":"8090"}]}

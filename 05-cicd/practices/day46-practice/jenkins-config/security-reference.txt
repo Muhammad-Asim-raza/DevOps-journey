@@ -1,0 +1,104 @@
+============================================
+   JENKINS SECURITY CONFIGURATION
+============================================
+
+[ CRITICAL SECURITY SETTINGS ]
+
+  1. Enable Security
+  Manage Jenkins → Security → Enable Security
+  Security Realm: Jenkins own user database
+  Authorization: Project-based Matrix
+
+  2. CSRF Protection
+  Manage Jenkins → Security
+  ☑ Prevent Cross Site Request Forgery
+  This is ON by default in modern Jenkins
+
+  3. Agent → Controller Security
+  Manage Jenkins → Security
+  ☑ Enable Agent → Master Access Control
+
+  4. Script Approval
+  When Groovy scripts run in Sandbox mode
+  Unsafe operations need approval
+  Manage Jenkins → In-process Script Approval
+
+[ CREDENTIALS BEST PRACTICES ]
+
+  NEVER in Jenkinsfile:
+  ❌ def password = 'mysecret'
+  ❌ env.DB_PASS = 'password'
+  ❌ sh 'curl -u user:password ...'
+
+  ALWAYS use credentials store:
+  ✅ withCredentials([string(
+    credentialsId: 'my-secret',
+    variable: 'MY_SECRET')]) {
+    sh 'curl -H "Auth: $MY_SECRET" ...'
+  }
+
+  Credential scopes:
+  System: Only Jenkins itself
+  Global: All jobs (most common)
+  Folder: Jobs within specific folder
+
+[ PRODUCTION SECURITY CHECKLIST ]
+
+  ✅ Run behind HTTPS (nginx/Apache reverse proxy)
+  ✅ Not exposed to public internet directly
+  ✅ Strong admin password
+  ✅ CSRF protection enabled
+  ✅ Security realm enabled (not No Security)
+  ✅ Regular plugin updates
+  ✅ Jenkins itself updated
+  ✅ Build logs don't contain secrets
+  ✅ Docker socket mount reviewed
+  ✅ Agent communication encrypted
+  ✅ Backup jenkins_home regularly
+  ✅ Audit log enabled
+
+[ JENKINS BEHIND NGINX (production) ]
+
+  /etc/nginx/sites-available/jenkins:
+  server {
+    listen 443 ssl;
+    server_name jenkins.yourcompany.com;
+
+    location / {
+      proxy_pass http://localhost:8080;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto https;
+      proxy_set_header Host $host;
+    }
+  }
+
+  In Jenkins: set Jenkins URL to:
+  https://jenkins.yourcompany.com/
+
+[ BACKUP AND RESTORE ]
+
+  Backup Jenkins home (Docker volume):
+  docker run --rm \
+    -v jenkins-data:/data \
+    -v $(pwd):/backup \
+    ubuntu \
+    tar czf /backup/jenkins-backup-$(date +%Y%m%d).tar.gz /data
+
+  Restore:
+  docker run --rm \
+    -v jenkins-data:/data \
+    -v $(pwd):/backup \
+    ubuntu \
+    tar xzf /backup/jenkins-backup-DATE.tar.gz -C /
+
+  What gets backed up:
+  - All job configurations
+  - Build history
+  - Plugins
+  - Credentials (encrypted)
+  - User accounts
+  - System configuration
+
+============================================
+   SECURITY REFERENCE COMPLETE
+============================================

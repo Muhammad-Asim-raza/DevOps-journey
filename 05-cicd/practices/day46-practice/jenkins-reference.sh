@@ -1,0 +1,113 @@
+#!/bin/bash
+# ================================================
+# jenkins-reference.sh
+# Jenkins Complete Reference
+# Author: Asim Raza
+# Day 46 of DevOps Journey
+# ================================================
+
+echo "============================================"
+echo "   JENKINS REFERENCE"
+echo "   Author: Asim Raza - Day 46"
+echo "============================================"
+
+echo ""
+echo "[ WHAT IS JENKINS ]"
+echo "  Open-source CI/CD automation server"
+echo "  Self-hosted (you own the data)"
+echo "  1800+ plugins"
+echo "  ~50% enterprise CI/CD market"
+echo "  Pipeline defined in Jenkinsfile (Groovy)"
+
+echo ""
+echo "[ JENKINS vs GITHUB ACTIONS ]"
+echo "  Jenkins:        GitHub Actions:"
+echo "  Self-hosted  vs Cloud (GitHub)"
+echo "  Groovy       vs YAML"
+echo "  1800 plugins vs Marketplace"
+echo "  Full control vs Easy setup"
+echo "  Data on-prem vs GitHub holds data"
+echo "  Complex setup vs 5 minutes"
+
+echo ""
+echo "[ INSTALL WITH DOCKER ]"
+echo "  docker run -d \\"
+echo "    --name jenkins \\"
+echo "    -p 8090:8080 \\"
+echo "    -p 50000:50000 \\"
+echo "    -v jenkins-data:/var/jenkins_home \\"
+echo "    -v /var/run/docker.sock:/var/run/docker.sock \\"
+echo "    jenkins/jenkins:lts-jdk17"
+echo ""
+echo "  Get initial password:"
+echo "  docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword"
+
+echo ""
+echo "[ KEY DIRECTORIES ]"
+echo "  /var/jenkins_home/"
+echo "    jobs/          = pipeline configurations"
+echo "    plugins/       = installed plugins"
+echo "    secrets/       = encrypted credentials"
+echo "    workspace/     = active build workspaces"
+echo "    config.xml     = global configuration"
+
+echo ""
+echo "[ ESSENTIAL PLUGINS ]"
+echo "  Pipeline              = Jenkinsfile support"
+echo "  Git                   = source control"
+echo "  Docker Pipeline       = Docker in pipeline"
+echo "  Credentials Binding   = use secrets safely"
+echo "  Blue Ocean            = modern UI"
+echo "  JUnit                 = test reporting"
+echo "  Timestamper           = log timestamps"
+echo "  AnsiColor             = colored logs"
+echo "  Workspace Cleanup     = clean before build"
+echo "  Build Timeout         = kill hung builds"
+
+echo ""
+echo "[ JOB TYPES ]"
+echo "  Freestyle:            click UI, no code"
+echo "  Pipeline:             Jenkinsfile (DSL)"
+echo "  Multibranch Pipeline: auto from Git branches"
+echo "  Organization Folder:  scan entire GitHub org"
+
+echo ""
+echo "[ TRIGGERS ]"
+echo "  GitHub webhook:     push triggers build"
+echo "  Poll SCM:          check Git every N minutes"
+echo "                     H/5 * * * * = every 5 min"
+echo "  Schedule:          cron-like builds"
+echo "                     H 2 * * * = nightly 2am"
+echo "  Manual:            click Build Now"
+echo "  API:               POST /job/NAME/build"
+echo "  Upstream:          when another job succeeds"
+
+echo ""
+echo "[ CREDENTIALS TYPES ]"
+echo "  Username + Password:  GitHub, Docker Hub"
+echo "  Secret text:          API keys, tokens"
+echo "  SSH key:              Server deployment"
+echo "  Certificate:          TLS certs"
+echo "  Secret file:          kubeconfig files"
+
+echo ""
+echo "[ CURRENT STATUS ]"
+docker ps --filter "name=jenkins-day46" \
+    --format "Name: {{.Names}} | Status: {{.Status}}" \
+    2>/dev/null || echo "Jenkins container not found"
+echo ""
+echo "Access: http://localhost:8090"
+
+echo ""
+echo "[ TOMORROW: DAY 47 ]"
+echo "  Writing Jenkinsfiles (pipelines)"
+echo "  Declarative vs Scripted pipeline"
+echo "  Stages, steps, post conditions"
+echo "  Parallel stages in Jenkins"
+echo "  Jenkins credentials in pipelines"
+echo "  Multi-branch pipelines"
+
+echo ""
+echo "============================================"
+echo "   REFERENCE COMPLETE"
+echo "============================================"

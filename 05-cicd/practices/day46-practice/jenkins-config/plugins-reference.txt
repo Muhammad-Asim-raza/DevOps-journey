@@ -1,0 +1,159 @@
+============================================
+   JENKINS ESSENTIAL PLUGINS
+============================================
+
+[ PIPELINE PLUGINS ]
+
+  Pipeline
+    What: Core declarative pipeline support
+    Enables: Jenkinsfile with stages/steps
+    Required: YES (always)
+
+  Pipeline: Stage View
+    What: Visual pipeline stage display
+    Shows: which stage is running/failed
+    Required: YES (debugging)
+
+  Pipeline Graph View
+    What: Modern pipeline graph
+    Better than: Stage View
+    Required: Recommended
+
+  Blue Ocean
+    What: Modern Jenkins UI
+    Features: Better visualization, logs
+    Access at: /blue
+
+[ SOURCE CONTROL PLUGINS ]
+
+  Git
+    What: Git integration
+    Enables: Clone, checkout, poll
+    Required: YES (always)
+
+  GitHub Integration
+    What: GitHub webhooks and API
+    Enables: Trigger on push/PR
+    Required: If using GitHub
+
+  GitHub Branch Source
+    What: Scan GitHub orgs/repos
+    Enables: Multi-branch pipelines from GitHub
+
+[ BUILD TOOL PLUGINS ]
+
+  Docker Pipeline
+    What: Docker in Jenkinsfile
+    Enables: docker.build(), docker.push()
+    Required: If building Docker images
+
+  Maven Integration
+    What: Maven build tool
+    Enables: mvn commands in pipeline
+    Required: For Java/Maven projects
+
+  NodeJS
+    What: Node.js tool management
+    Enables: npm commands in pipeline
+    Required: For Node.js projects
+
+  Python
+    What: Python tool management
+    Enables: pip, pytest in pipeline
+
+[ QUALITY AND SECURITY PLUGINS ]
+
+  JUnit
+    What: Test result publishing
+    Enables: junit 'results.xml'
+    Shows: test results in UI
+    Required: YES (for test reporting)
+
+  Cobertura / JaCoCo
+    What: Code coverage reporting
+    Enables: Coverage trend graphs
+
+  OWASP Dependency-Check
+    What: Vulnerability scanning
+    Enables: CVE checks on dependencies
+
+  SonarQube Scanner
+    What: Code quality analysis
+    Enables: sonarqube { ... } in pipeline
+
+[ CREDENTIALS AND SECURITY PLUGINS ]
+
+  Credentials
+    What: Secure credential store
+    Enables: withCredentials { ... }
+    Required: YES (always)
+
+  Credentials Binding
+    What: Use credentials in shell
+    Enables: env vars from credentials
+    Required: YES (always)
+
+  SSH Agent
+    What: SSH key injection
+    Enables: sshagent(['key-id']) { ... }
+
+[ NOTIFICATION PLUGINS ]
+
+  Slack Notification
+    What: Slack alerts
+    Enables: slackSend(...)
+    Configured: via Slack app token
+
+  Email Extension
+    What: Rich email notifications
+    Enables: emailext body: '...'
+
+  Build Name Setter
+    What: Custom build names
+    Enables: currentBuild.displayName
+
+[ UTILITY PLUGINS ]
+
+  Timestamper
+    What: Timestamps in build logs
+    Configure: options { timestamps() }
+    Required: Recommended
+
+  AnsiColor
+    What: Color in build logs
+    Configure: options { ansiColor('xterm') }
+    Makes logs much more readable
+
+  Build Timeout
+    What: Kill long-running builds
+    Configure: options { timeout(time: 30, unit: 'MINUTES') }
+
+  Workspace Cleanup
+    What: Clean workspace before build
+    Configure: options { cleanWs() }
+    Prevents stale file issues
+
+  Parameter Binding
+    What: Build parameters
+    Enables: parameters { string(...) }
+
+[ HOW TO INSTALL PLUGINS ]
+
+  Method 1: UI (easy)
+  Manage Jenkins → Plugins → Available
+  Search, check boxes, Install
+
+  Method 2: Jenkins CLI
+  java -jar jenkins-cli.jar install-plugin PLUGIN_ID
+
+  Method 3: At startup (best for Docker)
+  In Dockerfile:
+  FROM jenkins/jenkins:lts-jdk17
+  RUN jenkins-plugin-cli --plugins \
+    pipeline-model-definition:latest \
+    git:latest \
+    docker-pipeline:latest
+
+============================================
+   PLUGINS REFERENCE COMPLETE
+============================================

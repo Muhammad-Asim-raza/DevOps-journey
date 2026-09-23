@@ -1,0 +1,10 @@
+=== JENKINS INSTALLATION ===
+--- Docker compose status ---
+NAMES           STATUS          PORTS
+jenkins-day46   Up 11 minutes   0.0.0.0:50000->50000/tcp, [::]:50000->50000/tcp, 0.0.0.0:8090->8080/tcp, [::]:8090->8080/tcp
+
+--- Jenkins running on ---
+http://localhost:8090
+
+--- Initial password ---
+Password not yet available

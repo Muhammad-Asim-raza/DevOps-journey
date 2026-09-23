@@ -1,0 +1,128 @@
+============================================
+   JENKINS SETUP - Day 46
+   Author: Asim Raza
+============================================
+
+[ STEP 1: Start Jenkins ]
+
+  cd ~/DevOps-journey/05-cicd/practices/day46-practice/jenkins-config
+  docker compose up -d
+
+  This starts Jenkins on: http://localhost:8090
+  First start: ~60 seconds to initialize
+
+[ STEP 2: Get Initial Admin Password ]
+
+  Method 1 (from container logs):
+  docker logs jenkins-day46 2>&1 | grep -A 5 'initial admin password'
+
+  Method 2 (from file):
+  docker exec jenkins-day46 cat /var/jenkins_home/secrets/initialAdminPassword
+
+  This password is required for first login
+  Jenkins generates it on first run
+  One-time use: changes after initial setup
+
+[ STEP 3: Initial Setup Wizard ]
+
+  1. Open: http://localhost:8090
+  2. Enter initial admin password
+  3. Choose: 'Install suggested plugins'
+     (installs ~15 essential plugins)
+  4. Wait: ~3-5 minutes for plugin install
+  5. Create admin user:
+     Username: admin
+     Password: DevOps2026!
+     Full name: Asim Raza
+     Email: asim@devops.local
+  6. Jenkins URL: http://localhost:8090
+  7. Click: 'Start using Jenkins'
+
+[ STEP 4: Essential Plugins to Install ]
+
+  After initial setup, install via:
+  Manage Jenkins → Plugins → Available plugins
+
+  REQUIRED plugins:
+  - Pipeline (usually pre-installed)
+  - Git (usually pre-installed)
+  - Docker Pipeline
+  - Blue Ocean (modern UI)
+  - GitHub Integration
+  - Credentials Binding
+  - AnsiColor
+  - Build Timeout
+  - Timestamper
+  - Workspace Cleanup
+  - Pipeline Graph View
+
+[ STEP 5: Configure Global Tools ]
+
+  Manage Jenkins → Tools:
+
+  JDK:
+  Name: JDK-17
+  JAVA_HOME: /opt/java/openjdk
+
+  Git:
+  Name: Default
+  Path: git
+
+  Maven (if needed):
+  Name: Maven-3
+  Install automatically: ✅
+  Version: 3.9.x
+
+  Docker:
+  Name: Docker
+  Path: docker
+
+[ STEP 6: Configure Credentials ]
+
+  Manage Jenkins → Credentials → Global → Add:
+
+  GitHub credentials:
+  Kind: Username with password
+  Username: Muhammad-Asim-raza
+  Password: [GitHub Personal Access Token]
+  ID: github-credentials
+  Description: GitHub PAT
+
+  Docker Hub credentials:
+  Kind: Username with password
+  Username: your-dockerhub-username
+  Password: [Docker Hub Access Token]
+  ID: dockerhub-credentials
+
+  SSH key:
+  Kind: SSH Username with private key
+  Username: deploy
+  Private Key: [paste SSH private key]
+  ID: deploy-ssh-key
+
+  Secret text:
+  Kind: Secret text
+  Secret: [value]
+  ID: my-secret
+
+[ STEP 7: Security Configuration ]
+
+  Manage Jenkins → Security:
+  Authorization: Matrix-based security
+  Add admin user: full permissions
+  Other users: build/read only
+
+  Security checklist:
+  ✅ Enable CSRF protection
+  ✅ Enable security realm
+  ✅ Disable agent-to-master security
+     (only for trusted internal agents)
+  ✅ Use HTTPS in production
+  ✅ Configure backup
+
+[ JENKINS DIRECTORY STRUCTURE ]
+
+  /var/jenkins_home/
+  ├── jobs/              ← All your pipelines
+  │   ├── my-pipeline/
+  │   │   ├── config.xml ← Job configuration

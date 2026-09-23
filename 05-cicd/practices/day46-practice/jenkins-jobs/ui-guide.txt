@@ -1,0 +1,149 @@
+============================================
+   JENKINS UI NAVIGATION GUIDE
+   URL: http://localhost:8090
+============================================
+
+[ MAIN DASHBOARD ]
+  URL: http://localhost:8090
+  Shows: All jobs, build status
+  Left panel:
+    - New Item (create job)
+    - People (users)
+    - Build History
+    - Manage Jenkins
+
+[ CREATING A PIPELINE JOB ]
+
+  Step 1: Dashboard → New Item
+  Step 2: Enter name: 'devops-pipeline'
+  Step 3: Select: 'Pipeline'
+  Step 4: Click OK
+
+  In Job Config:
+  ┌─────────────────────────────────┐
+  │ General:                         │
+  │   ☑ Discard old builds          │
+  │   Days: 30, Max: 20             │
+  │                                  │
+  │ Build Triggers:                  │
+  │   ☑ GitHub hook trigger         │
+  │   OR                            │
+  │   ☑ Poll SCM: H/5 * * * *       │
+  │                                  │
+  │ Pipeline:                        │
+  │   Definition: Pipeline script    │
+  │   from SCM                       │
+  │   SCM: Git                       │
+  │   Repository URL: [your repo]   │
+  │   Credentials: github-creds     │
+  │   Branch: */main                │
+  │   Script Path: Jenkinsfile      │
+  └─────────────────────────────────┘
+  Click: Save
+
+[ MANAGE JENKINS ]
+  URL: http://localhost:8090/manage
+
+  System:          Global system config
+  Plugins:         Install/update plugins
+  Nodes:           Agent management
+  Credentials:     Secret management
+  Users:           User management
+  Security:        Auth & authorization
+  Tools:           JDK, Git, Maven config
+  System Log:      Jenkins logs
+  Script Console:  Groovy console
+
+[ CREDENTIALS ]
+  URL: http://localhost:8090/credentials
+
+  Manage Jenkins → Credentials → System
+  → Global credentials → Add credentials
+
+  Credential types:
+  Username with password:
+    GitHub, Docker Hub, database logins
+
+  Secret text:
+    API keys, tokens, webhook URLs
+
+  SSH Username with private key:
+    Server deployment keys
+
+  Certificate:
+    TLS certificates
+
+  Kubernetes cluster:
+    K8s kubeconfig (needs plugin)
+
+[ ADDING GITHUB CREDENTIALS ]
+
+  1. Manage Jenkins → Credentials
+  2. System → Global credentials
+  3. Add Credentials
+  4. Kind: Username with password
+  5. Scope: Global
+  6. Username: Muhammad-Asim-raza
+  7. Password: [GitHub Personal Access Token]
+     (Settings → Developer settings → PAT → Classic)
+  8. ID: github-credentials
+  9. Description: GitHub PAT - Asim Raza
+  10. OK
+
+[ GLOBAL TOOLS CONFIGURATION ]
+  URL: http://localhost:8090/manage/configureTools/
+
+  Manage Jenkins → Tools
+
+  JDK installations:
+  Name: JDK-17
+  JAVA_HOME: /opt/java/openjdk
+  (auto-detected in Docker image)
+
+  Git installations:
+  Name: Default
+  Path to Git executable: git
+
+  Docker installations:
+  Name: Docker
+  Installation root: (auto-detect)
+  OR
+  Add installer → Download from docker.com
+
+[ SYSTEM CONFIGURATION ]
+  URL: http://localhost:8090/manage/configure
+
+  Important settings:
+  Jenkins URL: http://localhost:8090/
+  (Needed for webhooks and links to work)
+
+  System message: (optional)
+  e.g., 'DevOps Learning - Day 46'
+
+  Usage of Nodes:
+  Use only if tied projects: jobs on controller
+  (in production: use dedicated agents)
+
+[ PIPELINE VISUALIZATION ]
+  After running a job:
+
+  Classic view: /job/NAME/NUMBER/
+  Shows: Stage View (colored boxes)
+
+  Blue Ocean: /blue/pipelines/
+  Shows: Modern graph, better logs
+  Access: Open Blue Ocean (left menu)
+
+[ USEFUL JENKINS URLS ]
+  Dashboard:     http://localhost:8090/
+  Manage:        http://localhost:8090/manage
+  Plugins:       http://localhost:8090/pluginManager
+  Credentials:   http://localhost:8090/credentials
+  Nodes:         http://localhost:8090/computer
+  Script console: http://localhost:8090/script
+  API:           http://localhost:8090/api/json
+  Blue Ocean:    http://localhost:8090/blue
+
+============================================
+   UI GUIDE COMPLETE
+============================================

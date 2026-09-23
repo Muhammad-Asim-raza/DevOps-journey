@@ -1,0 +1,92 @@
+============================================
+   JENKINS REFERENCE
+   Author: Asim Raza - Day 46
+============================================
+
+[ WHAT IS JENKINS ]
+  Open-source CI/CD automation server
+  Self-hosted (you own the data)
+  1800+ plugins
+  ~50% enterprise CI/CD market
+  Pipeline defined in Jenkinsfile (Groovy)
+
+[ JENKINS vs GITHUB ACTIONS ]
+  Jenkins:        GitHub Actions:
+  Self-hosted  vs Cloud (GitHub)
+  Groovy       vs YAML
+  1800 plugins vs Marketplace
+  Full control vs Easy setup
+  Data on-prem vs GitHub holds data
+  Complex setup vs 5 minutes
+
+[ INSTALL WITH DOCKER ]
+  docker run -d \
+    --name jenkins \
+    -p 8090:8080 \
+    -p 50000:50000 \
+    -v jenkins-data:/var/jenkins_home \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    jenkins/jenkins:lts-jdk17
+
+  Get initial password:
+  docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+
+[ KEY DIRECTORIES ]
+  /var/jenkins_home/
+    jobs/          = pipeline configurations
+    plugins/       = installed plugins
+    secrets/       = encrypted credentials
+    workspace/     = active build workspaces
+    config.xml     = global configuration
+
+[ ESSENTIAL PLUGINS ]
+  Pipeline              = Jenkinsfile support
+  Git                   = source control
+  Docker Pipeline       = Docker in pipeline
+  Credentials Binding   = use secrets safely
+  Blue Ocean            = modern UI
+  JUnit                 = test reporting
+  Timestamper           = log timestamps
+  AnsiColor             = colored logs
+  Workspace Cleanup     = clean before build
+  Build Timeout         = kill hung builds
+
+[ JOB TYPES ]
+  Freestyle:            click UI, no code
+  Pipeline:             Jenkinsfile (DSL)
+  Multibranch Pipeline: auto from Git branches
+  Organization Folder:  scan entire GitHub org
+
+[ TRIGGERS ]
+  GitHub webhook:     push triggers build
+  Poll SCM:          check Git every N minutes
+                     H/5 * * * * = every 5 min
+  Schedule:          cron-like builds
+                     H 2 * * * = nightly 2am
+  Manual:            click Build Now
+  API:               POST /job/NAME/build
+  Upstream:          when another job succeeds
+
+[ CREDENTIALS TYPES ]
+  Username + Password:  GitHub, Docker Hub
+  Secret text:          API keys, tokens
+  SSH key:              Server deployment
+  Certificate:          TLS certs
+  Secret file:          kubeconfig files
+
+[ CURRENT STATUS ]
+Name: jenkins-day46 | Status: Up 9 hours
+
+Access: http://localhost:8090
+
+[ TOMORROW: DAY 47 ]
+  Writing Jenkinsfiles (pipelines)
+  Declarative vs Scripted pipeline
+  Stages, steps, post conditions
+  Parallel stages in Jenkins
+  Jenkins credentials in pipelines
+  Multi-branch pipelines
+
+============================================
+   REFERENCE COMPLETE
+============================================

@@ -1,0 +1,21 @@
+=== JENKINS SECURITY ===
+Security checklist implemented:
+✅ Jenkins running in Docker (isolated)
+✅ Non-default port (8090)
+✅ Setup wizard with password
+✅ Credentials store configured
+✅ Script sandbox enabled
+
+Production additions needed:
+- HTTPS via nginx reverse proxy
+- Not exposed directly to internet
+- Regular Jenkins and plugin updates
+- Backup jenkins_home volume
+
+Credentials in Jenkinsfile:
+WRONG: def pass = 'secret'
+RIGHT: withCredentials([string(
+  credentialsId: 'my-secret',
+  variable: 'MY_PASS')]) {
+  sh 'use $MY_PASS safely'
+}
