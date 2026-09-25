@@ -1,0 +1,443 @@
+// ================================================
+// Jenkinsfile.complete
+// Complete Declarative Pipeline Reference
+// Author: Asim Raza - Day 47
+// Every section explained with comments
+// ================================================
+
+// pipeline { } = required wrapper for declarative
+// All declarative pipelines start with this
+pipeline {
+
+    // ── AGENT ────────────────────────────────────
+    // agent = WHERE to run this pipeline
+    // This is the TOP-LEVEL agent (default for all stages)
+    agent any
+    // agent any      = any available agent
+    // agent none     = no global agent (specify per stage)
+    // agent { label 'linux' }  = specific labeled agent
+    // agent { docker 'python:3.11-slim' } = Docker agent
+    // agent { kubernetes { ... } }  = K8s pod agent
+
+    // ── OPTIONS ──────────────────────────────────
+    // options = pipeline-level behaviors
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        // timeout = fail if pipeline takes > 30 min
+        // Prevents hung builds blocking agents forever
+
+        timestamps()
+        // timestamps = prefix every log line with time
+        // [14:32:15] Stage started
+        // Makes debugging MUCH easier
+
+        ansiColor('xterm')
+        // ansiColor = colored terminal output in logs
+        // Requires: AnsiColor plugin
+
+        buildDiscarder(logRotator(
+            numToKeepStr: '20',
+            daysToKeepStr: '30'
+        ))
+        // buildDiscarder = don't keep builds forever
+        // numToKeepStr = keep last 20 builds
+        // daysToKeepStr = keep builds from last 30 days
+        // CRITICAL: without this disk fills up!
+
+        disableConcurrentBuilds()
+        // disableConcurrentBuilds = only ONE build
+        // at a time for this job
+        // Prevents: two deploys at same time
+        // Use: for deployment pipelines
+
+        retry(3)
+        // retry = retry entire pipeline up to 3 times
+        // Use carefully: not for deployment stages!
+    }
+
+    // ── PARAMETERS ───────────────────────────────
+    // parameters = let humans pass values at build time
+    parameters {
+        string(
+            name: 'DEPLOY_ENV',
+            defaultValue: 'staging',
+            description: 'Target environment'
+        )
+        // string = text input
+        // Access with: params.DEPLOY_ENV
+
+        choice(
+            name: 'LOG_LEVEL',
+            choices: ['INFO', 'DEBUG', 'WARNING', 'ERROR'],
+            description: 'Log verbosity'
+        )
+        // choice = dropdown menu
+        // Access with: params.LOG_LEVEL
+
+        booleanParam(
+            name: 'RUN_TESTS',
+            defaultValue: true,
+            description: 'Run test suite?'
+        )
+        // booleanParam = checkbox
+        // Access with: params.RUN_TESTS
+
+        password(
+            name: 'TEMP_PASSWORD',
+            defaultValue: '',
+            description: 'Temporary password (not stored)'
+        )
+        // password = masked input field
+        // For one-time values only
+        // Use credentials store for permanent secrets!
+    }
+
+    // ── ENVIRONMENT ──────────────────────────────
+    // environment = variables available to all stages
+    environment {
+        // Regular variable
+        APP_NAME    = 'jenkins-demo'
+        REGISTRY    = 'docker.io'
+        IMAGE_NAME  = "asimraza/${APP_NAME}"
+
+        // Computed variable
+        SHORT_SHA   = sh(
+            script: 'git rev-parse --short HEAD 2>/dev/null || echo "local"',
+            returnStdout: true
+        ).trim()
+        // sh(returnStdout: true) = capture command output
+        // .trim() = remove trailing newline
+
+        // From credentials store (SECURE)
+        DOCKER_CREDS = credentials('dockerhub-credentials')
+        // credentials() = pulls from Jenkins credentials
+        // Creates: DOCKER_CREDS_USR (username)
+        //          DOCKER_CREDS_PSW (password)
+        // Both are MASKED in logs
+
+        // Secret text credential
+        // SLACK_TOKEN = credentials('slack-webhook')
+    }
+
+    // ── STAGES ───────────────────────────────────
+    // stages = the actual work of the pipeline
+    // Each stage shown in the Blue Ocean visualization
+    stages {
+
+        // ── STAGE: Checkout ──────────────────────
+        stage('Checkout') {
+            steps {
+                // checkout scm = checkout code from
+                // the SCM configured for THIS job
+                // Equivalent to: git checkout main
+                checkout scm
+
+                // Show what we checked out
+                sh '''
+                    echo "=== BUILD CONTEXT ==="
+                    echo "Branch: ${GIT_BRANCH}"
+                    echo "Commit: ${GIT_COMMIT}"
+                    echo "Build:  ${BUILD_NUMBER}"
+                    echo "Job:    ${JOB_NAME}"
+                    git log --oneline -3
+                '''
+                // Multi-line sh uses ''' ''' (triple quotes)
+                // Variables: ${VAR} are shell variables here
+                // Jenkins vars: ${BUILD_NUMBER} are from env
+            }
+        }
+
+        // ── STAGE: Lint (conditional) ─────────────
+        stage('Lint') {
+            // when = only run this stage if condition is true
+            when {
+                expression { params.RUN_TESTS == true }
+                // expression = Groovy expression that must be true
+                // Can also use:
+                // branch 'main'     = only on main branch
+                // not { branch 'feature/*' }
+                // environment name: 'DEPLOY_ENV', value: 'prod'
+                // tag 'v*'          = only on tags
+            }
+            steps {
+                dir('05-cicd/practices/day47-practice/jenkins-app') {
+                    // dir = change to this directory
+                    sh '''
+                        pip install flake8 --quiet
+                        flake8 src/ \
+                            --max-line-length=88 \
+                            --exclude=__pycache__ \
+                            --count \
+                            --statistics \
+                            2>/dev/null || echo "Lint complete"
+                    '''
+                }
+            }
+        }
+
+        // ── STAGE: Test ──────────────────────────
+        stage('Test') {
+            when {
+                expression { params.RUN_TESTS }
+            }
+
+            // Use a specific agent for this stage
+            // Overrides top-level agent for this stage only
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                    // Run tests inside Python Docker container
+                    // Container is started for this stage
+                    // Destroyed after stage completes
+                    args '-u root'
+                    // args = additional docker run arguments
+                }
+            }
+
+            steps {
+                dir('05-cicd/practices/day47-practice/jenkins-app') {
+                    sh '''
+                        echo "=== INSTALLING DEPENDENCIES ==="
+                        pip install -r requirements.txt --quiet
+
+                        echo "=== RUNNING TESTS ==="
+                        python -m pytest tests/ \
+                            -v \
+                            --tb=short \
+                            --cov=src \
+                            --cov-report=xml:coverage.xml \
+                            --cov-fail-under=80 \
+                            --junit-xml=test-results.xml \
+                            2>&1 | tee test-output.log
+                    '''
+                }
+            }
+
+            post {
+                always {
+                    // publish test results regardless of pass/fail
+                    junit(
+                        testResults: \
+                        '05-cicd/practices/day47-practice/jenkins-app/test-results.xml',
+                        allowEmptyResults: true
+                    )
+                    // junit = publish JUnit XML results
+                    // Shows test trend graph in Jenkins UI
+                    // Marks individual tests as failed in UI
+                }
+            }
+        }
+
+        // ── STAGE: Parallel (multiple things at once) ─
+        stage('Security and Quality') {
+            // parallel = run multiple stages simultaneously
+            parallel {
+
+                stage('Security Scan') {
+                    steps {
+                        sh '''
+                            echo "=== SECURITY SCAN ==="
+                            pip install bandit --quiet 2>/dev/null || true
+                            bandit -r \
+                                05-cicd/practices/day47-practice/jenkins-app/src/ \
+                                --severity-level low \
+                                -f txt \
+                                2>/dev/null || echo "Bandit scan complete"
+                        '''
+                    }
+                }
+
+                stage('Dependency Check') {
+                    steps {
+                        sh '''
+                            echo "=== DEPENDENCY CHECK ==="
+                            pip install safety --quiet 2>/dev/null || true
+                            safety check \
+                                -r 05-cicd/practices/day47-practice/jenkins-app/requirements.txt \
+                                2>/dev/null || echo "Safety check complete"
+                        '''
+                    }
+                }
+
+            }
+            // Both stages run in PARALLEL
+            // Total time = max(security, dependency) not sum
+        }
+
+        // ── STAGE: Build Docker Image ─────────────
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // script { } block allows Groovy code
+                    // inside declarative pipeline
+                    // Use for: dynamic logic, loops, conditionals
+
+                    def version = "1.0.${env.BUILD_NUMBER}"
+                    def imageTag = "${env.IMAGE_NAME}:${version}"
+                    def latestTag = "${env.IMAGE_NAME}:latest"
+
+                    // Store for later stages
+                    env.IMAGE_VERSION = version
+                    env.IMAGE_TAG = imageTag
+                    // env.VAR = set env var for subsequent stages
+
+                    echo "Building: ${imageTag}"
+
+                    sh """
+                        docker build \
+                            --build-arg APP_VERSION=${version} \
+                            --build-arg BUILD_NUMBER=${env.BUILD_NUMBER} \
+                            --build-arg GIT_COMMIT=${env.GIT_COMMIT} \
+                            -t ${imageTag} \
+                            -t ${latestTag} \
+                            05-cicd/practices/day47-practice/jenkins-app/
+                    """
+                    // Note: """ (double quotes) = Groovy string
+                    //       interpolates ${var}
+                    //       ''' (single quotes) = shell string
+                    //       no Groovy interpolation
+                }
+            }
+        }
+
+        // ── STAGE: Push to Registry ───────────────
+        stage('Push to Registry') {
+            when {
+                branch 'main'
+                // Only push images from main branch
+                // Feature branches: build but don't push
+            }
+            steps {
+                script {
+                    // Use credentials for Docker login
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        sh '''
+                            echo "$DOCKER_PASS" | \
+                                docker login -u "$DOCKER_USER" --password-stdin
+                            docker push ${IMAGE_TAG}
+                            docker push ${IMAGE_NAME}:latest
+                            docker logout
+                        '''
+                        // withCredentials = inject credentials as env vars
+                        // DOCKER_PASS is MASKED in logs
+                        // docker logout = always clean up!
+                    }
+                }
+            }
+        }
+
+        // ── STAGE: Deploy to Staging ──────────────
+        stage('Deploy Staging') {
+            when {
+                branch 'main'
+            }
+            environment {
+                DEPLOY_HOST = credentials('staging-host')
+                // environment inside stage = stage-local vars
+            }
+            steps {
+                sh '''
+                    echo "=== DEPLOYING TO STAGING ==="
+                    echo "Environment: ${DEPLOY_ENV}"
+                    echo "Image: ${IMAGE_TAG}"
+                    echo "Deploying to staging..."
+                    sleep 1
+                    echo "✅ Staging deployment complete"
+                '''
+            }
+        }
+
+        // ── STAGE: Manual Approval for Production ──
+        stage('Approve Production') {
+            when {
+                branch 'main'
+                expression { params.DEPLOY_ENV == 'production' }
+            }
+            steps {
+                // input = pause pipeline and wait for human
+                input(
+                    message: 'Deploy to PRODUCTION?',
+                    ok: 'Deploy Now',
+                    // ok = label on the approve button
+                    submitter: 'admin,lead-engineer',
+                    // submitter = who can approve (Jenkins users)
+                    parameters: [
+                        string(
+                            name: 'REASON',
+                            description: 'Reason for deployment'
+                        )
+                    ]
+                )
+                // Pipeline pauses here
+                // Slack/email notification sent
+                // User clicks "Deploy Now" to continue
+                // Times out after options.timeout
+            }
+        }
+
+    }
+    // End of stages
+
+    // ── POST ─────────────────────────────────────
+    // post = actions after ALL stages complete
+    post {
+
+        always {
+            // always = runs NO MATTER WHAT
+            // Use for: cleanup, notifications
+            echo "Pipeline complete: ${currentBuild.result}"
+
+            // Clean workspace after every build
+            cleanWs()
+            // cleanWs() = delete workspace directory
+            // Prevents: stale files from previous build
+            // Requires: Workspace Cleanup plugin
+        }
+
+        success {
+            // success = only when pipeline PASSES
+            echo "✅ Build ${BUILD_NUMBER} SUCCEEDED"
+
+            // Example Slack notification:
+            // slackSend(
+            //     channel: '#deployments',
+            //     color: 'good',
+            //     message: "✅ ${JOB_NAME} #${BUILD_NUMBER} passed"
+            // )
+        }
+
+        failure {
+            // failure = only when pipeline FAILS
+            echo "❌ Build ${BUILD_NUMBER} FAILED"
+
+            // Email notification:
+            // emailext(
+            //     subject: "FAILED: ${JOB_NAME} #${BUILD_NUMBER}",
+            //     body: "Check: ${BUILD_URL}",
+            //     to: "team@company.com"
+            // )
+        }
+
+        unstable {
+            // unstable = tests failed but pipeline didn't error
+            // Example: junit tests failed
+            echo "⚠️ Build ${BUILD_NUMBER} UNSTABLE"
+        }
+
+        aborted {
+            // aborted = human cancelled the build
+            echo "🚫 Build ${BUILD_NUMBER} was aborted"
+        }
+
+        changed {
+            // changed = result changed from previous build
+            // (failed → passed or passed → failed)
+            // Great for: only notify on state CHANGE
+            echo "🔄 Build status changed!"
+        }
+    }
+}

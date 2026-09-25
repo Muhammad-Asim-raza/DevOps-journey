@@ -1,0 +1,128 @@
+// ================================================
+// Jenkinsfile.multibranch
+// Multi-Branch Pipeline Configuration
+// Author: Asim Raza - Day 47
+//
+// This Jenkinsfile handles different branches
+// with different behaviors automatically
+// ================================================
+
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        timeout(time: 15, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    environment {
+        APP_DIR   = '05-cicd/practices/day47-practice/jenkins-app'
+        IS_MAIN   = "${env.BRANCH_NAME == 'main' ? 'true' : 'false'}"
+        IS_PR     = "${env.CHANGE_ID ? 'true' : 'false'}"
+        // BRANCH_NAME = set by multibranch pipeline
+        // CHANGE_ID = set if this is a PR/MR build
+    }
+
+    stages {
+
+        stage('Context') {
+            steps {
+                script {
+                    echo "Branch: ${env.BRANCH_NAME}"
+                    echo "Is main: ${env.IS_MAIN}"
+                    echo "Is PR: ${env.IS_PR}"
+
+                    if (env.CHANGE_ID) {
+                        echo "PR #${env.CHANGE_ID}: ${env.CHANGE_TITLE}"
+                        echo "From: ${env.CHANGE_BRANCH}"
+                        echo "To: ${env.CHANGE_TARGET}"
+                    }
+                }
+            }
+        }
+
+        stage('Test') {
+            // Tests run on ALL branches
+            steps {
+                dir("${APP_DIR}") {
+                    sh '''
+                        pip install -r requirements.txt --quiet
+                        python -m pytest tests/ -q
+                        echo "✅ Tests passed"
+                    '''
+                }
+            }
+        }
+
+        stage('Build Image') {
+            // Build on main and feature branches
+            // Skip on PRs (already tested in feature branch)
+            when {
+                not { changeRequest() }
+                // changeRequest() = this is a PR build
+                // We skip building on PR builds to save time
+                // PR's source branch already built
+            }
+            steps {
+                script {
+                    def tag = env.IS_MAIN == 'true' ?
+                        "latest" : env.BRANCH_NAME.replace('/', '-')
+                    echo "Building tag: jenkins-demo:${tag}"
+                }
+            }
+        }
+
+        stage('Push Image') {
+            // Only push from main branch
+            when { branch 'main' }
+            steps {
+                echo "Pushing to registry from main only"
+                echo "Feature branches: build but never push"
+            }
+        }
+
+        stage('Deploy Staging') {
+            // Auto-deploy main to staging
+            when { branch 'main' }
+            steps {
+                echo "Auto-deploying main to staging"
+            }
+        }
+
+        stage('Deploy Production') {
+            // Production needs manual approval
+            when {
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.result == null }
+                }
+            }
+            input {
+                message "Deploy to PRODUCTION?"
+                ok "Deploy"
+                submitter "admin"
+            }
+            steps {
+                echo "Production deployment approved"
+            }
+        }
+
+    }
+
+    post {
+        always { cleanWs() }
+
+        success {
+            script {
+                if (env.IS_MAIN == 'true') {
+                    echo "Main branch build succeeded - staging updated"
+                } else if (env.IS_PR == 'true') {
+                    echo "PR tests passed - ready for review"
+                } else {
+                    echo "Feature branch build passed"
+                }
+            }
+        }
+    }
+}

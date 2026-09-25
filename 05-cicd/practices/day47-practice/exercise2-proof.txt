@@ -1,0 +1,11 @@
+=== DECLARATIVE PATTERNS ===
+Patterns in Jenkinsfile.patterns:
+1. Dynamic env from branch name
+2. retry(3) for flaky operations
+3. Stage-level timeout
+4. stash/unstash across agents
+5. archiveArtifacts permanent storage
+6. Jenkins built-in variables
+7. script{} Groovy in declarative
+8. when{} conditions (4 types)
+9. try/catch error handling

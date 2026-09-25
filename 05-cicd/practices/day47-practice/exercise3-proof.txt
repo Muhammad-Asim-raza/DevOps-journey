@@ -1,0 +1,23 @@
+=== MULTI-BRANCH PIPELINE ===
+Jenkinsfile.multibranch behavior:
+main branch:
+  - Tests run
+  - Image built
+  - Image pushed (registry)
+  - Auto-deploy to staging
+  - Manual approval → production
+
+feature/* branches:
+  - Tests run
+  - Image built (tag = branch name)
+  - NOT pushed (no registry pollution)
+  - NOT deployed
+
+PR builds:
+  - Tests run
+  - Image NOT built (source already tested)
+  - Status reported back to GitHub
+
+Key variables:
+BRANCH_NAME = current branch (multibranch)
+CHANGE_ID = PR number (only on PR builds)

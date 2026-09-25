@@ -1,0 +1,20 @@
+=== JENKINSFILES CREATED ===
+total 48
+drwxr-xr-x 2 asim-raza asim-raza  4096 Sep 25 11:22 .
+drwxr-xr-x 4 asim-raza asim-raza  4096 Sep 25 11:30 ..
+-rw-r--r-- 1 asim-raza asim-raza 16620 Sep 25 10:26 Jenkinsfile.complete
+-rw-r--r-- 1 asim-raza asim-raza  3782 Sep 25 11:22 Jenkinsfile.multibranch
+-rw-r--r-- 1 asim-raza asim-raza  7939 Sep 25 11:11 Jenkinsfile.patterns
+-rw-r--r-- 1 asim-raza asim-raza  6183 Sep 25 10:48 Jenkinsfile.production
+
+--- Stages in Jenkinsfile.complete ---
+  Checkout
+  Lint
+  Test
+  Security and Quality
+  Security Scan
+  Dependency Check
+  Build Docker Image
+  Push to Registry
+  Deploy Staging
+  Approve Production

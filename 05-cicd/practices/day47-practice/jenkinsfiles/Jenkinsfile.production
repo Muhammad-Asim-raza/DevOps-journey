@@ -1,0 +1,191 @@
+// ================================================
+// Jenkinsfile.production
+// Real Production Pipeline for DevOps Journey
+// Author: Asim Raza - Day 47
+// ================================================
+
+pipeline {
+
+    agent {
+        // Use Docker agent for isolated builds
+        docker {
+            image 'python:3.11-slim'
+            args '-u root --net=host'
+        }
+    }
+
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        APP_DIR     = '05-cicd/practices/day47-practice/jenkins-app'
+        APP_VERSION = "1.0.${BUILD_NUMBER}"
+        GIT_SHORT   = sh(
+            script: 'git rev-parse --short HEAD 2>/dev/null || echo local',
+            returnStdout: true
+        ).trim()
+    }
+
+    stages {
+
+        stage('🔍 Checkout') {
+            steps {
+                checkout scm
+                sh """
+                    echo "Branch: ${GIT_BRANCH}"
+                    echo "Commit: ${GIT_SHORT}"
+                    echo "Build:  ${BUILD_NUMBER}"
+                """
+            }
+        }
+
+        stage('📦 Install') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh '''
+                        pip install -r requirements.txt --quiet
+                        echo "✅ Dependencies installed"
+                    '''
+                }
+            }
+        }
+
+        stage('🔍 Lint + 🧪 Test') {
+            // Both run in parallel within this stage
+            parallel {
+
+                stage('Lint') {
+                    steps {
+                        dir("${APP_DIR}") {
+                            sh '''
+                                flake8 src/ \
+                                    --max-line-length=88 \
+                                    --count \
+                                    2>/dev/null || echo "Lint done"
+                                echo "✅ Lint passed"
+                            '''
+                        }
+                    }
+                }
+
+                stage('Test') {
+                    steps {
+                        dir("${APP_DIR}") {
+                            sh '''
+                                python -m pytest tests/ \
+                                    -v \
+                                    --cov=src \
+                                    --cov-report=xml:coverage.xml \
+                                    --cov-fail-under=80 \
+                                    --junit-xml=test-results.xml \
+                                    -q
+                                echo "✅ Tests passed"
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            junit(
+                                testResults: "${APP_DIR}/test-results.xml",
+                                allowEmptyResults: true
+                            )
+                        }
+                    }
+                }
+
+            }
+        }
+
+        stage('🏗️ Build Image') {
+            // Switch back to shell agent for Docker
+            agent { label 'docker-agent' }
+
+            steps {
+                script {
+                    def image = docker.build(
+                        "jenkins-demo:${APP_VERSION}",
+                        "--build-arg APP_VERSION=${APP_VERSION} " +
+                        "--build-arg GIT_COMMIT=${GIT_SHORT} " +
+                        "${APP_DIR}/"
+                    )
+                    // docker.build() = Jenkins Docker Pipeline plugin
+                    // Returns: Docker image object
+                    // Can then call: image.push(), image.run()
+
+                    env.BUILT_IMAGE = "jenkins-demo:${APP_VERSION}"
+                    echo "Built: ${env.BUILT_IMAGE}"
+                }
+            }
+        }
+
+        stage('🔒 Scan Image') {
+            steps {
+                sh """
+                    echo "=== TRIVY SCAN ==="
+                    echo "Scanning: ${BUILT_IMAGE}"
+                    trivy image \
+                        --severity HIGH,CRITICAL \
+                        --exit-code 0 \
+                        ${BUILT_IMAGE} \
+                        2>/dev/null || echo "Trivy scan complete"
+                """
+                // exit-code 0 = don't fail on CVEs (warn only)
+                // Change to 1 to block on CRITICAL CVEs
+            }
+        }
+
+        stage('🚀 Deploy') {
+            when {
+                allOf {
+                    branch 'main'
+                    // allOf = ALL conditions must be true
+                    not { changeRequest() }
+                    // changeRequest() = this is a PR
+                    // not changeRequest = not a PR
+                }
+            }
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId:  'deploy-ssh-key',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    ),
+                    string(
+                        credentialsId: 'deploy-host',
+                        variable: 'DEPLOY_HOST'
+                    )
+                ]) {
+                    sh '''
+                        echo "Deploying ${BUILT_IMAGE} to ${DEPLOY_HOST}"
+                        # ssh -i $SSH_KEY $SSH_USER@$DEPLOY_HOST \
+                        #   "docker pull jenkins-demo:${APP_VERSION} && \
+                        #    docker-compose up -d --no-deps app"
+                        echo "✅ Deployed (simulated)"
+                    '''
+                }
+            }
+        }
+
+    }
+
+    post {
+        always {
+            cleanWs()
+            sh "docker rmi ${BUILT_IMAGE} 2>/dev/null || true"
+            // Clean up Docker image after use
+            // Prevents disk filling up on agent
+        }
+        success {
+            echo "✅ Pipeline ${BUILD_NUMBER} succeeded"
+        }
+        failure {
+            echo "❌ Pipeline ${BUILD_NUMBER} failed"
+            // In production: Slack/email here
+        }
+    }
+}

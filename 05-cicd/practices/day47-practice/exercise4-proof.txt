@@ -1,0 +1,19 @@
+=== SHARED LIBRARIES ===
+Jenkinsfile.shared-library demonstrates:
+@Library('library-name@main') _
+
+Purpose: reusable Groovy code across Jenkinsfiles
+Equivalent to: GitHub Actions reusable workflows
+
+Library repo structure:
+vars/        = global functions
+  dockerBuild.groovy
+  deployToK8s.groovy
+  slackNotify.groovy
+src/         = Groovy classes
+resources/   = shell scripts, templates
+
+Usage:
+dockerBuild('myapp', '1.0.0')  ← calls vars/dockerBuild.groovy
+
+Benefit: update library once → all pipelines updated

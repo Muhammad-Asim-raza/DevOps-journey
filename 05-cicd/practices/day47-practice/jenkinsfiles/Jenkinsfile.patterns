@@ -1,0 +1,230 @@
+// ================================================
+// Jenkinsfile.patterns
+// Advanced Jenkins Pipeline Patterns
+// Author: Asim Raza - Day 47
+// ================================================
+
+pipeline {
+    agent any
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+
+        // ── PATTERN 1: Dynamic Environment ──
+        stage('Pattern 1: Dynamic Env') {
+            steps {
+                script {
+                    // Determine environment from branch
+                    def deployEnv = 'dev'
+                    if (env.GIT_BRANCH == 'origin/main') {
+                        deployEnv = 'production'
+                    } else if (env.GIT_BRANCH ==~ /.*develop.*/) {
+                        deployEnv = 'staging'
+                    }
+                    env.DEPLOY_ENV = deployEnv
+                    // ==~ = Groovy regex match operator
+
+                    echo "Branch: ${env.GIT_BRANCH}"
+                    echo "Environment: ${env.DEPLOY_ENV}"
+                }
+            }
+        }
+
+        // ── PATTERN 2: Retry on Failure ──
+        stage('Pattern 2: Retry') {
+            steps {
+                retry(3) {
+                    // retry(N) = try up to N times
+                    sh '''
+                        echo "Attempting flaky operation..."
+                        # Simulated success
+                        echo "✅ Operation succeeded"
+                    '''
+                }
+                // If all 3 retries fail: stage fails
+                // Use for: network operations, flaky tests
+            }
+        }
+
+        // ── PATTERN 3: Timeout per Stage ──
+        stage('Pattern 3: Stage Timeout') {
+            options {
+                timeout(time: 5, unit: 'MINUTES')
+                // options inside stage = stage-level timeout
+                // Only this stage gets 5 min timeout
+            }
+            steps {
+                sh 'echo "This stage times out after 5 minutes"'
+            }
+        }
+
+        // ── PATTERN 4: Stash and Unstash ──
+        stage('Pattern 4: Stash Files') {
+            steps {
+                sh '''
+                    mkdir -p build-output
+                    echo "compiled artifact" > build-output/app.jar
+                    echo "1.0.${BUILD_NUMBER}" > build-output/version.txt
+                '''
+
+                stash(
+                    name: 'build-artifacts',
+                    includes: 'build-output/**'
+                )
+                // stash = save files to Jenkins controller
+                // Can be unstashed on different agent
+                // Use for: passing files between agents
+
+                echo "Files stashed: build-artifacts"
+            }
+        }
+
+        stage('Pattern 4: Unstash Files') {
+            // Different agent could be here
+            steps {
+                unstash 'build-artifacts'
+                // unstash = retrieve previously stashed files
+
+                sh '''
+                    echo "=== Unstashed artifacts ==="
+                    ls -la build-output/
+                    cat build-output/version.txt
+                '''
+            }
+        }
+
+        // ── PATTERN 5: Archive Artifacts ──
+        stage('Pattern 5: Archive') {
+            steps {
+                sh '''
+                    mkdir -p reports
+                    echo "Test Results" > reports/junit.xml
+                    echo "Coverage: 87%" > reports/coverage.txt
+                '''
+
+                archiveArtifacts(
+                    artifacts: 'reports/**',
+                    fingerprint: true,
+                    allowEmptyArchive: true
+                )
+                // archiveArtifacts = save files to Jenkins
+                // Available to download from build page
+                // fingerprint = calculate checksum (traceability)
+                // Different from stash: permanent (respects log rotation)
+            }
+        }
+
+        // ── PATTERN 6: Environment Variables Deep Dive ──
+        stage('Pattern 6: Env Vars') {
+            environment {
+                STAGE_VAR = 'stage-level-only'
+                // This var only exists in THIS stage
+            }
+            steps {
+                sh '''
+                    echo "=== JENKINS BUILT-IN VARIABLES ==="
+                    echo "BUILD_NUMBER:    ${BUILD_NUMBER}"
+                    echo "BUILD_URL:       ${BUILD_URL}"
+                    echo "JOB_NAME:        ${JOB_NAME}"
+                    echo "JOB_BASE_NAME:   ${JOB_BASE_NAME}"
+                    echo "WORKSPACE:       ${WORKSPACE}"
+                    echo "GIT_BRANCH:      ${GIT_BRANCH}"
+                    echo "GIT_COMMIT:      ${GIT_COMMIT}"
+                    echo "GIT_URL:         ${GIT_URL}"
+                    echo "JENKINS_URL:     ${JENKINS_URL}"
+                    echo "NODE_NAME:       ${NODE_NAME}"
+                    echo "EXECUTOR_NUMBER: ${EXECUTOR_NUMBER}"
+                    echo "STAGE_VAR:       ${STAGE_VAR}"
+                '''
+            }
+        }
+
+        // ── PATTERN 7: Groovy Script Block ──
+        stage('Pattern 7: Script Block') {
+            steps {
+                script {
+                    // Groovy code inside declarative
+                    def buildNum = env.BUILD_NUMBER.toInteger()
+
+                    if (buildNum % 10 == 0) {
+                        echo "This is build #${buildNum} (milestone!)"
+                        currentBuild.description = "Milestone build #${buildNum}"
+                        // currentBuild.description = shown in build history
+                    }
+
+                    // List comprehension in Groovy
+                    def stages = ['lint', 'test', 'build', 'deploy']
+                    stages.each { stageName ->
+                        echo "Would run: ${stageName}"
+                    }
+
+                    // Set build result
+                    // currentBuild.result = 'UNSTABLE'
+                    // currentBuild.result = 'FAILURE'
+                    // currentBuild.result = 'SUCCESS'
+                }
+            }
+        }
+
+        // ── PATTERN 8: When Conditions ──
+        stage('Pattern 8a: Branch Condition') {
+            when { branch 'main' }
+            steps { echo "Main branch only!" }
+        }
+
+        stage('Pattern 8b: Multiple Conditions') {
+            when {
+                allOf {
+                    branch 'main'
+                    not { changeRequest() }
+                    // not changeRequest = not a pull request
+                }
+            }
+            steps { echo "Main branch, not a PR" }
+        }
+
+        stage('Pattern 8c: Expression') {
+            when {
+                expression {
+                    return env.BUILD_NUMBER.toInteger() > 1
+                }
+            }
+            steps { echo "Not the first build" }
+        }
+
+        stage('Pattern 8d: Environment Value') {
+            when {
+                environment name: 'DEPLOY_ENV', value: 'production'
+            }
+            steps { echo "Production only!" }
+        }
+
+        // ── PATTERN 9: Error Handling ──
+        stage('Pattern 9: Error Handling') {
+            steps {
+                script {
+                    try {
+                        sh 'echo "Risky operation"'
+                        // sh 'exit 1'  // would throw exception
+                    } catch (Exception e) {
+                        echo "Caught error: ${e.message}"
+                        // Don't fail the build, just log
+                        // Or: throw e  to re-throw and fail
+                        currentBuild.result = 'UNSTABLE'
+                    } finally {
+                        echo "Always runs (like post { always })"
+                    }
+                }
+            }
+        }
+
+    }
+
+    post {
+        always { cleanWs() }
+        success { echo "All patterns demonstrated!" }
+    }
+}

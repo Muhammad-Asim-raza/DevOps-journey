@@ -1,0 +1,105 @@
+============================================
+   JENKINSFILE REFERENCE
+   Author: Asim Raza - Day 47
+============================================
+
+[ PIPELINE SKELETON ]
+pipeline {
+    agent any
+    options { timestamps(); buildDiscarder(logRotator(numToKeepStr: '20')) }
+    environment { APP_NAME = 'myapp' }
+    parameters { string(name: 'ENV', defaultValue: 'staging') }
+    stages {
+        stage('Build') {
+            steps { sh 'make build' }
+        }
+    }
+    post {
+        always  { cleanWs() }
+        success { echo "Passed!" }
+        failure { echo "Failed!" }
+    }
+}
+
+[ AGENT OPTIONS ]
+  agent any                        = any available agent
+  agent none                       = set per-stage
+  agent { label 'linux' }          = labeled agent
+  agent { docker { image '...' } } = Docker container
+  agent { kubernetes { yaml '...' } } = K8s pod
+
+[ COMMON STEPS ]
+  sh 'command'                 = run shell command
+  sh '''multiline'''           = multi-line shell
+  echo 'message'              = print to log
+  dir('path') { steps }       = change directory
+  checkout scm                 = clone from job SCM
+  withCredentials([...]) {}   = inject credentials
+  script { groovy code }      = Groovy in declarative
+  stash name: 'files'         = save files between agents
+  unstash 'files'             = restore stashed files
+  archiveArtifacts 'files/**' = save to Jenkins
+  junit 'results.xml'         = publish test results
+  retry(3) { steps }          = retry on failure
+  timeout(time:5, unit:'MINUTES') { steps }
+  input message: 'Approve?'   = pause for human
+  cleanWs()                   = delete workspace
+
+[ CREDENTIALS IN PIPELINE ]
+  // Username + Password:
+  withCredentials([usernamePassword(
+    credentialsId: 'my-creds',
+    usernameVariable: 'USER',
+    passwordVariable: 'PASS')]) {
+    sh 'login --user $USER --pass $PASS'
+  }
+
+  // Secret text:
+  withCredentials([string(
+    credentialsId: 'api-key',
+    variable: 'API_KEY')]) {
+    sh 'curl -H "Auth: $API_KEY" ...'
+  }
+
+  // SSH key:
+  sshagent(['deploy-key']) {
+    sh 'ssh user@server ./deploy.sh'
+  }
+
+[ WHEN CONDITIONS ]
+  when { branch 'main' }
+  when { tag 'v*' }
+  when { changeRequest() }            = is PR
+  when { not { changeRequest() } }    = not PR
+  when { expression { condition } }
+  when { environment name:'K', value:'V' }
+  when { allOf { cond1; cond2 } }     = AND
+  when { anyOf { cond1; cond2 } }     = OR
+
+[ POST CONDITIONS ]
+  always    = runs always (cleanup)
+  success   = only on success
+  failure   = only on failure
+  unstable  = test failures
+  aborted   = cancelled by human
+  changed   = result changed from last build
+
+[ JENKINS BUILT-IN VARIABLES ]
+  BUILD_NUMBER  = current build number
+  BUILD_URL     = URL to this build
+  JOB_NAME      = full job name
+  WORKSPACE     = build workspace path
+  GIT_BRANCH    = current git branch
+  GIT_COMMIT    = full commit SHA
+  BRANCH_NAME   = branch (multibranch)
+  CHANGE_ID     = PR number (if PR build)
+
+[ JENKINSFILES CREATED TODAY ]
+Jenkinsfile.complete
+Jenkinsfile.multibranch
+Jenkinsfile.patterns
+Jenkinsfile.production
+
+============================================
+   REFERENCE COMPLETE
+============================================
