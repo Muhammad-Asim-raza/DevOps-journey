@@ -1,0 +1,15 @@
+=== GITLAB CI VARIABLES ===
+Key GitLab predefined variables:
+CI_PROJECT_NAME     = repository name
+CI_COMMIT_SHA       = full 40-char SHA
+CI_COMMIT_SHORT_SHA = 8-char SHA (for tags)
+CI_COMMIT_BRANCH    = branch name
+CI_PIPELINE_ID      = unique pipeline ID
+CI_PIPELINE_IID     = incremental number
+CI_REGISTRY         = registry.gitlab.com
+CI_REGISTRY_IMAGE   = registry.gitlab.com/user/project
+CI_REGISTRY_USER    = auto (gitlab-ci-token)
+CI_REGISTRY_PASSWORD = auto (job token)
+
+No secrets needed for GitLab registry!
+Everything is auto-provided by GitLab runner.

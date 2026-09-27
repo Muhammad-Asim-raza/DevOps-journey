@@ -1,0 +1,16 @@
+=== GITLAB CI ANATOMY ===
+Files created:
+total 36
+drwxr-xr-x 2 asim-raza asim-raza  4096 Sep 27 10:07 .
+drwxr-xr-x 4 asim-raza asim-raza  4096 Sep 27 10:08 ..
+-rw-r--r-- 1 asim-raza asim-raza 11626 Sep 27 09:54 01-anatomy.gitlab-ci.yml
+-rw-r--r-- 1 asim-raza asim-raza  4821 Sep 27 10:01 02-variables.gitlab-ci.yml
+-rw-r--r-- 1 asim-raza asim-raza  5022 Sep 27 10:07 05-complete-pipeline.gitlab-ci.yml
+
+Stages in 01-anatomy:
+  - validate
+  - test
+  - build
+  - scan
+  - deploy
+  - notify

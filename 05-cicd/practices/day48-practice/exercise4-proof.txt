@@ -1,0 +1,15 @@
+=== RULES AND ENVIRONMENTS ===
+rules: (modern - use this)
+  - if: '$CI_COMMIT_BRANCH == "main"'
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  - changes: ["**/*.py"]
+  - when: manual
+  - when: never
+
+environments:
+  - Track deployments
+  - Show history: who deployed what when
+  - Review apps: one per MR branch
+    name: review/$CI_COMMIT_REF_SLUG
+  - Protected: require approval in settings
+  - auto_stop_in: 3 days (auto cleanup)

@@ -1,0 +1,104 @@
+============================================
+   GITLAB CI REFERENCE
+   Author: Asim Raza - Day 48
+============================================
+
+[ GITLAB CI vs GITHUB ACTIONS vs JENKINS ]
+Feature                   GitLab CI            GitHub Actions       Jenkins             
+-------                   ---------            --------------       -------             
+Config file               .gitlab-ci.yml       .github/workflows/   Jenkinsfile         
+Language                  YAML                 YAML                 Groovy              
+Container Registry        Built-in             GHCR                 Plugin              
+MR/PR checks              Native               Native               Plugin              
+Hosting                   Self/Cloud           Cloud                Self-hosted         
+Free CI minutes           400/month            2000/month           Your server         
+
+[ .gitlab-ci.yml STRUCTURE ]
+image: python:3.11-slim    # Default image for all jobs
+stages: [test, build, deploy]
+
+variables:                  # Pipeline-level variables
+  APP_NAME: myapp
+
+cache:                      # Share between runs
+  key: $CI_COMMIT_REF_SLUG
+  paths: [.cache/pip]
+
+before_script:             # Runs before every job script
+  - pip install --quiet -r requirements.txt
+
+job-name:
+  stage: test              # Which stage
+  image: python:3.10       # Override image
+  needs: [other-job]       # Depends on this job
+  rules:                   # When to run
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  variables:               # Job-level variables
+    JOB_VAR: value
+  script:                  # Commands to run
+    - pytest tests/
+  artifacts:               # Files to keep/pass
+    paths: [junit.xml]
+    reports:
+      junit: junit.xml
+    expire_in: 1 week
+  environment:             # Track deployments
+    name: staging
+    url: https://staging.example.com
+  when: manual             # Require human click
+  allow_failure: true      # Don't block pipeline
+
+[ STAGE EXECUTION ]
+  Jobs in SAME stage: run in PARALLEL
+  Stages: run in SEQUENTIAL order
+  Example:
+  Stage 1 (test): unit-tests || lint || security
+                  (all three at same time)
+  Stage 2 (build): build-image
+                  (waits for all test stage jobs)
+
+[ RULES CHEAT SHEET ]
+  # Always run:
+  rules: [{when: always}]
+
+  # Main branch only:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+  # Merge requests:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+  # File changes:
+  rules:
+    - changes: ["**/*.py", "requirements.txt"]
+
+  # Not on main (exclude):
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: never
+    - when: always
+
+[ KEY GITLAB CI VARIABLES ]
+  CI_PROJECT_NAME      = repo name
+  CI_COMMIT_SHA        = full commit SHA
+  CI_COMMIT_SHORT_SHA  = 8-char SHA
+  CI_COMMIT_BRANCH     = branch name
+  CI_PIPELINE_ID       = unique pipeline ID
+  CI_PIPELINE_IID      = incremental pipeline #
+  CI_JOB_NAME          = current job name
+  CI_REGISTRY          = registry.gitlab.com
+  CI_REGISTRY_IMAGE    = project registry URL
+  CI_REGISTRY_USER     = auto login user
+  CI_REGISTRY_PASSWORD = auto job token
+  CI_PIPELINE_SOURCE   = push|merge_request_event|schedule
+  CI_MERGE_REQUEST_IID = MR number (in MR pipeline)
+
+[ FILES CREATED TODAY ]
+01-anatomy.gitlab-ci.yml
+02-variables.gitlab-ci.yml
+05-complete-pipeline.gitlab-ci.yml
+
+============================================
+   REFERENCE COMPLETE
+============================================

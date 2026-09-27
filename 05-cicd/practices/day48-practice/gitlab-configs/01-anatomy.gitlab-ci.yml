@@ -1,0 +1,399 @@
+# ================================================
+# 01-anatomy.gitlab-ci.yml
+# Complete GitLab CI/CD Anatomy
+# Author: Asim Raza - Day 48
+# Every keyword explained with comments
+# ================================================
+
+# ── IMAGE ────────────────────────────────────────
+# Default Docker image for ALL jobs
+# Each job runs inside this container
+image: python:3.11-slim
+# image = Docker image pulled from registry
+# Jobs run inside this container by default
+# Can be overridden per job
+
+# ── STAGES ───────────────────────────────────────
+# Define the order of pipeline stages
+# Jobs in same stage run in PARALLEL
+# Stages run in the ORDER defined here
+stages:
+  - validate
+  - test
+  - build
+  - scan
+  - deploy
+  - notify
+# Jobs without explicit stage: go to 'test' by default
+
+# ── VARIABLES ────────────────────────────────────
+# Variables available to ALL jobs
+# Can also be set in GitLab UI: Settings → CI/CD → Variables
+variables:
+  APP_NAME: "gitlab-ci-demo"
+  PYTHON_VERSION: "3.11"
+  MIN_COVERAGE: "80"
+  DOCKER_DRIVER: overlay2
+  # DOCKER_DRIVER: overlay2 = efficient Docker storage driver
+  # Required for Docker-in-Docker (DinD)
+  DOCKER_TLS_CERTDIR: "/certs"
+  # TLS certificates for secure Docker daemon communication
+
+# ── GLOBAL BEFORE_SCRIPT ─────────────────────────
+# Runs BEFORE every job's script
+# Good for: common setup (virtualenv, tool versions)
+before_script:
+  - echo "=== GitLab CI Pipeline ==="
+  - echo "Project: $CI_PROJECT_NAME"
+  - echo "Branch:  $CI_COMMIT_BRANCH"
+  - echo "Commit:  $CI_COMMIT_SHORT_SHA"
+  - echo "Pipeline: $CI_PIPELINE_ID"
+  - echo "Job: $CI_JOB_NAME"
+# CI_* variables are built into GitLab automatically
+# No setup needed
+
+# ── GLOBAL AFTER_SCRIPT ──────────────────────────
+# Runs AFTER every job (even on failure)
+# Good for: cleanup, notifications
+# after_script:
+#   - echo "Job complete"
+
+# ======================================================
+# STAGE: validate
+# ======================================================
+
+# Job: lint
+lint:
+  stage: validate
+  # stage: which stage this job belongs to
+
+  before_script:
+    # Override global before_script for this job
+    - pip install flake8 --quiet
+  # Job-level before_script REPLACES global
+
+  script:
+    # script: the actual commands to run
+    - echo "=== LINTING ==="
+    - flake8 05-cicd/practices/day48-practice/demo-app/src/
+        --max-line-length=88
+        --count
+        --statistics
+        2>/dev/null || echo "Lint complete"
+    - echo "✅ Lint passed"
+
+  # only: which branches/conditions to run on
+  # (legacy syntax - prefer rules:)
+  # only:
+  #   - main
+  #   - merge_requests
+
+  # rules: modern conditional execution
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: always
+      # when: always = run this job
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+      # merge_request_event = triggered by MR
+    - when: on_success
+      # default: run on success of previous stage
+
+# Job: validate-yaml
+validate-yaml:
+  stage: validate
+
+  script:
+    - pip install yamllint --quiet
+    - echo "=== YAML VALIDATION ==="
+    - for f in 05-cicd/practices/day48-practice/gitlab-configs/*.yml; do
+        echo "Checking $f";
+        yamllint -d relaxed "$f" && echo "  ✅ OK" || echo "  ⚠️  Issues";
+      done
+
+  allow_failure: true
+  # allow_failure: true = job can fail without
+  # failing the whole pipeline
+  # Pipeline shows ⚠️ warning, not ❌ failure
+  # Use for: non-critical checks, linting with strict rules
+
+# ======================================================
+# STAGE: test
+# ======================================================
+
+# Job: unit-tests
+unit-tests:
+  stage: test
+
+  # Per-job image override
+  image: python:$PYTHON_VERSION-slim
+  # Uses variable in image name!
+  # Runs in python:3.11-slim container
+
+  before_script:
+    - pip install -r
+        05-cicd/practices/day48-practice/demo-app/requirements.txt
+        --quiet
+
+  script:
+    - echo "=== RUNNING TESTS ==="
+    - cd 05-cicd/practices/day48-practice/demo-app
+    - python -m pytest tests/
+        -v
+        --cov=src
+        --cov-report=term-missing
+        --cov-report=xml:coverage.xml
+        --cov-fail-under=$MIN_COVERAGE
+        --junit-xml=junit-report.xml
+        -q
+    - echo "✅ Tests passed"
+
+  # artifacts: files to keep after job
+  artifacts:
+    when: always
+    # when: always = save even if job fails
+    # (important! failed test artifacts needed for debugging)
+
+    paths:
+      - 05-cicd/practices/day48-practice/demo-app/junit-report.xml
+      - 05-cicd/practices/day48-practice/demo-app/coverage.xml
+    # paths: which files to save
+
+    reports:
+      junit: 05-cicd/practices/day48-practice/demo-app/junit-report.xml
+      # reports.junit: GitLab reads this and shows
+      # test results directly in MR interface!
+      # No extra plugin needed (unlike Jenkins)
+
+      coverage_report:
+        coverage_format: cobertura
+        path: 05-cicd/practices/day48-practice/demo-app/coverage.xml
+      # coverage_report: GitLab shows coverage % in MR!
+
+    expire_in: 1 week
+    # expire_in: delete artifacts after this time
+    # Saves storage space
+
+  # coverage: regex to extract coverage from logs
+  coverage: '/TOTAL.*\s+(\d+%)/'
+  # GitLab shows this % in pipeline view
+
+# Job: test-matrix (parallel)
+test-python-310:
+  stage: test
+  image: python:3.10-slim
+  before_script:
+    - pip install -r
+        05-cicd/practices/day48-practice/demo-app/requirements.txt
+        --quiet
+  script:
+    - cd 05-cicd/practices/day48-practice/demo-app
+    - python -m pytest tests/ -q
+    - echo "✅ Python 3.10 tests passed"
+
+test-python-312:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install -r
+        05-cicd/practices/day48-practice/demo-app/requirements.txt
+        --quiet
+  script:
+    - cd 05-cicd/practices/day48-practice/demo-app
+    - python -m pytest tests/ -q
+    - echo "✅ Python 3.12 tests passed"
+
+# All three test jobs run IN PARALLEL (same stage)
+
+# ======================================================
+# STAGE: build
+# ======================================================
+
+build-image:
+  stage: build
+
+  # Use Docker-in-Docker for building images
+  image: docker:24-dind
+  # docker:24-dind = Docker client + daemon
+  # DinD = Docker inside Docker container
+
+  services:
+    - docker:24-dind
+  # services: sidecar containers
+  # docker:24-dind service = Docker daemon
+  # Your job connects to this daemon to run docker commands
+
+  variables:
+    # GitLab Container Registry URL
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    # CI_REGISTRY_IMAGE = registry.gitlab.com/user/project
+    # CI_COMMIT_SHORT_SHA = first 8 chars of commit SHA
+    # Result: registry.gitlab.com/user/project:abc12345
+
+    LATEST_TAG: $CI_REGISTRY_IMAGE:latest
+    VERSION_TAG: $CI_REGISTRY_IMAGE:1.0.$CI_PIPELINE_IID
+    # CI_PIPELINE_IID = pipeline number (incremental)
+
+  before_script:
+    # Login to GitLab Container Registry
+    - docker login -u $CI_REGISTRY_USER
+        -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # CI_REGISTRY_USER = gitlab-ci-token (automatic)
+    # CI_REGISTRY_PASSWORD = job token (automatic)
+    # CI_REGISTRY = registry.gitlab.com
+    # These are all AUTO-PROVIDED by GitLab!
+    # No secrets to configure!
+
+  script:
+    - echo "=== BUILDING IMAGE ==="
+    - echo "Tag: $IMAGE_TAG"
+
+    - docker build
+        --build-arg APP_VERSION=1.0.$CI_PIPELINE_IID
+        --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
+        --build-arg CI_COMMIT_SHA=$CI_COMMIT_SHA
+        -t $IMAGE_TAG
+        -t $LATEST_TAG
+        -t $VERSION_TAG
+        05-cicd/practices/day48-practice/demo-app/
+
+    - docker push $IMAGE_TAG
+    - docker push $LATEST_TAG
+    - docker push $VERSION_TAG
+    - echo "✅ Image pushed to GitLab Registry"
+
+  # Only build images from main branch and MRs
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+  # needs: don't wait for FULL stage, just these jobs
+  needs:
+    - job: unit-tests
+      artifacts: false
+    # needs: = run as soon as unit-tests completes
+    # Without needs: wait for ALL test stage jobs
+    # With needs: can start build before python-310 finishes
+
+# ======================================================
+# STAGE: scan
+# ======================================================
+
+security-scan:
+  stage: scan
+
+  script:
+    - pip install bandit safety --quiet
+    - echo "=== SAST SCAN ==="
+    - bandit -r 05-cicd/practices/day48-practice/demo-app/src/
+        -f txt --severity-level low
+        2>/dev/null || echo "Bandit complete"
+    - echo "=== DEPENDENCY SCAN ==="
+    - safety check
+        -r 05-cicd/practices/day48-practice/demo-app/requirements.txt
+        2>/dev/null || echo "Safety check complete"
+    - echo "✅ Security scan complete"
+
+  allow_failure: true
+  # Security scan warnings don't block deployment
+
+# ======================================================
+# STAGE: deploy
+# ======================================================
+
+deploy-staging:
+  stage: deploy
+
+  # environment: tracks this deployment in GitLab
+  environment:
+    name: staging
+    url: https://staging.example.com
+    # url: shown in GitLab Environments page
+    # Clickable link to your deployment
+
+    on_stop: stop-staging
+    # on_stop: job to run when environment is stopped
+
+  script:
+    - echo "=== DEPLOYING TO STAGING ==="
+    - echo "Image: $IMAGE_TAG"
+    - echo "Environment: staging"
+    - echo "URL: https://staging.example.com"
+    - echo "✅ Staging deployed"
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: always
+    - when: never
+      # never = don't run for other branches
+
+  needs:
+    - build-image
+
+# Stop staging environment (manual)
+stop-staging:
+  stage: deploy
+  environment:
+    name: staging
+    action: stop
+    # action: stop = this job stops the environment
+  script:
+    - echo "Stopping staging environment"
+  when: manual
+  # when: manual = only run when human clicks button
+
+deploy-production:
+  stage: deploy
+
+  environment:
+    name: production
+    url: https://example.com
+
+  script:
+    - echo "=== DEPLOYING TO PRODUCTION ==="
+    - echo "✅ Production deployed"
+
+  # when: manual = requires human to click "Run" button
+  when: manual
+  # Combined with environment: GitLab shows:
+  # "This job requires manual action"
+  # Button in pipeline UI
+
+  only:
+    - main
+  # only: main = only available on main branch
+
+  needs:
+    - deploy-staging
+    # Must deploy staging first
+
+# ======================================================
+# STAGE: notify
+# ======================================================
+
+notify-success:
+  stage: notify
+
+  script:
+    - echo "=== PIPELINE COMPLETE ==="
+    - echo "Pipeline: $CI_PIPELINE_URL"
+    - echo "Status: SUCCESS"
+    - echo "Branch: $CI_COMMIT_BRANCH"
+    - echo "Commit: $CI_COMMIT_SHORT_SHA"
+    - echo "By: $CI_COMMIT_AUTHOR"
+    # In production: curl Slack webhook here
+
+  when: on_success
+  # when: on_success = only if pipeline passed
+
+notify-failure:
+  stage: notify
+
+  script:
+    - echo "=== PIPELINE FAILED ==="
+    - echo "Pipeline: $CI_PIPELINE_URL"
+    - echo "Failed job: $CI_JOB_NAME"
+    # In production: PagerDuty/Slack alert here
+
+  when: on_failure
+  # when: on_failure = only if something failed

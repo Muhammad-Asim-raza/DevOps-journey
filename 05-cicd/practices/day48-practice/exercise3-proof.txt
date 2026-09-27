@@ -1,0 +1,19 @@
+=== CACHE VS ARTIFACTS ===
+cache:
+  Between pipeline RUNS (next time this job runs)
+  Speeds up: dependency installation
+  Key: based on requirements.txt hash
+  Example: pip packages, node_modules
+
+artifacts:
+  Between JOBS in same pipeline run
+  Passes: files downstream
+  Types:
+    paths:         any files
+    reports.junit: test results (shown in MR)
+    reports.coverage_report: coverage % in MR
+  expire_in: auto-delete after time
+
+Docker registry = built into GitLab
+No external DockerHub needed
+Login is automatic (CI_REGISTRY_USER + PASSWORD)
