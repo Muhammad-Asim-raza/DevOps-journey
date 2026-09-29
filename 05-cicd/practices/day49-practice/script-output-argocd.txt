@@ -1,0 +1,111 @@
+============================================
+   ARGOCD & GITOPS REFERENCE
+   Author: Asim Raza - Day 49
+============================================
+
+[ WHAT IS GITOPS ]
+  Git = single source of truth
+  Desired state described in Git (YAML)
+  Tool (ArgoCD) makes cluster MATCH Git
+  Changes via Git commit (not kubectl)
+  Audit = git log
+  Rollback = git revert
+
+[ PUSH vs PULL DEPLOYMENT ]
+  Push (traditional CI/CD):
+  Pipeline → has credentials → applies to cluster
+  Cluster may drift after initial deploy
+
+  Pull (GitOps):
+  ArgoCD IN cluster → watches Git → applies changes
+  Credentials STAY IN cluster
+  Continuous reconciliation (no drift)
+
+[ ARGOCD APPLICATION YAML ]
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/org/configs
+    targetRevision: main
+    path: apps/my-app/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: staging
+  syncPolicy:
+    automated:
+      prune: true      # delete removed resources
+      selfHeal: true   # revert manual changes
+    syncOptions:
+      - CreateNamespace=true
+
+[ KUSTOMIZE STRUCTURE ]
+  apps/my-app/
+  ├── base/
+  │   ├── deployment.yaml
+  │   ├── service.yaml
+  │   ├── configmap.yaml
+  │   └── kustomization.yaml
+  └── overlays/
+      ├── staging/
+      │   └── kustomization.yaml  ← patches base
+      └── production/
+          └── kustomization.yaml  ← patches base
+
+[ ARGOCD CLI REFERENCE ]
+  argocd login localhost:8443 --insecure
+  argocd app list
+  argocd app get APP_NAME
+  argocd app sync APP_NAME
+  argocd app sync APP_NAME --prune
+  argocd app wait APP_NAME --timeout 120
+  argocd app history APP_NAME
+  argocd app rollback APP_NAME ID
+  argocd app delete APP_NAME
+
+[ SYNC STATUS ]
+  Synced     = cluster matches Git ✅
+  OutOfSync  = cluster differs from Git ⚠️
+
+[ HEALTH STATUS ]
+  Healthy    = all pods running ✅
+  Progressing= updating 🔄
+  Degraded   = something failing ❌
+  Missing    = not deployed yet
+
+[ GITOPS REPO STRUCTURE ]
+  gitops-repo/
+  ├── apps/                ← app manifests
+  │   └── my-app/
+  │       ├── base/
+  │       └── overlays/
+  │           ├── staging/
+  │           └── production/
+  └── argocd/              ← ArgoCD Applications
+      └── applications/
+          ├── app-of-apps.yaml
+          ├── my-app-staging.yaml
+          └── my-app-production.yaml
+
+[ FILES CREATED TODAY ]
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/argocd-reference.sh
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/base/configmap.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/base/deployment.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/base/kustomization.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/base/service.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/overlays/production/kustomization.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/overlays/staging/kustomization.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/argocd/applications/app-of-apps.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/argocd/applications/demo-app-production.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/argocd/applications/demo-app-staging.yaml
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/install-scripts/01-install-argocd.sh
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/install-scripts/02-kind-cluster.sh
+/home/asim-raza/DevOps-journey/05-cicd/practices/day49-practice/install-scripts/03-gitops-workflow.sh
+
+============================================
+   REFERENCE COMPLETE
+============================================

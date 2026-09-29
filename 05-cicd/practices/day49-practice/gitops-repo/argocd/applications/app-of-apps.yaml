@@ -1,0 +1,57 @@
+# ================================================
+# app-of-apps.yaml
+# App of Apps Pattern
+# Author: Asim Raza - Day 49
+#
+# The App of Apps pattern:
+# One ArgoCD Application manages OTHER Applications
+# Instead of applying each app manually:
+# apply this ONE file → ArgoCD manages everything
+# ================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devops-journey-apps
+  # This is the ROOT application
+  # It manages all other ArgoCD Applications
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Muhammad-Asim-raza/DevOps-journey
+    targetRevision: main
+    path: 05-cicd/practices/day49-practice/gitops-repo/argocd/applications
+    # path: directory containing Application manifests
+    # ArgoCD reads ALL .yaml files in this directory
+    # Creates one Application per file!
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+    # Deploy Applications to argocd namespace
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+# RESULT:
+# ArgoCD finds:
+#   gitops-repo/argocd/applications/demo-app-staging.yaml
+#   gitops-repo/argocd/applications/demo-app-production.yaml
+# Creates ArgoCD Applications for each
+# Those Applications then deploy the actual app!
+
+# HIERARCHY:
+# Git ← App of Apps (one Application)
+#         ├── demo-app-staging Application
+#         │     └── staging namespace resources
+#         └── demo-app-production Application
+#               └── production namespace resources

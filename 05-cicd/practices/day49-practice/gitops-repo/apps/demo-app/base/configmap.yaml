@@ -1,0 +1,18 @@
+# ================================================
+# configmap.yaml - App Configuration
+# Author: Asim Raza - Day 49
+# Non-sensitive config stored in Git (fine!)
+# Sensitive config: use Sealed Secrets or Vault
+# ================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-app-config
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  PORT: "8000"
+  # All non-sensitive configuration here
+  # Version-controlled in Git
+  # ArgoCD applies changes automatically

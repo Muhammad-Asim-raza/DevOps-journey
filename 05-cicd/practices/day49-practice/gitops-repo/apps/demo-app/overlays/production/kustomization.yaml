@@ -1,0 +1,48 @@
+# ================================================
+# overlays/production/kustomization.yaml
+# Production-specific configuration
+# Author: Asim Raza - Day 49
+# ================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../base
+
+# Production namespace
+namespace: production
+
+patches:
+  - target:
+      kind: Deployment
+      name: demo-app
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 5
+      # Production: 5 replicas for HA
+
+  - target:
+      kind: Deployment
+      name: demo-app
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "512Mi"
+      # Production: larger memory limit
+
+images:
+  - name: ghcr.io/muhammad-asim-raza/cicd-docker-demo
+    newTag: "sha-abc1234"
+    # Immutable SHA tag for production!
+    # CI/CD pipeline updates this via:
+    # kustomize edit set image app=app:sha-NEW
+
+configMapGenerator:
+  - name: demo-app-config
+    behavior: merge
+    literals:
+      - APP_ENV=production
+      - LOG_LEVEL=WARNING
+      # WARNING only in production (less noise)

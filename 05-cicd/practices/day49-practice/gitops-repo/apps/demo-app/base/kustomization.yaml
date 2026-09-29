@@ -1,0 +1,21 @@
+# ================================================
+# kustomization.yaml - Kustomize Base
+# Author: Asim Raza - Day 49
+# Kustomize: customize Kubernetes manifests
+# without templating (unlike Helm)
+# ================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Resources: all manifests in this base
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+
+# Common labels added to ALL resources
+commonLabels:
+  app: demo-app
+  managed-by: argocd
+  team: devops-journey

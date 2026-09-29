@@ -1,0 +1,51 @@
+# ================================================
+# demo-app-production.yaml
+# ArgoCD Application for Production
+# Author: Asim Raza - Day 49
+# ================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-app-production
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Muhammad-Asim-raza/DevOps-journey
+    targetRevision: main
+    path: 05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/overlays/production
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+
+  syncPolicy:
+    # Production: MANUAL sync only!
+    # automated: NOT set
+    # A human must click "Sync" in ArgoCD UI
+    # or run: argocd app sync demo-app-production
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - Validate=true
+      # Validate=true: validate manifests before applying
+
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+        # Let HPA manage replicas

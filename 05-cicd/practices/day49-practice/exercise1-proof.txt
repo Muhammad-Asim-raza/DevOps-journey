@@ -1,0 +1,16 @@
+=== GITOPS CONCEPTS ===
+GitOps Four Principles:
+1. Declarative: describe desired state in files
+2. Versioned: state in Git (immutable, versioned)
+3. Pulled automatically: tool pulls from Git
+4. Continuously reconciled: always matches Git
+
+Push vs Pull:
+Push: pipeline has credentials, pushes to cluster
+Pull: ArgoCD in cluster, pulls from Git, no pipeline creds
+
+Benefits:
+✅ Git = audit trail (who changed what)
+✅ Rollback = git revert
+✅ Drift detection + auto-correction
+✅ No cluster credentials in CI/CD

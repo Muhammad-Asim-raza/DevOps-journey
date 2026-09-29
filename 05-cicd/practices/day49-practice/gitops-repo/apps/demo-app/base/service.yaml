@@ -1,0 +1,23 @@
+# ================================================
+# service.yaml - Kubernetes Service
+# Author: Asim Raza - Day 49
+# ================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app-svc
+  labels:
+    app: demo-app
+spec:
+  selector:
+    app: demo-app
+    # Routes traffic to pods with this label
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  type: ClusterIP
+  # ClusterIP: only accessible within cluster
+  # In production: use Ingress for external access

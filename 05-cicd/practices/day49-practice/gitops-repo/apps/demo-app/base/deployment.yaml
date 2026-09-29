@@ -1,0 +1,121 @@
+# ================================================
+# deployment.yaml - Base deployment manifest
+# Author: Asim Raza - Day 49
+# ArgoCD watches this file in Git
+# Changes here = auto-deployed to cluster
+# ================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  # name: used by ArgoCD to track this resource
+  labels:
+    app: demo-app
+    managed-by: argocd
+    # Labels help ArgoCD identify managed resources
+spec:
+  replicas: 2
+  # replicas: how many pods to run
+  # ArgoCD ensures EXACTLY 2 pods always
+
+  selector:
+    matchLabels:
+      app: demo-app
+  # selector: which pods this deployment manages
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      # maxSurge: extra pods during update
+      maxUnavailable: 0
+      # maxUnavailable: never kill pod before new one ready
+      # Combined: zero-downtime rolling update
+
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        version: "1.0.0"
+    spec:
+
+      # Security context for pod
+      securityContext:
+        runAsNonRoot: true
+        # runAsNonRoot: enforce non-root (Day 33 pattern!)
+        runAsUser: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: app
+          image: ghcr.io/muhammad-asim-raza/cicd-docker-demo:latest
+          # image: ArgoCD monitors this
+          # When you update tag in Git: ArgoCD syncs
+
+          ports:
+            - containerPort: 8000
+              name: http
+
+          env:
+            - name: PORT
+              value: "8000"
+            - name: APP_ENV
+              value: production
+
+          # Resource limits (Day 35 pattern!)
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+          # Liveness probe (Day 35 pattern!)
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3
+
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # Security context for container
+          securityContext:
+            readOnlyRootFilesystem: true
+            # readOnlyRootFilesystem: Day 33 pattern!
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              # Drop all Linux capabilities
+
+          volumeMounts:
+            - name: tmp-vol
+              mountPath: /tmp
+              # Need writable /tmp even with readOnly fs
+
+      volumes:
+        - name: tmp-vol
+          emptyDir:
+            medium: Memory
+            # emptyDir in memory = tmpfs (Day 33 pattern!)
+
+      # Spread pods across nodes for HA
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: demo-app

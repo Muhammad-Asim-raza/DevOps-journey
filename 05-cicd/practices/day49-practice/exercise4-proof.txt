@@ -1,0 +1,21 @@
+=== APP OF APPS ===
+App of Apps pattern:
+One ArgoCD Application manages other Applications
+
+Root Application:
+  watches: gitops-repo/argocd/applications/
+  finds: demo-app-staging.yaml, demo-app-production.yaml
+  creates: ArgoCD Application for each file
+
+Benefits:
+- Single git commit to add new application
+- ArgoCD bootstraps itself
+- No manual kubectl apply for each new app
+- One source of truth for ALL applications
+
+Hierarchy:
+Git → App of Apps
+        ├── demo-app-staging (Application)
+        │     → staging namespace K8s resources
+        └── demo-app-production (Application)
+              → production namespace K8s resources

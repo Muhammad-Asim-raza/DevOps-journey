@@ -1,0 +1,17 @@
+=== ARGOCD APPLICATIONS ===
+ArgoCD Application manifests:
+total 20
+drwxr-xr-x 2 asim-raza asim-raza 4096 Sep 29 11:05 .
+drwxr-xr-x 3 asim-raza asim-raza 4096 Sep 29 10:55 ..
+-rw-r--r-- 1 asim-raza asim-raza 1688 Sep 29 11:05 app-of-apps.yaml
+-rw-r--r-- 1 asim-raza asim-raza 1275 Sep 29 11:05 demo-app-production.yaml
+-rw-r--r-- 1 asim-raza asim-raza 3991 Sep 29 11:05 demo-app-staging.yaml
+
+Key fields:
+source.repoURL:      Git repo with manifests
+source.targetRevision: branch/tag/SHA to track
+source.path:         directory in repo
+destination.server:  K8s cluster API
+destination.namespace: deploy to this namespace
+syncPolicy.automated.prune: delete removed resources
+syncPolicy.automated.selfHeal: revert manual changes

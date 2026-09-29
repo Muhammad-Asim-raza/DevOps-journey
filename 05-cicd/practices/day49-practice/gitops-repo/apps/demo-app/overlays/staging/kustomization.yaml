@@ -1,0 +1,55 @@
+# ================================================
+# overlays/staging/kustomization.yaml
+# Staging-specific configuration
+# Author: Asim Raza - Day 49
+# Overlays PATCH the base without modifying it
+# ================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Extend base
+bases:
+  - ../../base
+# bases: start from base manifests
+# Apply staging-specific patches on top
+
+# Add staging namespace
+namespace: staging
+# namespace: deploy to staging namespace
+
+# Staging-specific patches
+patches:
+  - target:
+      kind: Deployment
+      name: demo-app
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      # Staging: 1 replica (save resources)
+      # Production base: 2 replicas
+
+  - target:
+      kind: Deployment
+      name: demo-app
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "128Mi"
+      # Staging: smaller memory limit
+
+# Images: update specific image tag for staging
+images:
+  - name: ghcr.io/muhammad-asim-raza/cicd-docker-demo
+    newTag: "staging-latest"
+    # Different tag for staging vs production
+
+# Config overrides
+configMapGenerator:
+  - name: demo-app-config
+    behavior: merge
+    literals:
+      - APP_ENV=staging
+      - LOG_LEVEL=DEBUG
+      # DEBUG logging in staging

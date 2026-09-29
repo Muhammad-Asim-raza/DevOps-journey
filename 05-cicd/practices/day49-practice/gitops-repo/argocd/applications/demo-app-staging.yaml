@@ -1,0 +1,110 @@
+# ================================================
+# demo-app-staging.yaml
+# ArgoCD Application for Staging
+# Author: Asim Raza - Day 49
+# This IS a Kubernetes resource (CRD)
+# Created by: kubectl apply -f this-file.yaml
+# ================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+# kind: Application = ArgoCD Custom Resource Definition
+# ArgoCD installed this CRD when we installed it
+
+metadata:
+  name: demo-app-staging
+  # name: shown in ArgoCD UI
+  namespace: argocd
+  # namespace: ALWAYS argocd (where ArgoCD runs)
+
+  # finalizers: ensure proper cleanup when deleted
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    # This finalizer deletes managed resources
+    # when the Application is deleted
+    # Without it: deleting Application leaves
+    # orphaned deployments/services in cluster
+
+spec:
+
+  # ── Project ──────────────────────────────────
+  project: default
+  # project: ArgoCD project for access control
+  # default: allows everything
+  # Production: create specific projects with RBAC
+
+  # ── Source: where to get manifests ───────────
+  source:
+    repoURL: https://github.com/Muhammad-Asim-raza/DevOps-journey
+    # repoURL: Git repository with Kubernetes manifests
+    # ArgoCD clones this repo and reads manifests
+
+    targetRevision: main
+    # targetRevision: which branch/tag/commit to track
+    # main: always latest from main branch
+    # v1.2.3: specific git tag (safer for production)
+    # abc1234: specific commit SHA (most stable)
+
+    path: 05-cicd/practices/day49-practice/gitops-repo/apps/demo-app/overlays/staging
+    # path: directory inside repo with manifests
+    # This is the Kustomize overlay for staging!
+
+  # ── Destination: where to deploy ─────────────
+  destination:
+    server: https://kubernetes.default.svc
+    # server: which Kubernetes cluster to deploy to
+    # https://kubernetes.default.svc = the SAME cluster
+    # where ArgoCD is running (in-cluster)
+    # External clusters: add their API server URL
+
+    namespace: staging
+    # namespace: deploy resources to this namespace
+    # ArgoCD creates namespace if it doesn't exist
+    # (if server-side apply and permissions allow)
+
+  # ── Sync Policy ──────────────────────────────
+  syncPolicy:
+    automated:
+      prune: true
+      # prune: true = delete resources from cluster
+      # that were REMOVED from Git
+      # Without prune: deleted-from-Git resources
+      # stay in cluster (drift accumulates)
+
+      selfHeal: true
+      # selfHeal: true = if someone manually changes
+      # the cluster (kubectl edit, kubectl delete)
+      # ArgoCD detects the drift and reverts to Git state
+      # This is the "self-healing" GitOps property
+      # Without selfHeal: drift accumulates silently
+
+      allowEmpty: false
+      # allowEmpty: false = don't sync if result is empty
+      # Safety: prevents accidental deletion of everything
+
+    syncOptions:
+      - CreateNamespace=true
+      # CreateNamespace: auto-create namespace if missing
+      - PrunePropagationPolicy=foreground
+      # PrunePropagationPolicy: delete order for cleanup
+      - PruneLast=true
+      # PruneLast: delete old resources AFTER new ones ready
+
+    retry:
+      limit: 5
+      # limit: retry up to 5 times on sync failure
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+        # Exponential backoff: 5s, 10s, 20s, 40s, 80s
+
+  # ── Health Check ─────────────────────────────
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+      # ignoreDifferences: don't flag these as out-of-sync
+      # HPA (Horizontal Pod Autoscaler) modifies replicas
+      # Without ignoring: ArgoCD fights HPA over replica count!

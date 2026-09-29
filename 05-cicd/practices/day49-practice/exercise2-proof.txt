@@ -1,0 +1,13 @@
+=== KUBERNETES MANIFESTS ===
+Files created:
+total 24
+drwxr-xr-x 2 asim-raza asim-raza 4096 Sep 29 11:04 .
+drwxr-xr-x 4 asim-raza asim-raza 4096 Sep 29 10:55 ..
+-rw-r--r-- 1 asim-raza asim-raza  504 Sep 29 11:04 configmap.yaml
+-rw-r--r-- 1 asim-raza asim-raza 3162 Sep 29 11:04 deployment.yaml
+-rw-r--r-- 1 asim-raza asim-raza  535 Sep 29 11:04 kustomization.yaml
+-rw-r--r-- 1 asim-raza asim-raza  536 Sep 29 11:04 service.yaml
+
+Kustomize overlays:
+production
+staging
