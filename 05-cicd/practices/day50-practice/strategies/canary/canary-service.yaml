@@ -1,0 +1,17 @@
+# ================================================
+# Service for Canary - routes to BOTH deployments
+# Author: Asim Raza - Day 50
+# ================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+spec:
+  selector:
+    app: demo
+    # Selects BOTH stable and canary pods!
+    # (no track: label = matches both)
+    # Traffic split by replica count ratio
+  ports:
+    - port: 80
+      targetPort: 80

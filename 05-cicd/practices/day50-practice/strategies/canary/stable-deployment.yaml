@@ -1,0 +1,35 @@
+# ================================================
+# Stable (baseline) Deployment for Canary
+# Author: Asim Raza - Day 50
+# ================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-stable
+  labels:
+    app: demo
+    track: stable
+spec:
+  replicas: 19
+  # 19 stable pods
+  # ratio: 19/(19+1) = 95% traffic to stable
+  selector:
+    matchLabels:
+      app: demo
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: demo
+        track: stable
+        version: "1.0.0"
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.24-alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet: {path: /, port: 80}
+            initialDelaySeconds: 5
+            periodSeconds: 5

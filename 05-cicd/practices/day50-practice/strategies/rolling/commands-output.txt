@@ -1,0 +1,66 @@
+============================================
+   ROLLING UPDATE COMMANDS
+============================================
+
+[ DEPLOY / UPDATE ]
+  # Update image (triggers rolling update):
+  kubectl set image deployment/app-rolling \
+    app=nginx:1.26-alpine
+
+  # Apply updated manifest:
+  kubectl apply -f deployment.yaml
+
+  # With record (for history):
+  kubectl set image deployment/app-rolling \
+    app=nginx:1.26 \
+    --record
+
+[ WATCH ROLLOUT PROGRESS ]
+  # Watch status:
+  kubectl rollout status deployment/app-rolling
+  → Waiting for 6 pods to roll out...
+  → deployment.apps/app-rolling successfully rolled out
+
+  # Watch pods:
+  kubectl get pods -l app=demo -w
+  → Shows old pods terminating, new pods starting
+
+  # Describe events:
+  kubectl describe deployment app-rolling
+
+[ ROLLBACK ]
+  # Rollback to previous version:
+  kubectl rollout undo deployment/app-rolling
+
+  # Rollback to specific revision:
+  kubectl rollout undo deployment/app-rolling \
+    --to-revision=2
+
+  # View rollout history:
+  kubectl rollout history deployment/app-rolling
+  REVISION  CHANGE-CAUSE
+  1         initial deploy
+  2         v2.0.0 - rolling update
+  3         v3.0.0 - feature release
+
+[ PAUSE AND RESUME ]
+  # Pause (freeze mid-update):
+  kubectl rollout pause deployment/app-rolling
+
+  # Resume:
+  kubectl rollout resume deployment/app-rolling
+
+  Use pause to: canary manually
+  Deploy 1 batch → pause → verify → resume
+
+[ SCALING ]
+  # Scale up:
+  kubectl scale deployment/app-rolling --replicas=10
+
+  # Autoscale:
+  kubectl autoscale deployment/app-rolling \
+    --min=3 --max=10 --cpu-percent=50
+
+============================================
+   COMMANDS REFERENCE COMPLETE
+============================================

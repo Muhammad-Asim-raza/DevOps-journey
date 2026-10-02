@@ -1,0 +1,36 @@
+# ================================================
+# Canary Deployment (new version, small %)
+# Author: Asim Raza - Day 50
+# ================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-canary
+  labels:
+    app: demo
+    track: canary
+spec:
+  replicas: 1
+  # 1 canary pod
+  # ratio: 1/(19+1) = 5% traffic to canary
+  selector:
+    matchLabels:
+      app: demo
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: demo
+        track: canary
+        version: "2.0.0"
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.25-alpine
+          # NEW version gets 5% of traffic
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet: {path: /, port: 80}
+            initialDelaySeconds: 5
+            periodSeconds: 5

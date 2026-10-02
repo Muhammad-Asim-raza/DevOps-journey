@@ -1,0 +1,19 @@
+=== RECREATE STRATEGY ===
+Strategy: Recreate
+Downtime: YES (startup time of new version)
+Rollback: kubectl rollout undo (quick)
+Use when:
+  - Dev environments
+  - DB schema changes (can't run v1+v2 together)
+  - Stateful apps
+
+Kubernetes config:
+strategy:
+  type: Recreate
+
+Deployment flow:
+v1 pods ALL stopped → DOWNTIME → v2 pods ALL start
+
+When to avoid:
+  Production customer-facing services
+  Any service with SLA requirements

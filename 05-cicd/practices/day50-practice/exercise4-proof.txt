@@ -1,0 +1,25 @@
+=== CANARY STRATEGY ===
+Strategy: Canary
+Downtime: NONE
+Rollback: INSTANT (scale canary to 0)
+Blast radius: only % of traffic on canary
+
+Traffic split by replica ratio:
+19 stable + 1 canary = 5% canary
+15 stable + 5 canary = 25% canary
+10 stable + 10 canary = 50% canary
+
+Monitor during canary:
+Error rate comparison (canary vs stable)
+P99 latency comparison
+Business metrics (conversion, revenue)
+
+Auto-rollback if:
+canary error rate > threshold × stable error rate
+canary p99 > maximum acceptable latency
+
+Best tools for advanced canary:
+- Argo Rollouts (K8s operator)
+- Flagger (automatic canary with metrics)
+- Istio (service mesh traffic control)
+- AWS CodeDeploy (for ECS/Lambda)

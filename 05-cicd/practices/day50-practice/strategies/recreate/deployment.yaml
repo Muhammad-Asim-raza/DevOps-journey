@@ -1,0 +1,43 @@
+# ================================================
+# Recreate Strategy - Kubernetes Deployment
+# Author: Asim Raza - Day 50
+# Use: dev environments, stateful apps with schema changes
+# ================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-recreate
+  labels:
+    app: demo
+    strategy: recreate
+spec:
+  replicas: 3
+
+  strategy:
+    type: Recreate
+    # type: Recreate = stop ALL old pods first
+    # then start ALL new pods
+    # No maxSurge, no maxUnavailable
+    # Simple but has downtime
+
+  selector:
+    matchLabels:
+      app: demo
+
+  template:
+    metadata:
+      labels:
+        app: demo
+        version: "2.0.0"
+    spec:
+      containers:
+        - name: app
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5

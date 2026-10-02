@@ -1,0 +1,22 @@
+=== ROLLING UPDATE STRATEGY ===
+Strategy: Rolling Update
+Downtime: NONE (with maxUnavailable=0)
+Rollback: kubectl rollout undo (seconds)
+Use when:
+  - Stateless web APIs
+  - Backwards-compatible changes
+  - Default for most production services
+
+Kubernetes config:
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 2        # extra pods during update
+    maxUnavailable: 0  # zero downtime
+
+Key commands:
+kubectl rollout status deployment/NAME
+kubectl rollout history deployment/NAME
+kubectl rollout undo deployment/NAME
+kubectl rollout pause deployment/NAME
+kubectl rollout resume deployment/NAME

@@ -1,0 +1,102 @@
+============================================
+   DEPLOYMENT STRATEGY DECISION GUIDE
+   Author: Asim Raza - Day 50
+============================================
+
+[ STRATEGY COMPARISON TABLE ]
+Strategy             Downtime     Rollback     Cost         Best For            
+--------             --------     --------     ----         --------            
+Recreate             YES          Minutes      1x           Dev/DB migrations   
+Rolling Update       NONE         Seconds      1.3x         Most services       
+Blue-Green           NONE         Instant      2x           High-risk/payment   
+Canary               NONE         Instant      1.1x         Algorithm changes   
+Feature Flags        NONE         Instant      1x           Product features    
+
+[ DECISION FLOWCHART ]
+
+  Q1: Can you afford any downtime?
+  → NO: Skip Recreate strategy
+  → YES: Recreate is an option (dev/test only)
+
+  Q2: Can v1 and v2 run simultaneously?
+  → NO (DB schema change): Use Recreate with maintenance window
+  → YES: Continue to Q3
+
+  Q3: Need instant rollback capability?
+  → YES (payments, auth): Blue-Green
+  → NO: Continue to Q4
+
+  Q4: Is this a high-risk code change?
+  → YES (algorithm, ML model): Canary
+  → NO: Continue to Q5
+
+  Q5: Is this a product feature?
+  → YES: Feature Flags (decouple deploy/release)
+  → NO: Rolling Update
+
+  DEFAULT: Rolling Update is the right choice
+  for most stateless web services
+
+[ REAL INDUSTRY EXAMPLES ]
+
+  Amazon:
+  Strategy: Canary + Feature Flags
+  Deploy new checkout algorithm to 0.01%
+  Monitor: conversion rate, latency, errors
+  If better: gradually increase to 100%
+  Deploy frequency: 11.7 seconds
+
+  Netflix:
+  Strategy: Canary + Regional rollout
+  Deploy to one AWS region first
+  Monitor: stream quality, error rates
+  If healthy: roll out to all regions
+
+  Stripe (payment processing):
+  Strategy: Blue-Green + Feature Flags
+  Zero downtime absolutely required
+  Instant rollback for financial systems
+
+  Facebook:
+  Strategy: Feature Flags (FBLearner)
+  Code deployed, features off
+  Enable for internal → 1% → 100%
+  Runs thousands of A/B tests simultaneously
+
+[ COMBINING STRATEGIES ]
+
+  Real production uses COMBINATIONS:
+
+  Deployment: Rolling Update (zero downtime)
+  +   Feature: Feature Flag (gradual exposure)
+  +   Monitoring: Canary metrics monitoring
+
+  Flow:
+  1. Rolling update deploys new code (flag OFF)
+  2. Enable flag for 1% of users (canary users)
+  3. Monitor metrics (error rate, latency)
+  4. Increase to 10% → 50% → 100%
+  5. Rollback: disable flag instantly (no redeploy)
+
+[ KUBERNETES ROLLOUT COMMANDS CHEAT SHEET ]
+
+  # Rolling update:
+  kubectl set image deploy/app app=myapp:v2
+  kubectl rollout status deploy/app
+  kubectl rollout undo deploy/app
+
+  # Blue-green switch:
+  kubectl patch svc app-svc \
+    -p '{"spec":{"selector":{"color":"green"}}}'
+
+  # Canary scale:
+  kubectl scale deploy/app-canary --replicas=5
+  kubectl scale deploy/app-stable --replicas=15
+
+  # Check rollout history:
+  kubectl rollout history deploy/app
+  kubectl rollout undo deploy/app --to-revision=3
+
+============================================
+   DECISION GUIDE COMPLETE
+============================================

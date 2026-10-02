@@ -1,0 +1,28 @@
+=== BLUE-GREEN STRATEGY ===
+Strategy: Blue-Green
+Downtime: NONE
+Rollback: INSTANT (change service selector back)
+Use when:
+  High-risk releases
+  Need instant rollback
+  Payment/financial systems
+Cost: 2x infrastructure (two identical envs)
+
+Implementation:
+Two identical Deployments:
+  app-blue  (label: color=blue)
+  app-green (label: color=green)
+
+One Service switches between them:
+  selector: color: blue  → blue traffic
+  selector: color: green → green traffic
+
+Switch command:
+kubectl patch svc app-service \
+    -p '{"spec":{"selector":{"color":"green"}}}'
+
+Rollback:
+kubectl patch svc app-service \
+    -p '{"spec":{"selector":{"color":"blue"}}}'
+
+Time to rollback: < 1 second

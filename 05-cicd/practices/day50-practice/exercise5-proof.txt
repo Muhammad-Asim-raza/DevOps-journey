@@ -1,0 +1,21 @@
+=== FEATURE FLAGS STRATEGY ===
+Strategy: Feature Flags (Dark Launch)
+Downtime: NONE
+Rollback: Change flag value (milliseconds)
+Use when:
+  Decouple deployment from release
+  A/B testing
+  Gradual rollout to users
+  Kill switch for risky features
+
+Key concept:
+Code is deployed (dark = invisible to users)
+Feature flag controls visibility
+Enable for 1% → monitor → 100%
+Rollback = disable flag (no new deployment)
+
+Tools:
+Open source: Unleash, Flagsmith, GrowthBook
+Commercial: LaunchDarkly, Split.io
+AWS native: AppConfig
+DIY: environment variables, DB table

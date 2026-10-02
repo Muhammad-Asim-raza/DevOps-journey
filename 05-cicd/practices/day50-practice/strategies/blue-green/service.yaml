@@ -1,0 +1,24 @@
+# ================================================
+# Service for Blue-Green switching
+# Author: Asim Raza - Day 50
+# THE TRAFFIC SWITCH IS HERE
+# Change selector.color: blue → green to switch
+# ================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+  labels:
+    app: demo
+    strategy: blue-green
+spec:
+  selector:
+    app: demo
+    color: blue
+    # color: blue = send traffic to BLUE pods
+    # color: green = send traffic to GREEN pods
+    # Changing this ONE field = instant traffic switch!
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
