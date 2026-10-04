@@ -1,0 +1,80 @@
+============================================
+   CI/CD SECURITY SCANNING REFERENCE
+   Author: Asim Raza - Day 51
+============================================
+
+[ DEVSECOPS PHILOSOPHY ]
+  Shift Left: find vulnerabilities EARLIER
+  Development → Review → QA → Staging → Production
+  Dev: $80/fix  →  Production exploited: $760,000+
+  Automate security checks in every pipeline
+
+[ 5 SCANNING TYPES ]
+Type     What                      Tool (Python)                       When                
+----     ----                      -------------                       ----                
+SAST     Source code               bandit, semgrep                     Every commit        
+SCA      Dependencies              pip-audit, safety                   Every commit        
+Image    Docker image              trivy, grype                        After build         
+Secret   Leaked creds              gitleaks                            Every commit        
+IaC      Infra code                checkov, tfsec                      Before apply        
+
+[ QUICK COMMANDS ]
+  # SAST:
+  bandit -r src/ -ll -ii
+  semgrep --config p/python src/
+
+  # SCA:
+  pip-audit -r requirements.txt
+  safety check -r requirements.txt
+  npm audit --audit-level=high
+
+  # Image scan:
+  trivy image myapp:v1.0
+  trivy image --severity HIGH,CRITICAL myapp:v1
+  trivy config ./  (Dockerfile)
+
+  # Secret scan:
+  gitleaks detect --source .
+  gitleaks protect --staged  (pre-commit)
+
+  # IaC scan:
+  checkov -d . --framework terraform
+  checkov -d . --framework kubernetes
+  tfsec .
+
+[ SECURITY GATE THRESHOLDS ]
+  CRITICAL CVE:     FAIL pipeline immediately
+  HIGH severity:    FAIL or require review
+  MEDIUM severity:  WARNING, track/schedule
+  LOW severity:     INFO only
+  Secrets found:    FAIL immediately + rotate
+  IaC misconfig:    FAIL on CRITICAL, WARN on HIGH
+
+[ SARIF REPORTS ]
+  SARIF = Static Analysis Results Interchange Format
+  GitHub natively reads SARIF files
+  Uploads to: Security → Code scanning alerts
+
+  Upload in GitHub Actions:
+  - uses: github/codeql-action/upload-sarif@v2
+    with:
+      sarif_file: results.sarif
+
+  Tools that output SARIF:
+  trivy --format sarif
+  CodeQL (GitHub native)
+  Semgrep --sarif
+  Checkov -o sarif
+
+[ SCHEDULED SCANS ]
+  schedule:
+    - cron: '0 2 * * 1'  # Monday 2am UTC
+
+  Why weekly scheduled scans?
+  New CVEs published daily in NVD database
+  Your code unchanged but deps now vulnerable
+  Weekly scan: catch new CVEs in existing code
+
+============================================
+   REFERENCE COMPLETE
+============================================

@@ -1,0 +1,6 @@
+# Intentionally outdated/vulnerable packages for demo
+flask==2.0.1          # outdated, has known CVEs
+requests==2.26.0      # outdated version
+urllib3==1.26.7       # has known CVE
+cryptography==3.3.0   # outdated, has CVEs
+PyYAML==5.3.1         # known CVE (arbitrary code exec)

@@ -1,0 +1,8 @@
+============================================
+   SCA - SOFTWARE COMPOSITION ANALYSIS
+   Scanning dependencies for CVEs
+============================================
+
+Requirements: vulnerable-app/requirements.txt
+
+[ Method 1: Safety Check ]

@@ -1,0 +1,24 @@
+=== SAST SCANNING ===
+Tool: Bandit (Python SAST)
+
+Vulnerabilities found in demo app:
+1. Hardcoded secrets (API_KEY, DB_PASSWORD, AWS_SECRET)
+   Bandit: B105 hardcoded_password_string
+   Fix: Use environment variables or secrets manager
+
+2. SQL Injection (f"SELECT * FROM users WHERE name = '{query}'")
+   Bandit: B608 hardcoded_sql_expressions
+   Fix: Use parameterized queries (cursor.execute("?", value))
+
+3. Command Injection (subprocess.run(cmd, shell=True))
+   Bandit: B602 subprocess_popen_with_shell_equals_true
+   Fix: shell=False, validate input, use list args
+
+4. Weak cryptography (hashlib.md5)
+   Bandit: B324 hashlib
+   Fix: Use bcrypt, argon2, or scrypt for passwords
+
+SAST CI/CD gate:
+HIGH severity issues → FAIL pipeline (block deploy)
+MEDIUM severity → WARNING (require review)
+LOW severity → INFO only

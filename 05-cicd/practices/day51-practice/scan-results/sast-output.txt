@@ -1,0 +1,7 @@
+============================================
+   SAST SCANNING WITH BANDIT
+   Static Application Security Testing
+============================================
+
+Target: vulnerable-app/src
+Time:   2026-10-04T05:25:26Z
