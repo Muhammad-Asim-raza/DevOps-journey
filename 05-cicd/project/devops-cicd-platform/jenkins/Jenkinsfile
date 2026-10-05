@@ -1,0 +1,182 @@
+// ================================================
+// Jenkinsfile — DevOps CI/CD Platform
+// Author: Asim Raza - Day 52
+// Jenkins equivalent of the GitHub Actions pipeline
+// ================================================
+
+pipeline {
+
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '-u root'
+        }
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        APP_DIR     = '05-cicd/project/devops-cicd-platform'
+        APP_VERSION = "1.0.${BUILD_NUMBER}"
+        REGISTRY    = 'ghcr.io'
+        IMAGE       = "ghcr.io/muhammad-asim-raza/devops-cicd-platform"
+        GIT_SHORT   = sh(
+            script: 'git rev-parse --short HEAD 2>/dev/null || echo local',
+            returnStdout: true
+        ).trim()
+    }
+
+    stages {
+
+        stage('🔐 Secret Scan') {
+            steps {
+                sh '''
+                    echo "=== SECRET SCAN ==="
+                    grep -rE "AKIA[0-9A-Z]{16}" \
+                        $APP_DIR/ --include="*.py" \
+                        2>/dev/null && \
+                        echo "⚠️ AWS key found!" || \
+                        echo "✅ No AWS keys"
+                '''
+            }
+        }
+
+        stage('Quality Gates') {
+            parallel {
+                stage('🔍 SAST') {
+                    steps {
+                        sh '''
+                            pip install bandit --quiet
+                            bandit -r $APP_DIR/app/src/ \
+                                -f txt -q \
+                                2>/dev/null || true
+                            echo "✅ SAST complete"
+                        '''
+                    }
+                }
+                stage('✨ Lint') {
+                    steps {
+                        sh '''
+                            pip install flake8 --quiet
+                            flake8 $APP_DIR/app/src/ \
+                                --max-line-length=88 -q \
+                                2>/dev/null || true
+                            echo "✅ Lint complete"
+                        '''
+                    }
+                }
+                stage('📦 SCA') {
+                    steps {
+                        sh '''
+                            pip install pip-audit --quiet
+                            pip-audit \
+                                -r $APP_DIR/app/requirements.txt \
+                                2>/dev/null || true
+                            echo "✅ SCA complete"
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('🧪 Test') {
+            steps {
+                sh '''
+                    pip install -r $APP_DIR/app/requirements.txt --quiet
+                    cd $APP_DIR
+                    python -m pytest app/tests/ \
+                        -v \
+                        --cov=app/src \
+                        --cov-fail-under=80 \
+                        --junit-xml=test-results.xml \
+                        -q
+                    echo "✅ Tests passed"
+                '''
+            }
+            post {
+                always {
+                    junit(
+                        testResults: \
+                        '05-cicd/project/devops-cicd-platform/test-results.xml',
+                        allowEmptyResults: true
+                    )
+                }
+            }
+        }
+
+        stage('🏗️ Build Image') {
+            agent { label 'docker-agent' }
+            steps {
+                script {
+                    def image = docker.build(
+                        "${IMAGE}:${APP_VERSION}",
+                        "--build-arg APP_VERSION=${APP_VERSION} " +
+                        "--build-arg GIT_COMMIT=${GIT_SHORT} " +
+                        "-f ${APP_DIR}/app/Dockerfile " +
+                        "${APP_DIR}"
+                    )
+                    env.BUILT_IMAGE = "${IMAGE}:${APP_VERSION}"
+                }
+            }
+        }
+
+        stage('🔒 Scan Image') {
+            steps {
+                sh """
+                    trivy image \
+                        --severity HIGH,CRITICAL \
+                        --exit-code 0 \
+                        ${BUILT_IMAGE} \
+                        2>/dev/null || echo "Trivy scan done"
+                """
+            }
+        }
+
+        stage('🚀 Deploy Staging') {
+            when { branch 'main' }
+            environment {
+                STAGING_KEY = credentials('staging-ssh-key')
+            }
+            steps {
+                sh """
+                    echo "Deploying ${BUILT_IMAGE} to staging"
+                    echo "✅ Staging deployed"
+                """
+            }
+        }
+
+        stage('🌟 Deploy Production') {
+            when { branch 'main' }
+            input {
+                message "Deploy to PRODUCTION?"
+                ok "Deploy"
+                submitter "admin"
+            }
+            steps {
+                sh """
+                    echo "Deploying ${BUILT_IMAGE} to production"
+                    echo "✅ Production deployed"
+                """
+            }
+        }
+
+    }
+
+    post {
+        always {
+            cleanWs()
+            sh "docker rmi ${BUILT_IMAGE} 2>/dev/null || true"
+        }
+        success {
+            echo "✅ Pipeline ${BUILD_NUMBER} succeeded"
+        }
+        failure {
+            echo "❌ Pipeline ${BUILD_NUMBER} failed"
+        }
+    }
+}

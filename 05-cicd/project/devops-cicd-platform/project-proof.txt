@@ -1,0 +1,29 @@
+--- Test results ---
+Command 'python' not found, did you mean:
+  command 'python3' from deb python3
+  command 'python' from deb python-is-python3
+
+--- Docker image ---
+Image: devops-cicd-platform:v1.0.0 | Size: 210MB
+
+--- Security checks ---
+SAST: bandit -r app/src/ -q
+		Undefined: 0
+		Low: 0
+		Medium: 1
+		High: 0
+Files skipped (0):
+
+--- Files created ---
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/app/Dockerfile
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/app/requirements.txt
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/app/src/app.py
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/app/tests/test_platform.py
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/jenkins/Jenkinsfile
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/k8s/base/deployment.yaml
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/k8s/base/kustomization.yaml
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/k8s/base/service.yaml
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/k8s/overlays/production/kustomization.yaml
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/k8s/overlays/staging/kustomization.yaml
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/project-proof.txt
+/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/test-output.txt
