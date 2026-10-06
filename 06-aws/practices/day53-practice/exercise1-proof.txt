@@ -1,0 +1,11 @@
+=== AWS FUNDAMENTALS ===
+Cloud computing: rent computing resources on-demand
+Pay as you go, scale instantly, no upfront hardware
+
+Three service models:
+IaaS (EC2, S3): you manage OS and up
+PaaS (RDS, ECS): you manage application and data
+SaaS: you just use the software
+
+AWS market share: ~32% (largest cloud provider)
+Why AWS: most services, most jobs, most documentation

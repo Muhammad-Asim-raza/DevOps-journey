@@ -1,0 +1,198 @@
+============================================
+   AWS CORE SERVICES FOR DEVOPS
+   200+ services. These are the essential ones.
+============================================
+
+[ COMPUTE ]
+  EC2 (Elastic Compute Cloud) ← Day 56
+    Virtual machines in the cloud
+    Fully configurable (OS, RAM, CPU, storage)
+    You manage: OS, runtime, application
+    Use: web servers, batch processing
+
+  ECS (Elastic Container Service) ← Day 59
+    AWS-managed Docker container service
+    Run your Docker containers
+    Two modes: EC2 (you manage servers)
+               Fargate (AWS manages servers)
+
+  EKS (Elastic Kubernetes Service) ← Day 60
+    AWS-managed Kubernetes
+    Run your K8s workloads on AWS
+    AWS manages: control plane
+    You manage: worker nodes (or use Fargate)
+
+  Lambda ← Day 62
+    Serverless functions
+    Upload code → AWS runs it
+    Pay per request (not per server)
+    Use: event processing, APIs, automation
+
+  Fargate
+    Serverless containers (no EC2 to manage)
+    Works with ECS and EKS
+    AWS manages all the server infrastructure
+
+[ STORAGE ]
+  S3 (Simple Storage Service) ← Day 57
+    Object storage (files, images, backups)
+    Unlimited storage, 99.999999999% durability
+    Use: static websites, backups, artifacts
+    Very cheap ($0.023/GB/month)
+
+  EBS (Elastic Block Store)
+    Block storage for EC2 (like a hard drive)
+    Attached to one EC2 instance
+    Use: OS storage, databases on EC2
+
+  EFS (Elastic File System)
+    Shared filesystem (multiple instances)
+    Like NFS - many EC2 mount same FS
+    Use: shared config, content storage
+
+  ECR (Elastic Container Registry)
+    Private Docker image registry
+    Like Docker Hub but private + AWS-native
+    Integrates with: ECS, EKS, CodePipeline
+
+[ NETWORKING ]
+  VPC (Virtual Private Cloud) ← Day 55
+    Your private network in AWS
+    Isolated from other customers
+    Contains: subnets, route tables, gateways
+
+  Route53 ← Day 65
+    AWS DNS service
+    Register domains, route traffic
+    Health checks + failover
+
+  CloudFront
+    Content Delivery Network (CDN)
+    Cache content at 400+ edge locations
+    Speeds up: static sites, APIs
+
+  ALB (Application Load Balancer) ← Day 66
+    HTTP/HTTPS load balancer
+    Routes based on URL path/headers
+    Integrates with: ECS, EKS, Auto Scaling
+
+  NLB (Network Load Balancer)
+    TCP/UDP load balancer
+    Extremely high performance
+    Use: millions of requests/second
+
+[ DATABASE ]
+  RDS (Relational Database Service) ← Day 58
+    Managed SQL databases
+    Engines: MySQL, PostgreSQL, Oracle, MSSQL
+    AWS manages: patching, backups, HA
+    You manage: schema, queries, application
+
+  Aurora
+    AWS-optimized MySQL/PostgreSQL
+    5x faster than MySQL, 3x faster than PostgreSQL
+    Auto-scales storage
+
+  DynamoDB
+    Managed NoSQL database
+    Serverless, scales automatically
+    Key-value + document store
+    Use: high-scale, simple lookups
+
+  ElastiCache
+    Managed Redis or Memcached
+    In-memory caching layer
+    Reduces database load
+
+[ SECURITY ]
+  IAM (Identity and Access Management) ← Day 54
+    Who can do what in AWS
+    Users, Groups, Roles, Policies
+    The foundation of AWS security
+
+  KMS (Key Management Service) ← Day 68
+    Encryption key management
+    Encrypts S3, EBS, RDS data
+
+  Secrets Manager
+    Store and rotate secrets
+    Like HashiCorp Vault but AWS-native
+    Automatic rotation for RDS passwords
+
+  WAF (Web Application Firewall)
+    Block SQL injection, XSS, DDoS
+    Protects: CloudFront, ALB, API Gateway
+
+  GuardDuty
+    Threat detection service
+    Analyzes: CloudTrail, VPC Flow Logs, DNS
+    Alerts on: suspicious activity, intrusions
+
+[ DEVOPS / CI/CD ]
+  CodePipeline
+    AWS-native CI/CD pipeline
+    Similar to GitHub Actions but AWS-hosted
+
+  CodeBuild
+    Managed build service
+    Like GitHub Actions runners but managed
+
+  CodeDeploy
+    Automated deployment to EC2, ECS, Lambda
+    Blue-green, canary deployments
+
+  CloudFormation ← Day 61
+    Infrastructure as Code for AWS
+    Define AWS resources in JSON/YAML
+    (Terraform is often preferred - Day 71)
+
+  Systems Manager (SSM)
+    Manage EC2 instances at scale
+    Session Manager: SSH without SSH keys
+    Parameter Store: config and secrets
+
+[ MONITORING ]
+  CloudWatch ← Day 64
+    AWS-native monitoring
+    Metrics, logs, alarms, dashboards
+    Works with ALL AWS services
+
+  CloudTrail
+    Audit log of ALL AWS API calls
+    Who did what, when, from where
+    CRITICAL for security and compliance
+
+  X-Ray
+    Distributed tracing
+    Like Jaeger but AWS-native
+    Debug: which service is slow?
+
+[ SERVERLESS ]
+  Lambda ← Day 62
+  API Gateway ← Day 63
+    HTTP API in front of Lambda
+    REST and WebSocket APIs
+  SQS (Simple Queue Service)
+    Message queue
+    Decouple: producer and consumer
+  SNS (Simple Notification Service)
+    Pub/Sub messaging
+    Fan-out: one message → many subscribers
+  EventBridge
+    Event bus for serverless architectures
+
+[ THE 10 SERVICES EVERY DEVOPS KNOWS ]
+  1.  IAM   - who has access
+  2.  VPC   - your private network
+  3.  EC2   - virtual machines
+  4.  S3    - object storage
+  5.  RDS   - managed database
+  6.  ECS   - containers
+  7.  EKS   - Kubernetes
+  8.  ALB   - load balancing
+  9.  CloudWatch - monitoring
+  10. Route53 - DNS
+
+============================================
+   SERVICES OVERVIEW COMPLETE
+============================================

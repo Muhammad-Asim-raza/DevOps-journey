@@ -1,0 +1,16 @@
+=== AWS GLOBAL INFRASTRUCTURE ===
+Regions: 33 geographic locations
+  Each region = multiple Availability Zones
+  Examples: us-east-1, eu-west-1, ap-southeast-1
+
+Availability Zones: isolated data centers
+  Each region has 3-6 AZs
+  Physically separate (different buildings + power)
+  Connected by low-latency private fiber
+
+For HA (High Availability):
+  Deploy to 2+ AZs in same region
+  One AZ fails → other AZs serve traffic
+
+Rule: choose region closest to users
+      Data residency: EU users → eu-west-1 (GDPR)

@@ -1,0 +1,15 @@
+=== AWS CLI SETUP ===
+aws-cli/2.35.21 Python/3.14.6 Linux/6.18.40.1-microsoft-standard-WSL2 exe/x86_64.ubuntu.24
+
+Configuration:
+~/.aws/credentials = access keys (never in Git!)
+~/.aws/config = region and output format
+
+Key commands:
+aws configure                    = set credentials
+aws sts get-caller-identity      = verify identity
+aws ec2 describe-regions         = list regions
+aws s3 ls                        = list buckets
+aws --profile NAME               = use named profile
+
+NEVER commit ~/.aws/ to version control!

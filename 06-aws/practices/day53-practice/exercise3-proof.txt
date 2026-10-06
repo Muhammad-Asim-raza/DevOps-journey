@@ -1,0 +1,20 @@
+=== SHARED RESPONSIBILITY MODEL ===
+AWS responsible (Security OF the cloud):
+  Physical infrastructure
+  Hardware
+  Network infrastructure
+  Hypervisor
+  Managed service software
+
+YOU responsible (Security IN the cloud):
+  Your data
+  IAM configuration
+  OS patching (EC2)
+  Application security
+  Network configuration
+  Compliance
+
+Varies by service type:
+  EC2 (IaaS): you patch the OS
+  RDS (PaaS): AWS patches the DB engine
+  Lambda: AWS manages everything runtime

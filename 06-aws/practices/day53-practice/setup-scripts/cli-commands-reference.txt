@@ -1,0 +1,122 @@
+============================================
+   FIRST AWS CLI COMMANDS
+============================================
+
+[ VERIFY CREDENTIALS ]
+
+  aws sts get-caller-identity
+  Output: Account ID, UserID, ARN
+  Shows: which account and user you're using
+  First command to run after aws configure
+
+  Running: aws sts get-caller-identity
+{
+    "UserId": "AIDATWHVWKKECSMXELTVT",
+    "Account": "253918335624",
+    "Arn": "arn:aws:iam::253918335624:user/AsimUser1"
+}
+
+[ REGION COMMANDS ]
+
+  # List all available regions:
+  aws ec2 describe-regions \
+    --output table
+
+  # List regions in JSON:
+  aws ec2 describe-regions \
+    --query 'Regions[*].RegionName' \
+    --output text
+
+  # Check current region:
+  aws configure get region
+
+[ ACCOUNT INFORMATION ]
+
+  # Get account ID:
+  aws sts get-caller-identity --query Account --output text
+
+  # List IAM users (need permissions):
+  aws iam list-users --output table
+
+  # Check your identity:
+  aws sts get-caller-identity
+
+[ EC2 BASIC COMMANDS (preview) ]
+
+  # List running instances:
+  aws ec2 describe-instances \
+    --query 'Reservations[*].Instances[*].[InstanceId,State.Name,InstanceType,PublicIpAddress]' \
+    --output table
+
+  # List available AMIs (Amazon Machine Images):
+  aws ec2 describe-images \
+    --owners amazon \
+    --filters 'Name=name,Values=amzn2-ami-hvm-2.0.*-x86_64-gp2' \
+    --query 'Images[0].ImageId' \
+    --output text
+
+[ S3 BASIC COMMANDS (preview) ]
+
+  # List all buckets:
+  aws s3 ls
+
+  # Create a bucket:
+  aws s3 mb s3://my-unique-bucket-name-2026
+
+  # Upload a file:
+  aws s3 cp myfile.txt s3://my-bucket/
+
+  # List bucket contents:
+  aws s3 ls s3://my-bucket/
+
+  # Download a file:
+  aws s3 cp s3://my-bucket/myfile.txt .
+
+  # Sync directory to S3:
+  aws s3 sync ./dist/ s3://my-bucket/
+
+  # Delete bucket:
+  aws s3 rb s3://my-bucket --force
+
+[ USEFUL CLI FLAGS ]
+
+  --region us-east-1    override default region
+  --profile myprofile   use named profile
+  --output json|text|table|yaml
+  --query 'JMESPath'    filter output
+  --dry-run             validate without executing
+  --no-cli-pager        don't use less/more pager
+  --no-verify-ssl       (not recommended)
+
+  QUERY examples (JMESPath):
+  --query 'Instances[0].InstanceId'
+  --query 'length(Instances)'
+  --query 'Instances[*].[InstanceId,State.Name]'
+  --query 'Instances[?State.Name==`running`]'
+
+[ AWS CLI HELP ]
+  aws help                    top-level help
+  aws ec2 help                EC2 service help
+  aws ec2 describe-instances help
+  aws ec2 run-instances help
+
+[ CLI CONFIGURATION FILES ]
+
+  ~/.aws/credentials:
+  [default]
+  aws_access_key_id = AKIAIOSFODNN7EXAMPLE
+  aws_secret_access_key = wJalrXUtnFEMI...
+
+  ~/.aws/config:
+  [default]
+  region = us-east-1
+  output = json
+  cli_pager =
+
+  NEVER commit ~/.aws/ to Git!
+  Add to ~/.gitignore_global:
+  echo '.aws/' >> ~/.gitignore_global
+
+============================================
+   CLI COMMANDS REFERENCE COMPLETE
+============================================

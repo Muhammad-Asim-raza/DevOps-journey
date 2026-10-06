@@ -1,0 +1,87 @@
+============================================
+   AWS FUNDAMENTALS REFERENCE
+   Author: Asim Raza - Day 53
+============================================
+
+[ CLOUD COMPUTING MODELS ]
+  IaaS: you manage OS + apps (EC2, S3)
+  PaaS: you manage apps only (RDS, Lambda)
+  SaaS: you use the service (Gmail, Slack)
+
+[ AWS GLOBAL INFRASTRUCTURE ]
+  Regions:           33+ geographic areas
+  Availability Zones: 3-6 per region
+  Edge Locations:    400+ for CloudFront CDN
+
+  Region naming: us-east-1, eu-west-1
+  AZ naming:     us-east-1a, us-east-1b
+
+  For High Availability: deploy to 2+ AZs
+
+[ SHARED RESPONSIBILITY ]
+  AWS: physical hardware, network, hypervisor
+  You: data, IAM, OS patches, app security
+
+[ CORE SERVICES — DEVOPS FOCUS ]
+  Compute:   EC2, ECS, EKS, Lambda, Fargate
+  Storage:   S3, EBS, EFS, ECR
+  Network:   VPC, ALB, Route53, CloudFront
+  Database:  RDS, Aurora, DynamoDB, ElastiCache
+  Security:  IAM, KMS, Secrets Manager, WAF
+  Monitor:   CloudWatch, CloudTrail, X-Ray
+  CI/CD:     CodePipeline, CodeBuild, CodeDeploy
+
+[ PRICING MODEL ]
+  Pay as you go (no upfront)
+  On-Demand: most flexible, most expensive
+  Reserved 1-3yr: 30-72% discount
+  Spot: up to 90% off, interruptible
+  Savings Plans: flexible commitment
+
+[ AWS CLI ESSENTIALS ]
+  Install: curl from awscli.amazonaws.com
+  Config:  aws configure
+  Files:   ~/.aws/credentials, ~/.aws/config
+
+  Verify:  aws sts get-caller-identity
+  Regions: aws ec2 describe-regions
+  Buckets: aws s3 ls
+
+  Flags:
+  --region REGION   override region
+  --profile NAME    use named profile
+  --output FORMAT   json|text|table
+  --query JMESPATH  filter results
+  --dry-run         test without executing
+
+[ PHASE 6 PLAN ]
+  Day 53: Fundamentals (TODAY)
+  Day 54: IAM
+  Day 55: VPC
+  Day 56: EC2
+  Day 57: S3
+  Day 58: RDS
+  Day 59: ECS
+  Day 60: EKS
+  Day 61: CloudFormation
+  Day 62: Lambda
+  Day 63: API Gateway
+  Day 64: CloudWatch
+  Day 65: Route53
+  Day 66: Load Balancers
+  Day 67: Auto Scaling
+  Day 68: AWS Security
+  Day 69: Cost Optimization
+  Day 70: AWS Phase Project
+
+[ AWS CLI STATUS ]
+aws-cli/2.35.21 Python/3.14.6 Linux/6.18.40.1-microsoft-standard-WSL2 exe/x86_64.ubuntu.24
+{
+    "UserId": "AIDATWHVWKKECSMXELTVT",
+    "Account": "253918335624",
+    "Arn": "arn:aws:iam::253918335624:user/AsimUser1"
+}
+
+============================================
+   REFERENCE COMPLETE
+============================================
