@@ -1,0 +1,11 @@
+=== IAM BEST PRACTICES ===
+1. Lock root: MFA + delete root keys + never use daily
+2. Least privilege: only what the service NEEDS
+3. Roles for services: not user access keys
+4. Groups for users: not direct policy attachments
+5. MFA for all humans with console access
+6. Rotate access keys every 90 days max
+7. Use tags for attribute-based access control
+8. Enable CloudTrail for audit logging
+9. Review credential report monthly
+10. Use IAM Access Advisor to find unused permissions

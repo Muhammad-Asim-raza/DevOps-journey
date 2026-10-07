@@ -1,0 +1,20 @@
+=== IAM POLICY TYPES ===
+1. AWS Managed: pre-built by AWS, cannot modify
+   Examples: AdministratorAccess, ReadOnlyAccess
+   Use: quick tests only
+
+2. Customer Managed: you create, reusable
+   Best for: production (specific permissions)
+
+3. Inline: embedded in user/role, not reusable
+   Avoid: hard to audit and maintain
+
+4. Resource-based: on the resource itself (S3 policy)
+   Enables: cross-account access
+
+5. Service Control Policies: organization-wide limits
+   Even admin cannot exceed SCP limits
+
+Policy evaluation:
+Default DENY → SCP check → Resource policy → Identity policy
+Explicit Deny always wins

@@ -1,0 +1,156 @@
+============================================
+   AWS IAM CLI REFERENCE
+   Author: Asim Raza - Day 54
+============================================
+
+[ USERS ]
+
+  # List all IAM users:
+  aws iam list-users --output table
+
+  # Create a user:
+  aws iam create-user --user-name devops-engineer
+
+  # Get user details:
+  aws iam get-user --user-name devops-engineer
+
+  # Delete user:
+  aws iam delete-user --user-name devops-engineer
+
+  # Create access key:
+  aws iam create-access-key --user-name devops-engineer
+
+  # List access keys:
+  aws iam list-access-keys --user-name devops-engineer
+
+  # Deactivate access key:
+  aws iam update-access-key \
+    --user-name devops-engineer \
+    --access-key-id AKIAIOSFODNN7EXAMPLE \
+    --status Inactive
+
+  # Delete access key:
+  aws iam delete-access-key \
+    --user-name devops-engineer \
+    --access-key-id AKIAIOSFODNN7EXAMPLE
+
+[ GROUPS ]
+
+  # List groups:
+  aws iam list-groups
+
+  # Create group:
+  aws iam create-group --group-name DevOpsEngineers
+
+  # Add user to group:
+  aws iam add-user-to-group \
+    --user-name devops-engineer \
+    --group-name DevOpsEngineers
+
+  # List users in group:
+  aws iam get-group --group-name DevOpsEngineers
+
+  # Remove user from group:
+  aws iam remove-user-from-group \
+    --user-name devops-engineer \
+    --group-name DevOpsEngineers
+
+[ ROLES ]
+
+  # List roles:
+  aws iam list-roles --output table
+
+  # Create role with trust policy:
+  aws iam create-role \
+    --role-name MyEC2Role \
+    --assume-role-policy-document file://trust-policy.json
+
+  # Get role:
+  aws iam get-role --role-name MyEC2Role
+
+  # Delete role:
+  aws iam delete-role --role-name MyEC2Role
+
+  # Assume a role (get temporary credentials):
+  aws sts assume-role \
+    --role-arn arn:aws:iam::123456789012:role/MyRole \
+    --role-session-name MySession
+
+[ POLICIES ]
+
+  # List AWS managed policies:
+  aws iam list-policies \
+    --scope AWS \
+    --output table | head -30
+
+  # Create customer managed policy:
+  aws iam create-policy \
+    --policy-name MyS3Policy \
+    --policy-document file://policy.json
+
+  # Get policy:
+  aws iam get-policy \
+    --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  # Attach policy to user:
+  aws iam attach-user-policy \
+    --user-name devops-engineer \
+    --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess
+
+  # Attach policy to role:
+  aws iam attach-role-policy \
+    --role-name MyEC2Role \
+    --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  # List policies attached to role:
+  aws iam list-attached-role-policies \
+    --role-name MyEC2Role
+
+  # Detach policy from role:
+  aws iam detach-role-policy \
+    --role-name MyEC2Role \
+    --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+[ INSTANCE PROFILES (EC2 Roles) ]
+
+  # Create instance profile:
+  aws iam create-instance-profile \
+    --instance-profile-name MyEC2Profile
+
+  # Add role to instance profile:
+  aws iam add-role-to-instance-profile \
+    --instance-profile-name MyEC2Profile \
+    --role-name MyEC2Role
+
+  # Attach to EC2 instance:
+  aws ec2 associate-iam-instance-profile \
+    --instance-id i-0abc123 \
+    --iam-instance-profile Name=MyEC2Profile
+
+[ IAM CREDENTIAL REPORT ]
+
+  # Generate credential report:
+  aws iam generate-credential-report
+
+  # Download report:
+  aws iam get-credential-report \
+    --query 'Content' --output text | base64 -d
+
+  Report contains:
+  - All users
+  - Password last used
+  - Access key last used
+  - MFA enabled
+  Use for: security audits, compliance
+
+[ CURRENT ACCOUNT INFO ]
+
+{
+    "UserId": "AIDATWHVWKKECSMXELTVT",
+    "Account": "253918335624",
+    "Arn": "arn:aws:iam::253918335624:user/AsimUser1"
+}
+
+============================================
+   IAM CLI REFERENCE COMPLETE
+============================================

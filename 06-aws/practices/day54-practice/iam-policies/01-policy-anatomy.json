@@ -1,0 +1,56 @@
+{
+  "Version": "2012-10-17",
+  "_comment_version": "Policy language version. Always use 2012-10-17. Never use 2008-10-17 (older, fewer features).",
+
+  "Statement": [
+    {
+      "Sid": "AllowS3BucketAccess",
+      "_comment_sid": "Sid = Statement ID. Optional but recommended. Human-readable identifier for this statement.",
+
+      "Effect": "Allow",
+      "_comment_effect": "Effect: Allow OR Deny. AWS DENIES everything by default. You must ALLOW what you need. An explicit DENY always overrides any ALLOW.",
+
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "_comment_action": "Action: which AWS API calls are allowed/denied. Format: service:ApiCall. Use * for wildcard. s3:* means ALL S3 actions (dangerous!). List specific actions for least privilege.",
+
+      "Resource": [
+        "arn:aws:s3:::my-app-bucket",
+        "arn:aws:s3:::my-app-bucket/*"
+      ],
+      "_comment_resource": "Resource: which specific AWS resources this applies to. ARN format: arn:partition:service:region:account:resource. s3:::bucket = the bucket itself (for ListBucket). s3:::bucket/* = objects in bucket (for GetObject/PutObject). Use * for all resources (AVOID in production!)",
+
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        },
+        "IpAddress": {
+          "aws:SourceIp": ["10.0.0.0/8", "172.16.0.0/12"]
+        }
+      },
+      "_comment_condition": "Condition: optional extra restrictions. Only applies if condition is TRUE. Examples: restrict to specific region, IP range, require MFA, require HTTPS, time of day."
+    },
+
+    {
+      "Sid": "ExplicitDenyDeleteBucket",
+      "Effect": "Deny",
+      "_comment_deny": "Explicit Deny ALWAYS wins. Even if another policy Allows this, this Deny overrides it. Use for: protecting critical resources unconditionally.",
+
+      "Action": [
+        "s3:DeleteBucket",
+        "s3:DeleteBucketPolicy"
+      ],
+      "Resource": "arn:aws:s3:::my-app-bucket",
+
+      "Condition": {
+        "StringNotEquals": {
+          "aws:PrincipalTag/Role": "admin"
+        }
+      }
+    }
+  ]
+}

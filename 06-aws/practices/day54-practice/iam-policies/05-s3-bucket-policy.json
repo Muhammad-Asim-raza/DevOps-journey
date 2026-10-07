@@ -1,0 +1,73 @@
+{
+  "_comment": "S3 Resource-Based Policy Examples",
+
+  "PublicReadBucketPolicy": {
+    "_comment": "For static website hosting (all objects public)",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "PublicReadGetObject",
+        "Effect": "Allow",
+        "Principal": "*",
+        "Action": "s3:GetObject",
+        "Resource": "arn:aws:s3:::my-website-bucket/*"
+      }
+    ]
+  },
+
+  "CrossAccountAccessPolicy": {
+    "_comment": "Allow another AWS account to read from this bucket",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "CrossAccountRead",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::PARTNER-ACCOUNT-ID:root"
+        },
+        "Action": [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        "Resource": [
+          "arn:aws:s3:::shared-data-bucket",
+          "arn:aws:s3:::shared-data-bucket/*"
+        ]
+      }
+    ]
+  },
+
+  "EnforceEncryptionPolicy": {
+    "_comment": "Deny uploads without server-side encryption",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "DenyUnencryptedUploads",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:PutObject",
+        "Resource": "arn:aws:s3:::my-secure-bucket/*",
+        "Condition": {
+          "StringNotEquals": {
+            "s3:x-amz-server-side-encryption": "aws:kms"
+          }
+        }
+      },
+      {
+        "Sid": "DenyHTTPAccess",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:*",
+        "Resource": [
+          "arn:aws:s3:::my-secure-bucket",
+          "arn:aws:s3:::my-secure-bucket/*"
+        ],
+        "Condition": {
+          "Bool": {
+            "aws:SecureTransport": "false"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "_comment": "Collection of production-grade IAM policies for DevOps",
+
+  "CICDPipelinePolicy": {
+    "_comment": "For GitHub Actions or Jenkins CI/CD pipeline",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "ECRPushPull",
+        "Effect": "Allow",
+        "Action": [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "ECSDeployment",
+        "Effect": "Allow",
+        "Action": [
+          "ecs:RegisterTaskDefinition",
+          "ecs:DeregisterTaskDefinition",
+          "ecs:DescribeTaskDefinition",
+          "ecs:UpdateService",
+          "ecs:DescribeServices",
+          "ecs:DescribeClusters"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "S3Artifacts",
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        "Resource": [
+          "arn:aws:s3:::my-artifacts-bucket",
+          "arn:aws:s3:::my-artifacts-bucket/*"
+        ]
+      }
+    ]
+  },
+
+  "EC2AppServerPolicy": {
+    "_comment": "For EC2 instances running the application",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "ReadAppConfig",
+        "Effect": "Allow",
+        "Action": [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ],
+        "Resource": "arn:aws:ssm:us-east-1:*:parameter/myapp/*"
+      },
+      {
+        "Sid": "ReadSecrets",
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Resource": "arn:aws:secretsmanager:us-east-1:*:secret:myapp/*"
+      },
+      {
+        "Sid": "WriteAppLogs",
+        "Effect": "Allow",
+        "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ],
+        "Resource": "arn:aws:logs:us-east-1:*:log-group:/myapp/*"
+      },
+      {
+        "Sid": "ReadS3AppData",
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        "Resource": [
+          "arn:aws:s3:::my-app-data-bucket",
+          "arn:aws:s3:::my-app-data-bucket/*"
+        ]
+      }
+    ]
+  },
+
+  "DeveloperReadOnlyPolicy": {
+    "_comment": "For developers: read production, full dev access",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "ReadProductionResources",
+        "Effect": "Allow",
+        "Action": [
+          "ec2:Describe*",
+          "ecs:Describe*",
+          "ecs:List*",
+          "rds:Describe*",
+          "elasticloadbalancing:Describe*",
+          "cloudwatch:GetMetricData",
+          "cloudwatch:DescribeAlarms",
+          "logs:FilterLogEvents",
+          "logs:GetLogEvents"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "FullDevelopmentAccess",
+        "Effect": "Allow",
+        "Action": "*",
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "development"
+          }
+        }
+      },
+      {
+        "Sid": "DenyProductionChanges",
+        "Effect": "Deny",
+        "Action": [
+          "ec2:TerminateInstances",
+          "rds:DeleteDBInstance",
+          "s3:DeleteBucket",
+          "ecs:DeleteCluster"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "aws:ResourceTag/Environment": "production"
+          }
+        }
+      }
+    ]
+  }
+}

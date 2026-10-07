@@ -1,0 +1,22 @@
+=== IAM COMPONENTS ===
+IAM Components:
+ROOT: unlimited power, use only for initial setup
+USER: person or app identity, has credentials
+GROUP: collection of users, policies attached once
+ROLE: temporary identity, assumed by services
+POLICY: JSON document defining permissions
+
+Policy anatomy:
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "description",
+    "Effect": "Allow | Deny",
+    "Action": ["service:ApiCall"],
+    "Resource": ["arn:aws:s3:::bucket/*"],
+    "Condition": {optional restrictions}
+  }]
+}
+
+Default is DENY — you must explicitly Allow
+Explicit Deny always overrides Allow

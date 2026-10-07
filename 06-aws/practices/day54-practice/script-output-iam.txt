@@ -1,0 +1,71 @@
+============================================
+   AWS IAM COMPLETE REFERENCE
+   Author: Asim Raza - Day 54
+============================================
+
+[ IAM COMPONENTS ]
+  Root    = unlimited, use only for setup + billing
+  User    = human identity with credentials
+  Group   = users collection, attach policies once
+  Role    = temporary identity for services
+  Policy  = JSON permissions document
+
+[ POLICY ANATOMY ]
+  Effect:   Allow | Deny
+  Action:   service:ApiCall (e.g., s3:GetObject)
+  Resource: ARN of specific resource
+  Condition: optional extra restrictions
+
+  Default: DENY (must explicitly Allow)
+  Explicit Deny: ALWAYS wins over Allow
+
+[ ARN FORMAT ]
+  arn:aws:service:region:account:resource
+  arn:aws:iam::123456789012:user/asim
+  arn:aws:ec2:us-east-1:123456789012:instance/i-abc
+  arn:aws:s3:::my-bucket (no region/account for S3)
+
+[ ROLES vs USERS FOR SERVICES ]
+  User + access key: stored, never rotates, risky
+  Role: auto-rotates every hour, no storage, safe
+
+  EC2: IAM instance profile (role)
+  Lambda: execution role
+  ECS: task role
+  GitHub Actions: OIDC role (no keys at all!)
+
+[ GITHUB ACTIONS OIDC ]
+  1. Create OIDC provider in IAM
+     URL: token.actions.githubusercontent.com
+  2. Create IAM role with OIDC trust policy
+     Condition: sub=repo:OWNER/REPO:ref:refs/heads/main
+  3. In workflow: permissions: id-token: write
+  4. Use: aws-actions/configure-aws-credentials@v4
+  Result: No AWS keys stored anywhere!
+
+[ SECURITY CHECKLIST ]
+  ✅ Root MFA enabled
+  ✅ No root access keys
+  ✅ Users in groups (not direct policies)
+  ✅ MFA for all human console users
+  ✅ Access keys < 90 days old
+  ✅ Services use roles not user keys
+  ✅ No wildcard * Resource in policies
+  ✅ CloudTrail enabled
+  ✅ Least privilege enforced
+
+[ KEY CLI COMMANDS ]
+  aws iam list-users
+  aws iam list-roles
+  aws iam list-policies --scope Local
+  aws iam get-user --user-name NAME
+  aws iam create-role --role-name R --assume-role-policy-document file://trust.json
+  aws iam attach-role-policy --role-name R --policy-arn ARN
+  aws iam simulate-principal-policy  (test permissions!)
+  aws iam generate-credential-report
+  aws sts get-caller-identity
+  aws sts assume-role --role-arn ARN --role-session-name S
+
+============================================
+   IAM REFERENCE COMPLETE
+============================================

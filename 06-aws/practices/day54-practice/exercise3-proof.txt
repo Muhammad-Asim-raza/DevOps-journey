@@ -1,0 +1,17 @@
+=== IAM ROLES FOR SERVICES ===
+Role trust policies — WHO can assume the role:
+
+EC2:    "Service": "ec2.amazonaws.com"
+Lambda: "Service": "lambda.amazonaws.com"
+ECS:    "Service": "ecs-tasks.amazonaws.com"
+GitHub: "Federated": "token.actions.githubusercontent.com"
+
+GitHub Actions OIDC (no stored keys!):
+  Condition:
+    sub: "repo:OWNER/REPO:ref:refs/heads/main"
+  This means ONLY this repo on this branch can assume the role
+
+Roles vs Users for services:
+User: stored access key, never rotates, if stolen = permanent
+Role: auto-rotated credentials (1hr), if stolen = expires soon
+ALWAYS use roles for services, never users

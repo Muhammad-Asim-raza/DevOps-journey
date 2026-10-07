@@ -1,0 +1,157 @@
+============================================
+   IAM BEST PRACTICES
+   Production security patterns
+============================================
+
+[ BEST PRACTICE 1: Lock down root account ]
+
+  ✅ Enable MFA on root
+  ✅ Delete root access keys
+  ✅ Never use root for daily operations
+  ✅ Create billing alert from root, then never again
+  ✅ Use root only for: closing account, changing email,
+     restoring IAM permissions if locked out
+
+[ BEST PRACTICE 2: Principle of Least Privilege ]
+
+  Grant ONLY the permissions required
+  Nothing more
+
+  WRONG:
+  Effect: Allow
+  Action: '*'
+  Resource: '*'
+  (Full admin = if compromised → everything lost)
+
+  RIGHT:
+  Effect: Allow
+  Action: ['s3:GetObject', 's3:PutObject']
+  Resource: 'arn:aws:s3:::my-app-bucket/*'
+  (Only what this specific service needs)
+
+  How to determine least privilege:
+  1. Use IAM Access Advisor (shows last used)
+  2. Start with no permissions
+  3. Add what app needs, test, repeat
+  4. Use AWS IAM Policy Simulator to test
+
+[ BEST PRACTICE 3: Use Roles Not Users for Services ]
+
+  WRONG: Give EC2 an IAM User access key
+  Access key stored in /etc/environment
+  Or worse: hardcoded in app.py
+  If EC2 is compromised: key stolen
+  Key never auto-expires
+
+  RIGHT: Give EC2 an IAM Role (instance profile)
+  No access key stored anywhere
+  Credentials auto-rotate every hour
+  If EC2 compromised: attacker gets 1hr creds
+  After 1 hour: creds expire automatically
+
+  Same principle for:
+  Lambda → Lambda execution role
+  ECS → Task role
+  GitHub Actions → OIDC role
+  Cross-account → AssumeRole
+
+[ BEST PRACTICE 4: Use Groups Not Direct Policies ]
+
+  WRONG: Attach policies directly to users
+  10 developers → 10 separate policy attachments
+  Hard to audit
+  Easy to forget when developer leaves
+
+  RIGHT: Groups → Policies → Users join groups
+  Developers group → S3 read, ECR pull
+  DevOps group → Full EC2, ECS, S3
+  NewDev starts → add to Developers group
+  Dev leaves → remove from all groups
+  Easy to audit: who is in which group
+
+[ BEST PRACTICE 5: Enable MFA for human users ]
+
+  Console access → REQUIRE MFA
+  API/CLI access → strongly recommended
+
+  Enforce MFA with condition:
+  'Condition': {
+    'Bool': {
+      'aws:MultiFactorAuthPresent': 'true'
+    }
+  }
+
+  AWS Config Rule: iam-user-mfa-enabled
+  Flags all users without MFA
+
+[ BEST PRACTICE 6: Rotate Credentials ]
+
+  Access keys: rotate every 90 days MAX
+  Passwords: enforce 90-day rotation via policy
+
+  Check key age:
+  aws iam list-access-keys --user-name USER
+  Look at CreateDate
+
+  Automate rotation:
+  AWS Secrets Manager: auto-rotates RDS passwords
+  OIDC: no keys to rotate (best!)
+
+  Audit unused keys:
+  aws iam get-credential-report
+  Keys unused >90 days → deactivate and investigate
+
+[ BEST PRACTICE 7: Use Tags for Access Control ]
+
+  Tag resources: Environment=production
+  Policy condition: only access if tagged
+
+  Example: Developer can only delete dev resources
+  Condition:
+    StringEquals:
+      aws:ResourceTag/Environment: development
+
+  This prevents developers from accidentally
+  deleting production resources even with
+  seemingly broad permissions
+
+[ BEST PRACTICE 8: Use Permission Boundaries ]
+
+  Permission Boundary = maximum allowed permissions
+  Even if policy allows more, boundary caps it
+
+  Use case: delegate IAM to team leads
+  Lead can create roles but not exceed boundary
+  Prevents: privilege escalation attacks
+
+[ BEST PRACTICE 9: Enable CloudTrail ]
+
+  Every IAM action logged
+  Who created/deleted/modified what
+  When, from which IP
+
+  aws cloudtrail create-trail \
+    --name my-audit-trail \
+    --s3-bucket-name my-cloudtrail-bucket
+
+  Query IAM events:
+  aws cloudtrail lookup-events \
+    --lookup-attributes \
+      AttributeKey=EventName,AttributeValue=DeleteBucket
+
+[ IAM SECURITY CHECKLIST ]
+
+  ✅ Root MFA enabled
+  ✅ No root access keys
+  ✅ All users in groups
+  ✅ MFA for all human users
+  ✅ Access keys < 90 days old
+  ✅ Services use roles not user keys
+  ✅ No wildcard * policies in production
+  ✅ CloudTrail enabled
+  ✅ Credential report reviewed monthly
+  ✅ AWS Config IAM rules enabled
+
+============================================
+   BEST PRACTICES COMPLETE
+============================================

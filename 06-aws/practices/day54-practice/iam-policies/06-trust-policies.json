@@ -1,0 +1,86 @@
+{
+  "_comment": "Trust Policies define WHO can assume a role",
+
+  "EC2TrustPolicy": {
+    "_comment": "Allows EC2 instances to assume this role",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+
+  "LambdaTrustPolicy": {
+    "_comment": "Allows Lambda to assume this role",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "lambda.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+
+  "ECSTaskTrustPolicy": {
+    "_comment": "Allows ECS tasks (containers) to assume this role",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ecs-tasks.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+
+  "GitHubActionsOIDCTrustPolicy": {
+    "_comment": "Allows GitHub Actions to assume role via OIDC (no stored keys!)",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Federated": "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+        },
+        "Action": "sts:AssumeRoleWithWebIdentity",
+        "Condition": {
+          "StringEquals": {
+            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+          },
+          "StringLike": {
+            "token.actions.githubusercontent.com:sub": "repo:Muhammad-Asim-raza/DevOps-journey:ref:refs/heads/main"
+          }
+        }
+      }
+    ]
+  },
+
+  "CrossAccountTrustPolicy": {
+    "_comment": "Allows another AWS account to assume this role",
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::TRUSTED-ACCOUNT-ID:root"
+        },
+        "Action": "sts:AssumeRole",
+        "Condition": {
+          "Bool": {
+            "aws:MultiFactorAuthPresent": "true"
+          }
+        }
+      }
+    ]
+  }
+}
