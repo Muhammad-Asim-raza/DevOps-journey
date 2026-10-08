@@ -1,0 +1,119 @@
+**Date:** Aug 12 2026
+**Status:** ✅ Completed
+
+---
+
+## Exercise 1: VPC Architecture ✅
+- [x] 3-tier VPC diagram drawn
+- [x] Public/private/database subnet design
+- [x] IP addressing plan (10.0.0.0/16)
+- [x] Component roles documented
+
+### Proof: practices/day55-practice/exercise1-proof.txt
+
+### IP Plan
+VPC: 10.0.0.0/16
+Public AZ-a:   10.0.1.0/24   (ALB, NAT GW)
+Public AZ-b:   10.0.2.0/24
+Private AZ-a:  10.0.10.0/24  (App servers)
+Private AZ-b:  10.0.11.0/24
+DB AZ-a:       10.0.20.0/24  (RDS Primary)
+DB AZ-b:       10.0.21.0/24  (RDS Standby)
+
+---
+
+## Exercise 2: Subnets and Routing ✅
+- [x] Public vs private subnet difference
+- [x] Route table configurations
+- [x] IGW vs NAT Gateway purpose
+- [x] Created VPC with CLI
+
+### Proof: practices/day55-practice/exercise2-proof.txt
+
+### The Defining Difference
+Public subnet = route 0.0.0.0/0 → IGW
+Private subnet = route 0.0.0.0/0 → NAT GW
+Database subnet = NO 0.0.0.0/0 route
+
+---
+
+## Exercise 3: Security Groups ✅
+- [x] Stateful behavior understood
+- [x] SG-to-SG references practiced
+- [x] 3-tier SG design documented
+- [x] CLI commands written
+
+### Proof: practices/day55-practice/exercise3-proof.txt
+
+### Key Pattern
+App-SG inbound: port 8000 from ALB-SG
+(not from 0.0.0.0/0, not from CIDR)
+Only ALB can reach app. Even same-subnet
+machines with different SG cannot.
+
+---
+
+## Exercise 4: NACLs ✅
+- [x] Stateless behavior understood
+- [x] Numbered rules and processing order
+- [x] Public and private NACL configs
+- [x] When to use NACL vs SG
+
+### Proof: practices/day55-practice/exercise4-proof.txt
+
+### Stateless Gotcha
+Must explicitly allow return traffic:
+Inbound port 80 (browser → server)
+Outbound ports 1024-65535 (server → browser response)
+SG handles this automatically (stateful)
+NACL requires both rules explicitly
+
+---
+
+## VPC Advanced Topics
+
+### VPC Endpoints (save NAT GW costs)
+Gateway endpoint: S3 and DynamoDB (FREE)
+Interface endpoint: other services (~$7/month)
+Private subnet → S3 without internet
+
+### VPC Peering
+Connect two VPCs (same or different accounts)
+NO transitive routing (must peer each pair)
+For hub-spoke: use Transit Gateway
+
+### VPC Flow Logs
+Capture all traffic metadata
+ACCEPT/REJECT per connection
+Use for: security audit, debugging, compliance
+
+---
+
+## Summary
+All 4 exercises completed Aug 12 2026
+
+Scripts created:
+- vpc-scripts/01-vpc-architecture.sh
+- vpc-scripts/02-create-vpc.sh
+- vpc-scripts/03-vpc-advanced.sh
+- security-configs/01-security-groups.sh
+- security-configs/02-nacls.sh
+- vpc-reference.sh
+
+Key concepts mastered:
+- VPC isolation and purpose
+- CIDR notation and IP planning
+- 3-tier subnet design
+- Public vs private subnets
+- Internet Gateway
+- NAT Gateway
+- Route tables
+- Security Groups (stateful, instance)
+- NACLs (stateless, subnet)
+- SG-to-SG references
+- VPC Endpoints
+- VPC Peering
+- VPC Flow Logs
+- Default VPC limitations
+- CLI commands for all resources
+
