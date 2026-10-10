@@ -1,0 +1,123 @@
+============================================
+   NETWORK ACLs (NACLs)
+   Stateless subnet-level firewall
+============================================
+
+[ NACL KEY CONCEPTS ]
+
+  NACLs operate at SUBNET level
+  Every subnet has one NACL
+  (Security Groups are per-instance)
+
+  STATELESS: must allow BOTH directions
+
+  Example: web server on port 80
+  NACL INBOUND:  allow TCP port 80 from 0.0.0.0/0
+  NACL OUTBOUND: allow TCP ports 1024-65535 to 0.0.0.0/0
+  (1024-65535 = ephemeral/dynamic ports)
+  (client browser picks random port for its end)
+
+  NUMBERED RULES: processed lowest-first
+  Rule 100: Allow 80 from 0.0.0.0/0
+  Rule 200: Allow 443 from 0.0.0.0/0
+  Rule 300: Deny 22 from 0.0.0.0/0
+  Rule *:   Deny all (implicit)
+
+  First matching rule wins. STOP.
+  Order matters! Unlike Security Groups.
+
+[ DEFAULT NACL vs CUSTOM NACL ]
+
+  Default NACL (created with VPC):
+  Inbound:  100 Allow All → * Deny All
+  Outbound: 100 Allow All → * Deny All
+  Effectively: allow everything
+  Use: development (permissive)
+
+  Custom NACL (you create):
+  Starts with: deny all (just the * rule)
+  You add allows explicitly
+  Use: production (restrictive)
+
+[ PRODUCTION PUBLIC SUBNET NACL ]
+
+  INBOUND RULES:
+  Rule  100: Allow TCP 80   from 0.0.0.0/0 (HTTP)
+  Rule  110: Allow TCP 443  from 0.0.0.0/0 (HTTPS)
+  Rule  120: Allow TCP 22   from OFFICE-IP (SSH to bastion)
+  Rule  130: Allow TCP 1024-65535 from 0.0.0.0/0 (return traffic)
+  Rule *:   Deny All
+
+  OUTBOUND RULES:
+  Rule  100: Allow TCP 80   to 0.0.0.0/0 (HTTP to internet)
+  Rule  110: Allow TCP 443  to 0.0.0.0/0 (HTTPS to internet)
+  Rule  120: Allow TCP 1024-65535 to 0.0.0.0/0 (return traffic)
+  Rule  130: Allow TCP 8000  to 10.0.0.0/16 (to app layer)
+  Rule *:   Deny All
+
+[ PRODUCTION PRIVATE SUBNET NACL ]
+
+  INBOUND RULES:
+  Rule  100: Allow TCP 8000 from 10.0.0.0/16 (from ALB)
+  Rule  110: Allow TCP 22   from 10.0.1.0/24 (from bastion)
+  Rule  120: Allow TCP 1024-65535 from 0.0.0.0/0 (return from internet)
+  Rule *:   Deny All
+
+  OUTBOUND RULES:
+  Rule  100: Allow TCP 5432 to 10.0.20.0/24 (to DB subnet)
+  Rule  110: Allow TCP 443  to 0.0.0.0/0 (via NAT: package downloads)
+  Rule  120: Allow TCP 1024-65535 to 0.0.0.0/0 (return traffic)
+  Rule *:   Deny All
+
+[ CLI COMMANDS ]
+
+  # Create NACL:
+  aws ec2 create-network-acl \
+    --vpc-id vpc-xxx \
+    --tag-specifications 'ResourceType=network-acl,
+      Tags=[{Key=Name,Value=public-subnet-nacl}]'
+
+  # Add inbound ALLOW rule:
+  aws ec2 create-network-acl-entry \
+    --network-acl-id acl-xxx \
+    --ingress \
+    --rule-number 100 \
+    --protocol tcp \
+    --port-range From=80,To=80 \
+    --cidr-block 0.0.0.0/0 \
+    --rule-action allow
+
+  # Add inbound DENY rule:
+  aws ec2 create-network-acl-entry \
+    --network-acl-id acl-xxx \
+    --ingress \
+    --rule-number 300 \
+    --protocol tcp \
+    --port-range From=22,To=22 \
+    --cidr-block 0.0.0.0/0 \
+    --rule-action deny
+
+  # Associate NACL with subnet:
+  aws ec2 associate-network-acl \
+    --network-acl-id acl-xxx \
+    --subnet-id subnet-xxx
+
+[ WHEN TO USE NACLs vs SGs ]
+
+  NACLs: additional layer, subnet-wide rules
+  Good for: blocking specific IPs (attackers)
+  Good for: compliance (explicit subnet controls)
+  Good for: defense in depth
+
+  Security Groups: primary defense, per-instance
+  Good for: service-to-service control
+  Good for: SG-to-SG references
+
+  Production best practice:
+  BOTH (defense in depth)
+  SG: primary control
+  NACL: backup + block known bad actors
+
+============================================
+   NACLs REFERENCE COMPLETE
+============================================

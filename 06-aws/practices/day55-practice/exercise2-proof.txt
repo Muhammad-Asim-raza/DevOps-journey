@@ -1,0 +1,16 @@
+=== SUBNETS AND ROUTING ===
+Public subnet route table:
+  10.0.0.0/16 → local
+  0.0.0.0/0   → igw-xxx (internet gateway)
+
+Private subnet route table:
+  10.0.0.0/16 → local
+  0.0.0.0/0   → nat-xxx (NAT gateway)
+
+Database subnet route table:
+  10.0.0.0/16 → local
+  (no internet route)
+
+Key: route table entry 0.0.0.0/0 → IGW = PUBLIC subnet
+     route table entry 0.0.0.0/0 → NAT = PRIVATE subnet
+     no 0.0.0.0/0 entry = database subnet (most secure)

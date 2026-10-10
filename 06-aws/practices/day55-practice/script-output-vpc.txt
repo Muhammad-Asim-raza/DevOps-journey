@@ -1,0 +1,82 @@
+============================================
+   AWS VPC COMPLETE REFERENCE
+   Author: Asim Raza - Day 55
+============================================
+
+[ VPC COMPONENTS ]
+  VPC:             your isolated private network
+  Subnet:          subdivision of VPC, in one AZ
+  IGW:             connects VPC to internet
+  NAT Gateway:     private → internet (outbound only)
+  Route Table:     controls traffic routing
+  Security Group:  instance-level, stateful, allow-only
+  NACL:            subnet-level, stateless, allow+deny
+  VPC Endpoint:    private access to AWS services
+  VPC Peering:     connect two VPCs
+  Flow Logs:       capture traffic metadata
+
+[ SUBNET TYPES ]
+  Public subnet:   has route 0.0.0.0/0 → IGW
+                   resources CAN have public IPs
+                   use: ALB, NAT GW, Bastion
+
+  Private subnet:  no route to IGW
+                   resources CANNOT be reached from internet
+                   can reach internet via NAT GW
+                   use: EC2 app servers, ECS, Lambda
+
+  DB subnet:       private + extra restricted NACL
+                   only accessible from private subnet
+                   use: RDS, ElastiCache
+
+[ SECURITY GROUPS vs NACLs ]
+  SG:   instance-level, stateful, allow only
+  NACL: subnet-level, stateless, allow + deny
+
+  For blocking specific IPs → use NACL
+  For service-to-service control → use SG
+  Production: use BOTH (defense in depth)
+
+[ CIDR QUICK REFERENCE ]
+  /16 = 65,536 IPs (use for VPC)
+  /24 = 256 IPs   (use for subnets)
+  /28 = 16 IPs    (minimum subnet)
+  /32 = 1 IP      (exact host)
+
+  Private ranges:
+  10.0.0.0/8     (preferred for VPCs)
+  172.16.0.0/12
+  192.168.0.0/16
+
+[ KEY CLI COMMANDS ]
+  aws ec2 describe-vpcs
+  aws ec2 describe-subnets
+  aws ec2 describe-internet-gateways
+  aws ec2 describe-route-tables
+  aws ec2 describe-security-groups
+  aws ec2 describe-nat-gateways
+  aws ec2 describe-network-acls
+  aws ec2 create-vpc --cidr-block 10.0.0.0/16
+  aws ec2 create-subnet --vpc-id vpc-xxx --cidr-block 10.0.1.0/24
+
+[ 3-TIER ARCHITECTURE IP PLAN ]
+  VPC:           10.0.0.0/16
+  Public AZ-a:   10.0.1.0/24   (ALB, NAT GW)
+  Public AZ-b:   10.0.2.0/24   (ALB, NAT GW)
+  Private AZ-a:  10.0.10.0/24  (EC2, ECS)
+  Private AZ-b:  10.0.11.0/24  (EC2, ECS)
+  Database AZ-a: 10.0.20.0/24  (RDS)
+  Database AZ-b: 10.0.21.0/24  (RDS standby)
+
+[ TRAFFIC FLOW ]
+  Internet → IGW → ALB (public subnet)
+          → App EC2 (private subnet)
+          → RDS (database subnet)
+
+  Private EC2 → NAT GW (public subnet)
+             → IGW → Internet
+             (updates, external APIs)
+
+============================================
+   VPC REFERENCE COMPLETE
+============================================

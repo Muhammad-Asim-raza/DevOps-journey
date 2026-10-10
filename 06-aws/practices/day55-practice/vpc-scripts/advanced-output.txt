@@ -1,0 +1,128 @@
+============================================
+   ADVANCED VPC FEATURES
+============================================
+
+[ VPC ENDPOINTS ]
+
+  Problem without endpoints:
+  EC2 in private subnet needs S3
+  Route: EC2 → NAT GW → Internet → S3
+  Cost: NAT GW data transfer fees
+  Security: traffic goes over internet
+
+  VPC Endpoint solution:
+  EC2 → VPC Endpoint → S3 (private AWS network)
+  Cost: no NAT GW fees for S3 traffic
+  Security: traffic NEVER leaves AWS network
+
+  TWO TYPES:
+
+  Gateway Endpoint (free):
+  Services: S3 and DynamoDB ONLY
+  Added to route table as target
+  aws ec2 create-vpc-endpoint \
+    --vpc-id vpc-xxx \
+    --service-name com.amazonaws.us-east-1.s3 \
+    --vpc-endpoint-type Gateway \
+    --route-table-ids rtb-PRIVATE
+
+  Interface Endpoint (costs ~$7/month):
+  Services: most other AWS services
+  Creates an ENI (Elastic Network Interface)
+  Uses PrivateLink technology
+  Services: EC2 API, SSM, Secrets Manager, ECR...
+  aws ec2 create-vpc-endpoint \
+    --vpc-id vpc-xxx \
+    --service-name com.amazonaws.us-east-1.ecr.api \
+    --vpc-endpoint-type Interface \
+    --subnet-ids subnet-PRIVATE \
+    --security-group-ids sg-xxx
+
+[ VPC PEERING ]
+
+  Connect TWO VPCs so they can communicate
+  Traffic stays on AWS private network
+  Works across: regions and accounts
+
+  Use cases:
+  Shared services VPC → spoke VPCs
+  Development VPC → Production VPC (read-only)
+  Company A VPC → Company B VPC (partner)
+
+  LIMITATIONS:
+  NO transitive routing!
+  VPC-A peered with VPC-B
+  VPC-B peered with VPC-C
+  VPC-A CANNOT reach VPC-C
+  (must peer A-C directly)
+
+  For hub-and-spoke: use Transit Gateway
+  (more expensive but scales better)
+
+  CREATE PEERING:
+  # From requesting VPC:
+  aws ec2 create-vpc-peering-connection \
+    --vpc-id vpc-REQUESTER \
+    --peer-vpc-id vpc-ACCEPTER \
+    --peer-region us-west-2
+
+  # Accept from the other side:
+  aws ec2 accept-vpc-peering-connection \
+    --vpc-peering-connection-id pcx-xxx
+
+  # Add routes in BOTH VPCs:
+  aws ec2 create-route \
+    --route-table-id rtb-VPC-A \
+    --destination-cidr-block 10.1.0.0/16 \
+    --vpc-peering-connection-id pcx-xxx
+
+[ VPC FLOW LOGS ]
+
+  Captures IP traffic information for:
+  Network interfaces, subnets, or entire VPC
+
+  What flow logs capture:
+  Source IP, Destination IP
+  Source port, Destination port
+  Protocol (TCP=6, UDP=17)
+  Bytes and packets
+  Action: ACCEPT or REJECT
+  Timestamp
+
+  Destination: CloudWatch Logs or S3
+
+  Create VPC Flow Log:
+  aws ec2 create-flow-logs \
+    --resource-type VPC \
+    --resource-ids vpc-xxx \
+    --traffic-type ALL \
+    --log-destination-type cloud-watch-logs \
+    --log-group-name /aws/vpc/flowlogs \
+    --deliver-logs-permission-arn arn:aws:iam::xxx:role/FlowLogsRole
+
+  Use for:
+  Security: who is connecting to what
+  Debugging: why is traffic rejected
+  Compliance: connection audit trail
+  Cost: data transfer analysis
+
+[ DEFAULT VPC ]
+
+  AWS creates a default VPC in every region
+  CIDR: 172.31.0.0/16
+  One default subnet per AZ
+  Has IGW already attached
+  All subnets are PUBLIC
+
+  Use for: quick tests and learning
+  NEVER for: production workloads
+
+  Default VPC characteristics:
+  ✓ Quick to get started
+  ✗ All instances public by default
+  ✗ Cannot customize CIDR easily
+  ✗ Not suitable for production
+
+============================================
+   ADVANCED VPC FEATURES COMPLETE
+============================================

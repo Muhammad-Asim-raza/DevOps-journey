@@ -1,0 +1,25 @@
+=== NACLs ===
+Security Groups vs NACLs:
+  SG:   per-instance, stateful, allow-only
+  NACL: per-subnet, stateless, allow+deny
+
+NACL stateless means:
+  Must allow BOTH inbound AND outbound
+  Inbound port 80: allow
+  Outbound ephemeral (1024-65535): allow
+  (both required for web server to work)
+
+NACL numbered rules:
+  Processed lowest number first
+  First match wins, STOP
+  Rule * = implicit deny all
+
+Use NACL to:
+  Block specific IP addresses (attacker IPs)
+  Compliance requirements
+  Defense in depth layer
+
+Use SG for:
+  Primary access control
+  Service-to-service rules
+  SG-to-SG references

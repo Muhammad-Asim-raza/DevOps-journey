@@ -1,0 +1,20 @@
+=== SECURITY GROUPS ===
+ALB Security Group:
+  Inbound: 80 from 0.0.0.0/0
+  Inbound: 443 from 0.0.0.0/0
+  Outbound: all (auto to app servers)
+
+App Server Security Group:
+  Inbound: 8000 from ALB-SG (NOT from internet!)
+  Outbound: 5432 to DB-SG
+  Outbound: 443 to 0.0.0.0/0 (via NAT)
+
+Database Security Group:
+  Inbound: 5432 from App-SG only
+  (nothing else)
+
+Key patterns:
+- Reference SG as source (not CIDR)
+- Stateful: return traffic auto-allowed
+- Only ALLOW rules (implicit deny if no match)
+- Specific ports, not 0-65535

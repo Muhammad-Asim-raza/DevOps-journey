@@ -1,0 +1,119 @@
+============================================
+   SECURITY GROUPS - STATEFUL FIREWALL
+   Per-instance virtual firewall
+============================================
+
+[ SECURITY GROUPS vs NACLs ]
+
+Feature                   Security Groups           NACLs                    
+-------                   ---------------           -----                    
+Level                     Instance                  Subnet                   
+State                     Stateful                  Stateless                
+Rules                     Allow only                Allow + Deny             
+Return traffic            Auto-allowed              Must allow               
+Rule order                All evaluated             Numbered order           
+Default inbound           Deny all                  Allow all                
+Default outbound          Allow all                 Allow all                
+
+[ STATEFUL EXPLAINED ]
+
+  Stateful = connection tracking
+  If you ALLOW inbound port 80:
+  → Response traffic automatically allowed
+  → No outbound rule needed for the response
+
+  Example:
+  Browser → EC2 port 80 (inbound rule: allow)
+  EC2 → Browser port 54321 (auto-allowed, NO rule needed)
+
+  Stateless (NACLs):
+  Must EXPLICITLY allow both directions
+  Inbound HTTP: allow port 80
+  Outbound EPHEMERAL: allow 1024-65535
+
+[ SECURITY GROUP: ALLOW ONLY ]
+
+  Security Groups have NO DENY rules
+  If no rule matches → traffic DENIED
+  (implicit deny — if not allowed, blocked)
+
+  You cannot use SG to block specific IP
+  Use NACL for that
+
+[ PRODUCTION SECURITY GROUP SETUP ]
+
+  ALB Security Group (internet-facing):
+  aws ec2 create-security-group \
+    --group-name devops-journey-alb-sg \
+    --description 'ALB - internet facing' \
+    --vpc-id vpc-xxx
+
+  Inbound rules:
+  aws ec2 authorize-security-group-ingress \
+    --group-id sg-ALB-ID \
+    --protocol tcp --port 80 --cidr 0.0.0.0/0
+  aws ec2 authorize-security-group-ingress \
+    --group-id sg-ALB-ID \
+    --protocol tcp --port 443 --cidr 0.0.0.0/0
+
+  ALB SG rules:
+  INBOUND:  80 (HTTP)  from 0.0.0.0/0 (internet)
+  INBOUND:  443 (HTTPS) from 0.0.0.0/0 (internet)
+  OUTBOUND: all (to app servers)
+
+  App Server Security Group:
+  INBOUND:  8000 from ALB-SG (NOT from internet!)
+  OUTBOUND: 3306/5432 to DB-SG (MySQL/PostgreSQL)
+  OUTBOUND: 443 to 0.0.0.0/0 (internet via NAT)
+
+  KEY: reference another SG as source/dest!
+  Instead of: cidr 10.0.0.0/16
+  Use: source sg-ALB-SG-ID
+  Only traffic FROM the ALB is allowed
+  Even if someone gets same-subnet IP, denied
+
+  Database Security Group:
+  INBOUND:  5432 from App-SG (PostgreSQL)
+  OUTBOUND: none needed (stateful)
+
+  Bastion Host Security Group:
+  INBOUND:  22 from YOUR-IP/32 (SSH from office only)
+  OUTBOUND: 22 to App-SG (SSH to private instances)
+
+[ CLI COMMANDS ]
+
+  # Create security group:
+  aws ec2 create-security-group \
+    --group-name my-sg \
+    --description 'My SG' \
+    --vpc-id vpc-xxx
+
+  # Add inbound rule (from CIDR):
+  aws ec2 authorize-security-group-ingress \
+    --group-id sg-xxx \
+    --protocol tcp \
+    --port 80 \
+    --cidr 0.0.0.0/0
+
+  # Add inbound rule (from another SG):
+  aws ec2 authorize-security-group-ingress \
+    --group-id sg-APP-ID \
+    --protocol tcp \
+    --port 8000 \
+    --source-group sg-ALB-ID
+
+  # List security groups:
+  aws ec2 describe-security-groups \
+    --output table
+
+  # Delete security group:
+  aws ec2 delete-security-group --group-id sg-xxx
+
+  # Remove inbound rule:
+  aws ec2 revoke-security-group-ingress \
+    --group-id sg-xxx \
+    --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+============================================
+   SECURITY GROUPS COMPLETE
+============================================

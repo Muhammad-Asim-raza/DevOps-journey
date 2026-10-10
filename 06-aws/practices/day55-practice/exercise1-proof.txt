@@ -1,0 +1,20 @@
+=== VPC ARCHITECTURE ===
+3-Tier VPC: 10.0.0.0/16
+
+Public subnets (10.0.1.0/24, 10.0.2.0/24):
+  → ALB, NAT Gateway, Bastion Host
+  → Has route 0.0.0.0/0 → IGW
+
+Private subnets (10.0.10.0/24, 10.0.11.0/24):
+  → EC2 app servers, ECS tasks, Lambda
+  → Has route 0.0.0.0/0 → NAT Gateway
+  → NO direct internet access
+
+Database subnets (10.0.20.0/24, 10.0.21.0/24):
+  → RDS Primary (AZ-a), RDS Standby (AZ-b)
+  → NO internet access at all
+  → Only reachable from private subnets
+
+Traffic flow:
+Internet → IGW → ALB → EC2 → RDS
+EC2 → NAT GW → IGW → Internet (outbound only)
