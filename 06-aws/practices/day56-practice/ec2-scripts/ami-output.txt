@@ -1,0 +1,117 @@
+============================================
+   AMI - AMAZON MACHINE IMAGES
+   The template for your EC2 instance
+============================================
+
+[ WHAT IS AN AMI? ]
+
+  AMI = snapshot of a configured server
+  Contains:
+  - Operating system (Ubuntu 22.04, Amazon Linux 2023)
+  - Pre-installed software (LAMP stack, Docker, etc.)
+  - Configuration files
+  - EBS snapshot(s) for root and data volumes
+
+  Like a VM template or Docker image but for EC2
+  Launch 1 instance or 1000 from same AMI
+
+[ AMI SOURCES ]
+
+  1. AWS Official AMIs:
+     Amazon Linux 2023 (AWS optimized)
+     Ubuntu 20.04, 22.04, 24.04 LTS
+     Red Hat Enterprise Linux
+     Windows Server 2019/2022
+
+  2. AWS Marketplace:
+     Pre-configured software (CentOS, Kali, etc.)
+     Paid AMIs (software license included)
+     Common: Palo Alto, Sophos, F5 load balancer
+
+  3. Community AMIs:
+     Public, shared by other users
+     USE WITH CAUTION: not vetted by AWS
+
+  4. YOUR custom AMIs:
+     Launch instance → configure → create AMI
+     Fast launch: pre-baked dependencies
+     Immutable infrastructure: same AMI everywhere
+
+[ FINDING AMIs WITH CLI ]
+
+  # Amazon Linux 2023 (latest):
+  aws ec2 describe-images \
+    --owners amazon \
+    --filters \
+      'Name=name,Values=al2023-ami-2023.*-x86_64' \
+      'Name=state,Values=available' \
+    --query 'sort_by(Images, &CreationDate)[-1].ImageId' \
+    --output text \
+    --region us-east-1
+
+  # Ubuntu 22.04 LTS (latest):
+  aws ec2 describe-images \
+    --owners 099720109477 \
+    --filters \
+      'Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*' \
+      'Name=state,Values=available' \
+    --query 'sort_by(Images, &CreationDate)[-1].ImageId' \
+    --output text
+
+  # Ubuntu 24.04 LTS (latest):
+  aws ec2 describe-images \
+    --owners 099720109477 \
+    --filters \
+      'Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*' \
+      'Name=state,Values=available' \
+    --query 'sort_by(Images, &CreationDate)[-1].ImageId' \
+    --output text
+
+  # Common AWS Official Owner IDs:
+  amazon (al2023, Amazon Linux 2)
+  099720109477 (Canonical - Ubuntu)
+  309956199498 (RedHat)
+  125523088429 (CentOS)
+
+  [ Live: Latest Amazon Linux 2023 AMI ]
+------------------------------------------------------
+|                   DescribeImages                   |
++----------------------------------------------------+
+|  ami-0d27e0fb3bac4d724                             |
+|  al2023-ami-2023.12.20260930.0-kernel-6.18-x86_64  |
+|  2026-09-29T19:49:02.000Z                          |
++----------------------------------------------------+
+
+[ AMI KEY CONCEPTS ]
+
+  AMI ID format:  ami-0abcdef1234567890
+  Region-specific: same AMI ID means different
+                   OS in different regions!
+  Always specify region when using AMI IDs
+
+  AMI Virtualization types:
+  HVM (Hardware Virtual Machine) ← use this
+  PV  (Paravirtual) ← legacy, avoid
+
+  Architecture:
+  x86_64  (Intel/AMD) ← most common
+  arm64   (Graviton)  ← cheaper, great performance
+
+[ CUSTOM AMI CREATION ]
+
+  1. Launch base instance (t3.micro)
+  2. Connect via SSH
+  3. Install and configure software:
+     sudo yum install -y docker nginx python3
+     sudo systemctl enable docker
+  4. Create AMI from instance:
+     aws ec2 create-image \
+       --instance-id i-0abc123 \
+       --name 'devops-platform-ami-v1' \
+       --description 'Pre-baked app server'
+  5. AMI is now available to launch more instances
+     aws ec2 describe-images --owners self
+
+============================================
+   AMI REFERENCE COMPLETE
+============================================
