@@ -1,0 +1,63 @@
+============================================
+   AWS EC2 COMPLETE REFERENCE
+   Author: Asim Raza - Day 56
+============================================
+
+[ INSTANCE FAMILIES ]
+  t3/t4g  Burstable General Purpose  (cheap, dev/test)
+  m6i/m7i Balanced (web/app servers)
+  c6i/c7g Compute optimized (CPU-heavy)
+  r6i/r7g Memory optimized (databases, Redis)
+  i4i     Storage optimized (I/O intensive)
+  p4d/p5  GPU (ML training)
+
+[ LAUNCH COMMAND ]
+  aws ec2 run-instances \
+    --image-id ami-xxxxxxxxx \
+    --instance-type t3.micro \
+    --key-name my-key \
+    --security-group-ids sg-xxx \
+    --subnet-id subnet-xxx \
+    --associate-public-ip-address \
+    --user-data file://setup.sh \
+    --metadata-options HttpTokens=required \
+    --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":20,"VolumeType":"gp3","Encrypted":true}}]' \
+    --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=my-server}]'
+
+[ KEY LIFECYCLE COMMANDS ]
+  aws ec2 start-instances    --instance-ids i-xxx
+  aws ec2 stop-instances     --instance-ids i-xxx
+  aws ec2 reboot-instances   --instance-ids i-xxx
+  aws ec2 terminate-instances --instance-ids i-xxx ← DELETES!
+  aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running'
+
+[ SSH AND CONNECT ]
+  ssh -i ~/.ssh/key.pem ec2-user@PUBLIC_IP  (Amazon Linux)
+  ssh -i ~/.ssh/key.pem ubuntu@PUBLIC_IP     (Ubuntu)
+  aws ssm start-session --target i-xxx       (SSM - PREFERRED)
+
+[ USER DATA ]
+  Runs ONCE on first boot as root
+  Logs: /var/log/cloud-init-output.log
+  Pass: --user-data file://userdata.sh
+
+[ IMDS (METADATA) ]
+  Only from inside instance: http://169.254.169.254
+  IMDSv2: needs PUT token first
+  Gets: instance-id, type, IP, role credentials
+  AWS SDK uses automatically for IAM role creds
+
+[ EBS VOLUMES ]
+  gp3: $0.08/GB - use this for most cases
+  io2: provisioned IOPS for databases
+  Encrypted: always encrypt root volume
+  DeleteOnTermination: true (auto cleanup)
+
+[ ELASTIC IP ]
+  Free when attached to running instance
+  $0.005/hr when not attached
+  ALWAYS release when done!
+
+============================================
+   EC2 REFERENCE COMPLETE
+============================================

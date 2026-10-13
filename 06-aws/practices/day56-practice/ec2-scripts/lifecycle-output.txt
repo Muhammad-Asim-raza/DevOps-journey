@@ -1,0 +1,171 @@
+============================================
+   EC2 INSTANCE LIFECYCLE
+============================================
+
+[ EC2 INSTANCE STATES ]
+
+  PENDING → RUNNING → STOPPING → STOPPED → TERMINATED
+     ↑                                          ↑
+  run-instances                         terminate-instances
+                 ↓                          ↑
+              stop-instances          start-instances
+                                (from STOPPED state)
+
+States:
+  pending:    Starting up, billing starts
+  running:    Active, fully billed
+  stopping:   Shutting down (not billed)
+  stopped:    Off (EBS still billed, CPU/RAM NOT billed)
+  terminated: DELETED permanently (cannot recover!)
+  rebooting:  Restart (stays running, brief downtime)
+
+KEY: stopped ≠ terminated
+  stopped: OFF but recoverable (like hibernate)
+  terminated: GONE FOREVER (like thrown in trash)
+
+[ LIFECYCLE COMMANDS ]
+
+  # Start stopped instance:
+  aws ec2 start-instances --instance-ids i-xxx
+
+  # Stop running instance (graceful shutdown):
+  aws ec2 stop-instances --instance-ids i-xxx
+
+  # Reboot instance:
+  aws ec2 reboot-instances --instance-ids i-xxx
+
+  # TERMINATE (DELETE FOREVER):
+  aws ec2 terminate-instances --instance-ids i-xxx
+
+  # Force stop (if stuck):
+  aws ec2 stop-instances --instance-ids i-xxx --force
+
+[ DESCRIBE INSTANCES (most used command) ]
+
+  # List all your instances:
+  aws ec2 describe-instances \
+    --query 'Reservations[*].Instances[*].[\
+      InstanceId,\
+      State.Name,\
+      InstanceType,\
+      PublicIpAddress,\
+      Tags[?Key==`Name`].Value|[0]\
+    ]' \
+    --output table
+
+  # Filter by state:
+  aws ec2 describe-instances \
+    --filters 'Name=instance-state-name,Values=running' \
+    --query 'Reservations[*].Instances[*].[InstanceId,PublicIpAddress]' \
+    --output table
+
+  # Filter by tag:
+  aws ec2 describe-instances \
+    --filters 'Name=tag:Environment,Values=production' \
+    --output table
+
+  [ Live: Your EC2 Instances ]
+
+[ EBS STORAGE CONCEPTS ]
+
+  EBS (Elastic Block Store) = persistent disk
+  Like a hard drive for your EC2
+
+  EBS Volume Types:
+  gp3: General Purpose SSD (default, best value)
+       3,000 IOPS baseline, 125 MB/s throughput
+       $0.08/GB/month
+
+  gp2: General Purpose SSD (older, avoid for new)
+       Burst IOPS, more expensive
+
+  io2: Provisioned IOPS SSD (databases)
+       Up to 64,000 IOPS, consistent performance
+       Use: Oracle, SQL Server, high-traffic MySQL
+
+  st1: Throughput Optimized HDD
+       Cheap, sequential reads (big data, logs)
+
+  sc1: Cold HDD (cheapest)
+       Infrequent access, archive
+
+  ROOT VOLUME best practices:
+  - Use gp3 (better performance, cheaper)
+  - Enable encryption: at rest encryption
+  - DeleteOnTermination: true (default, clean up)
+  - Snapshot before changes
+
+[ EC2 CONNECT METHODS ]
+
+  1. SSH (traditional):
+  ssh -i ~/.ssh/my-key.pem ec2-user@PUBLIC_IP
+  (ec2-user for Amazon Linux, ubuntu for Ubuntu)
+
+  2. EC2 Instance Connect (browser):
+  AWS Console → EC2 → Instance → Connect
+  No key pair needed (temporary key)
+  Instance must have public IP
+
+  3. SSM Session Manager (BEST for production):
+  aws ssm start-session --target i-xxx
+  No SSH port (22) needed!
+  No key pair needed!
+  Works on private instances (no public IP)
+  Full audit logging to CloudTrail
+  Requires: SSM Agent (pre-installed on AL2023)
+            IAM role with AmazonSSMManagedInstanceCore
+
+  SSM is preferred because:
+  ✅ No SSH port open = smaller attack surface
+  ✅ No key pair management
+  ✅ Works on private instances
+  ✅ All commands logged
+  ✅ Can be locked down with IAM
+
+[ ELASTIC IP (Static Public IP) ]
+
+  Problem: EC2 gets NEW public IP on every start/stop
+  Solution: Elastic IP = static public IP
+
+  # Allocate Elastic IP:
+  aws ec2 allocate-address --domain vpc
+
+  # Associate with instance:
+  aws ec2 associate-address \
+    --instance-id i-xxx \
+    --allocation-id eipalloc-xxx
+
+  # Dissociate:
+  aws ec2 disassociate-address --association-id eipassoc-xxx
+
+  # Release (MUST release or billed!):
+  aws ec2 release-address --allocation-id eipalloc-xxx
+
+  Cost: FREE when attached to running instance
+        $0.005/hour when NOT attached (wasted IP)
+        Always release unattached EIPs!
+
+[ SSH TROUBLESHOOTING ]
+
+  Issue 1: Permission denied (publickey)
+  Cause:   Wrong key, wrong user, wrong permissions
+  Fix:     chmod 400 key.pem
+           ec2-user (AL2023), ubuntu (Ubuntu)
+           verify key pair matches instance
+
+  Issue 2: Connection timeout
+  Cause:   Security group blocking port 22
+           Wrong IP in security group
+  Fix:     Check SG: port 22 from YOUR IP/32
+           Your IP may have changed!
+
+  Issue 3: Host key verification failed
+  Cause:   Instance was replaced, same IP
+  Fix:     ssh-keygen -R INSTANCE_IP
+
+  Issue 4: REMOTE HOST IDENTIFICATION HAS CHANGED
+  Same as #3 - remove old host key
+
+============================================
+   EC2 LIFECYCLE REFERENCE COMPLETE
+============================================
