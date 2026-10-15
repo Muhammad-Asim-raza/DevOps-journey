@@ -1,0 +1,22 @@
+=== EC2 LIFECYCLE ===
+States: pending → running → stopping → stopped → terminated
+terminated = PERMANENT DELETE (not recoverable)
+stopped = recoverable (EBS persists, not billed for CPU)
+
+EBS Storage:
+  gp3: default SSD ($0.08/GB) - use this
+  io2: high performance databases
+  st1: sequential big data (cheap HDD)
+
+Connect methods:
+  SSH: ssh -i key.pem ec2-user@IP (needs port 22 open)
+  SSM Session Manager: BEST for production
+    - No SSH port needed
+    - No key pair needed
+    - Works on private instances
+    - Full audit logging
+    aws ssm start-session --target i-xxx
+
+Elastic IP = static public IP
+  Free when attached to running instance
+  $0.005/hour when NOT attached (release unused EIPs!)

@@ -1,0 +1,22 @@
+=== EC2 FUNDAMENTALS ===
+EC2 Instance Types:
+t3.micro:   1 vCPU, 1GB RAM  (free tier)
+t3.medium:  2 vCPU, 4GB RAM
+m5.large:   2 vCPU, 8GB RAM  (balanced)
+c5.large:   2 vCPU, 4GB RAM  (compute)
+r5.large:   2 vCPU, 16GB RAM (memory)
+
+Memory tricks:
+t = tiny/burstable, m = medium/main
+c = compute, r = RAM, i = I/O, p = parallel GPU
+
+AMI = Amazon Machine Image
+  Template for EC2 (OS + config)
+  Region-specific IDs
+  Types: AWS official, Marketplace, Community, Custom
+
+Key Pair:
+  RSA key for SSH authentication
+  .pem file = your private key
+  chmod 400 is REQUIRED
+  Never commit to Git

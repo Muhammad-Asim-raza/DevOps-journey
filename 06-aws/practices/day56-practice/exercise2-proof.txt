@@ -1,0 +1,24 @@
+=== EC2 LAUNCH PROCESS ===
+Steps to launch EC2:
+1. Create key pair (ssh authentication)
+2. Find AMI ID (OS template)
+3. Create security group (firewall rules)
+4. Choose subnet (from Day 55 VPC)
+5. Run instance with:
+   --image-id AMI_ID
+   --instance-type t3.micro
+   --key-name my-key
+   --security-group-ids sg-xxx
+   --subnet-id subnet-xxx
+   --user-data file://setup.sh (optional)
+   --metadata-options HttpTokens=required (IMDSv2)
+
+Security: always use IMDSv2
+  --metadata-options HttpTokens=required
+  Prevents SSRF attacks on metadata service
+  (Capital One breach vector)
+
+SSH:
+ssh -i ~/.ssh/key.pem ec2-user@PUBLIC_IP
+ec2-user = Amazon Linux
+ubuntu = Ubuntu

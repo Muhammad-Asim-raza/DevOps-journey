@@ -1,0 +1,20 @@
+=== USER DATA AND IMDS ===
+User Data:
+  Script runs ONCE on first boot
+  Runs as root
+  Logs: /var/log/cloud-init-output.log
+  Max: 16KB
+  Use for: install packages, configure services, pull code
+
+Instance Metadata Service (IMDS):
+  URL: http://169.254.169.254
+  Only accessible from EC2 itself
+  Provides: instance-id, type, IP, role credentials
+  
+  IMDSv2 (required for security):
+  TOKEN=$(curl -s -X PUT 'http://169.254.169.254/latest/api/token' \
+    -H 'X-aws-ec2-metadata-token-ttl-seconds: 21600')
+  curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/instance-id
+
+  IAM roles use IMDS automatically (no keys on instance!)

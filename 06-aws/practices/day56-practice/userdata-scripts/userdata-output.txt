@@ -1,0 +1,461 @@
+============================================
+   EC2 USER DATA SCRIPTS
+   Automatic Instance Configuration
+   PRINT ONLY - SAFE DEMO
+============================================
+
+
+============================================
+WHAT IS USER DATA?
+============================================
+
+EC2 User Data:
+A script passed to an EC2 instance during launch.
+
+Normally:
+- Runs during first boot
+- Runs as root
+- Raw user data limit: 16 KB
+- Logs: /var/log/cloud-init-output.log
+
+Use for:
+- Installing Docker, NGINX, Python
+- Configuring services
+- Downloading application files
+- Starting applications
+- Running first-boot setup commands
+
+IMPORTANT:
+User data normally runs once, but services
+configured by user data can start on every boot.
+
+ALTERNATIVE: GOLDEN AMI
+
+A Golden AMI already contains installed software.
+
+Benefits:
+- Faster instance startup
+- Consistent server configuration
+
+Trade-off:
+- AMI must be rebuilt to update software
+
+
+============================================
+EXAMPLE 1: DOCKER + APPLICATION SERVER
+============================================
+
+Purpose:
+1. Update Amazon Linux 2023
+2. Install Docker, Git, and Python
+3. Start Docker
+4. Install Docker Compose plugin
+5. Download application from S3
+6. Start application containers
+
+USER DATA SCRIPT:
+
+#!/bin/bash
+set -euo pipefail
+
+# STEP 1: Enable logging
+exec > >(tee /var/log/user-data.log) 2>&1
+
+echo "=== Starting User Data ==="
+date
+
+# STEP 2: Update operating system
+dnf update -y
+
+# STEP 3: Install packages
+dnf install -y docker git python3 python3-pip
+
+# STEP 4: Start Docker automatically
+systemctl enable --now docker
+
+# STEP 5: Add ec2-user to Docker group
+usermod -aG docker ec2-user
+
+# STEP 6: Install Docker Compose plugin
+mkdir -p /usr/local/lib/docker/cli-plugins
+
+curl -fSL \
+  "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# STEP 7: Download application from S3
+# Requires an IAM instance role with S3 access.
+
+aws s3 cp \
+  s3://my-artifacts/app.tar.gz \
+  /home/ec2-user/app.tar.gz
+
+# STEP 8: Extract application
+mkdir -p /home/ec2-user/app
+
+tar -xzf /home/ec2-user/app.tar.gz \
+  -C /home/ec2-user/app
+
+chown -R ec2-user:ec2-user /home/ec2-user/app
+
+# STEP 9: Start containers
+cd /home/ec2-user/app
+
+docker compose up -d
+
+echo "=== User Data Complete ==="
+date
+
+
+============================================
+EXAMPLE 2: NGINX WEB SERVER
+============================================
+
+Purpose:
+1. Install NGINX
+2. Configure reverse proxy
+3. Forward HTTP requests to port 8000
+4. Start NGINX automatically
+
+USER DATA SCRIPT:
+
+#!/bin/bash
+set -e
+
+# STEP 1: Update Linux
+dnf update -y
+
+# STEP 2: Install NGINX
+dnf install -y nginx
+
+# STEP 3: Create NGINX configuration
+cat > /etc/nginx/conf.d/app.conf <<'NGINX'
+server {
+    listen 80;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location = /health {
+        return 200 'healthy';
+    }
+}
+NGINX
+
+# STEP 4: Validate configuration
+nginx -t
+
+# STEP 5: Start NGINX
+systemctl enable --now nginx
+
+echo "NGINX started"
+
+IMPORTANT:
+Your application must already be running
+on port 8000 for proxy requests to work.
+
+NGINX receives requests on port 80
+and forwards them to localhost:8000.
+
+
+============================================
+EXAMPLE 3: PULL DOCKER IMAGE FROM ECR
+============================================
+
+Purpose:
+1. Install Docker
+2. Start Docker
+3. Authenticate to Amazon ECR
+4. Pull a Docker image
+5. Run an application container
+
+USER DATA SCRIPT:
+
+#!/bin/bash
+set -euo pipefail
+
+# STEP 1: Update Linux
+dnf update -y
+
+# STEP 2: Install Docker
+dnf install -y docker
+
+# STEP 3: Start Docker
+systemctl enable --now docker
+
+# STEP 4: Login to Amazon ECR
+# Requires AWS CLI and an IAM instance role
+# with the required ECR permissions.
+
+aws ecr get-login-password \
+  --region us-east-1 | \
+  docker login \
+    --username AWS \
+    --password-stdin \
+    123456789012.dkr.ecr.us-east-1.amazonaws.com
+
+# STEP 5: Pull Docker image
+docker pull \
+  123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
+
+# STEP 6: Run application container
+docker run -d \
+  --name app \
+  --restart unless-stopped \
+  -p 80:8000 \
+  -e APP_ENV=production \
+  123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
+
+IMPORTANT:
+123456789012 is an example AWS account ID.
+
+Replace:
+- Account ID
+- AWS region
+- Repository name
+- Image tag
+
+The container must listen on port 8000.
+
+Port mapping:
+EC2 port 80 -> Container port 8000
+
+
+============================================
+DEBUGGING EC2 USER DATA
+============================================
+
+1. CHECK CLOUD-INIT STATUS
+
+cloud-init status --long
+
+
+2. VIEW CLOUD-INIT OUTPUT LOGS
+
+sudo cat /var/log/cloud-init-output.log
+
+
+3. VIEW CUSTOM USER DATA LOGS
+
+sudo cat /var/log/user-data.log
+
+
+4. CHECK APPLICATION SERVICE
+
+sudo systemctl status docker
+
+
+5. CHECK IF DOCKER IS RUNNING
+
+sudo docker ps
+
+
+6. TEST SCRIPT SYNTAX
+
+bash -n userdata.sh
+
+
+7. VIEW RECENT CLOUD-INIT LOGS
+
+sudo tail -n 100 /var/log/cloud-init-output.log
+
+
+============================================
+COMMON USER DATA PROBLEMS
+============================================
+
+PROBLEM 1:
+Script has a syntax error.
+
+SOLUTION:
+bash -n userdata.sh
+
+
+PROBLEM 2:
+Package installation failed.
+
+SOLUTION:
+Check package names, repositories,
+and cloud-init logs.
+
+
+PROBLEM 3:
+Application cannot access the internet.
+
+SOLUTION:
+Check subnet routes, security group
+outbound rules, NACLs, and DNS.
+
+
+PROBLEM 4:
+Application does not start.
+
+SOLUTION:
+Check service status and application logs.
+
+
+PROBLEM 5:
+S3 or ECR access denied.
+
+SOLUTION:
+Check the EC2 IAM instance role
+and its permissions.
+
+
+============================================
+HOW TO PASS USER DATA TO EC2
+============================================
+
+METHOD 1: USER DATA FILE
+
+Recommended method:
+
+aws ec2 run-instances \
+  --image-id ami-EXAMPLE \
+  --instance-type t3.micro \
+  --user-data file://userdata.sh \
+  --region ap-south-1
+
+NOTE:
+The AMI ID is a placeholder.
+Other launch parameters may be required.
+
+AWS CLI handles the encoding automatically.
+
+
+METHOD 2: INLINE USER DATA
+
+aws ec2 run-instances \
+  --image-id ami-EXAMPLE \
+  --instance-type t3.micro \
+  --user-data '#!/bin/bash
+echo "Hello from EC2 User Data"' \
+  --region ap-south-1
+
+NOTE:
+Pass the actual script text.
+Do not manually Base64-encode it for
+the normal AWS CLI run-instances command.
+
+
+============================================
+VIEW USER DATA INSIDE EC2
+============================================
+
+STEP 1: Get IMDSv2 token
+
+TOKEN=$(curl -fsS -X PUT \
+  'http://169.254.169.254/latest/api/token' \
+  -H 'X-aws-ec2-metadata-token-ttl-seconds: 21600')
+
+
+STEP 2: Retrieve user data
+
+curl -fsS \
+  -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/user-data
+
+
+IMPORTANT:
+These commands are intended to run
+inside the EC2 instance.
+
+Never put passwords, private keys,
+or other secrets in user data.
+
+
+============================================
+IMPORTANT DEVOPS CONCEPTS
+============================================
+
+USER DATA:
+Runs startup configuration commands,
+normally during the first boot.
+
+CLOUD-INIT:
+Software inside the EC2 operating system
+that processes user data.
+
+IAM INSTANCE ROLE:
+Provides temporary AWS credentials
+to applications running on EC2.
+
+DOCKER:
+Runs application containers.
+
+DOCKER COMPOSE:
+Starts and manages multiple containers.
+
+NGINX:
+Can act as a web server or reverse proxy.
+
+ECR:
+Stores Docker container images.
+
+S3:
+Stores files and application artifacts.
+
+SYSTEMD:
+Manages Linux services and can start
+them automatically after reboot.
+
+
+============================================
+COMPLETE USER DATA WORKFLOW
+============================================
+
+Your Laptop
+     |
+     | aws ec2 run-instances
+     | --user-data file://userdata.sh
+     |
+     v
+AWS EC2 Service
+     |
+     v
+EC2 Instance Created
+     |
+     v
+Amazon Linux Boots
+     |
+     v
+cloud-init Reads User Data
+     |
+     v
+User Data Runs as Root
+     |
+     +-- Update OS
+     |
+     +-- Install Docker
+     |
+     +-- Install Git / Python
+     |
+     +-- Download Application
+     |
+     +-- Start Services
+     |
+     v
+Application Ready
+     |
+     v
+Browser -> EC2 -> Application
+
+
+============================================
+   USER DATA REFERENCE COMPLETE
+============================================
+
+ALL COMMANDS ABOVE WERE PRINTED ONLY.
+
+No AWS API calls were made.
+No packages were installed.
+No Docker containers were started.
+No EC2 instances were created.
+
+============================================
