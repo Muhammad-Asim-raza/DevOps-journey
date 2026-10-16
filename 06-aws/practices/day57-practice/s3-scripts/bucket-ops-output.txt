@@ -1,0 +1,152 @@
+aws sts get-caller-identity --query Account --output text
+============================================
+   S3 BUCKET OPERATIONS
+   Author: Asim Raza - Day 57
+============================================
+
+Account: 123456789012
+Bucket:  devops-journey-123456789012-day57
+Region:  us-east-1
+
+[ STEP 1: Create Bucket ]
+
+  Bucket names:
+  - 3-63 characters
+  - lowercase letters, numbers, hyphens only
+  - NO underscores (use hyphens)
+  - globally unique across ALL AWS
+  - cannot start/end with hyphen
+  - cannot be formatted as IP (192.168.1.1)
+
+aws s3api create-bucket         --bucket devops-journey-123456789012-day57         --region us-east-1
+  (Would create bucket: devops-journey-123456789012-day57)
+
+[ STEP 2: Block All Public Access (Security!) ]
+
+  By default since 2023, S3 blocks all public access
+  But ALWAYS explicitly set it to be sure:
+
+aws s3api put-public-access-block     --bucket devops-journey-123456789012-day57     --public-access-block-configuration     BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+  (Would block all public access)
+
+  The 4 settings explained:
+  BlockPublicAcls:       block ACLs that make bucket public
+  IgnorePublicAcls:      ignore any existing public ACLs
+  BlockPublicPolicy:     block bucket policies allowing public
+  RestrictPublicBuckets: restrict access to bucket via policy
+
+[ STEP 3: Enable Versioning ]
+
+  Versioning keeps ALL versions of every object
+  Delete an object? Its previous version is safe
+  Overwrite a file? Old version preserved
+  Use for: important files, disaster recovery
+
+aws s3api put-bucket-versioning     --bucket devops-journey-123456789012-day57     --versioning-configuration Status=Enabled
+  (Would enable versioning)
+
+[ STEP 4: Enable Default Encryption ]
+
+  Encrypt ALL objects by default (at rest)
+  SSE-S3:  AWS manages keys (free)
+  SSE-KMS: You manage keys via KMS (adds cost)
+  DSSE-KMS: Dual-layer KMS (compliance)
+
+aws s3api put-bucket-encryption     --bucket devops-journey-123456789012-day57     --server-side-encryption-configuration '{
+        "Rules": [{
+            "ApplyServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+            },
+            "BucketKeyEnabled": true
+        }]
+    }'
+  (Would enable SSE-S3 encryption)
+
+[ STEP 5: Upload Objects ]
+
+  # Single file upload:
+aws s3 cp /tmp/readme.txt     s3://devops-journey-123456789012-day57/docs/readme.txt
+  (Would upload: docs/readme.txt)
+
+  # Upload with metadata and storage class:
+aws s3 cp /tmp/config.json     s3://devops-journey-123456789012-day57/configs/config.json     --metadata author=asim-raza,day=57     --storage-class STANDARD
+  (Would upload: configs/config.json)
+
+  # Upload deployment artifact:
+aws s3 cp /tmp/deployment.yaml     s3://devops-journey-123456789012-day57/artifacts/v1.0.57/deployment.yaml
+  (Would upload: artifacts/v1.0.57/deployment.yaml)
+
+  # Sync entire directory to S3:
+  aws s3 sync ./dist/ s3://devops-journey-123456789012-day57/website/ \
+    --delete \
+    --exclude '*.tmp'
+  --delete: removes objects in S3 not in local dir
+  (great for static website deployment!)
+
+[ STEP 6: List and Download ]
+
+  # List bucket:
+aws s3 ls s3://devops-journey-123456789012-day57/
+
+  # List recursively:
+aws s3 ls s3://devops-journey-123456789012-day57/     --recursive     --human-readable
+
+  # Download single file:
+  aws s3 cp s3://devops-journey-123456789012-day57/docs/readme.txt .
+
+  # Download all objects from prefix:
+  aws s3 sync s3://devops-journey-123456789012-day57/artifacts/ ./artifacts/
+
+  # Download specific version:
+  aws s3api get-object \
+    --bucket devops-journey-123456789012-day57 \
+    --key docs/readme.txt \
+    --version-id VERSION_ID \
+    readme-old.txt
+
+[ OBJECT DELETION WITH VERSIONING ]
+
+  # With versioning ON:
+  aws s3 rm s3://BUCKET/key
+  → Creates a 'delete marker' (soft delete)
+  → Object still exists (previous versions)
+  → Object appears deleted to GET requests
+
+  # Permanently delete specific version:
+  aws s3api delete-object \
+    --bucket BUCKET \
+    --key docs/file.txt \
+    --version-id VERSION_ID
+
+  # Delete all versions (empty versioned bucket):
+  aws s3api list-object-versions \
+    --bucket BUCKET \
+    --query 'Versions[*].[Key,VersionId]' \
+    --output text | while read key vid; do
+    aws s3api delete-object \
+      --bucket BUCKET --key "$key" --version-id "$vid"
+  done
+
+[ BUCKET OPERATIONS ]
+
+  # List all your buckets:
+  aws s3 ls
+  aws s3api list-buckets
+
+  # Get bucket info:
+  aws s3api get-bucket-location --bucket BUCKET
+  aws s3api get-bucket-versioning --bucket BUCKET
+  aws s3api get-bucket-encryption --bucket BUCKET
+
+  # Delete EMPTY bucket:
+  aws s3 rb s3://BUCKET
+
+  # Delete bucket and ALL contents:
+  aws s3 rb s3://BUCKET --force
+  ⚠️  PERMANENT - cannot undo!
+
+============================================
+   BUCKET OPERATIONS COMPLETE
+   Bucket: devops-journey-123456789012-day57
+============================================
+s3-scripts/01-bucket-operations.sh: line 242: ../s3-configs/bucket-config.sh: No such file or directory
