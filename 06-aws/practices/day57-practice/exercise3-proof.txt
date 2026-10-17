@@ -1,0 +1,24 @@
+=== S3 SECURITY ===
+Access control layers (in order):
+1. Block Public Access (account/bucket level)
+2. SCPs (if AWS Organizations)
+3. IAM Identity Policy
+4. S3 Bucket Policy (resource-based)
+5. S3 ACL (legacy, avoid)
+
+Key bucket policies:
+- HTTPS only: deny if aws:SecureTransport = false
+- CloudFront OAC: allow cloudfront.amazonaws.com
+- Enforce encryption: deny PutObject without SSE header
+- Cross-account: allow specific ARN from other account
+
+Encryption types:
+SSE-S3:  AWS manages keys (AES-256, free)
+SSE-KMS: You manage via KMS (~$1/key/month)
+SSE-C:   You provide key per request
+Client:  You encrypt before uploading
+
+Presigned URLs:
+aws s3 presign s3://BUCKET/KEY --expires-in 3600
+No AWS credentials needed by recipient
+Max 7 days for CLI, 7 days for SigV4

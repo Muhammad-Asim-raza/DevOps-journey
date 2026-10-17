@@ -1,0 +1,18 @@
+=== S3 STORAGE CLASSES ===
+STANDARD:           $0.023  frequent access
+INTELLIGENT_TIERING: varies unknown pattern (auto-tiers)
+STANDARD_IA:        $0.0125 monthly access + retrieval fee
+ONEZONE_IA:         $0.01   recreatable data (1 AZ only!)
+GLACIER_IR:         $0.004  archive + immediate retrieval
+GLACIER:            $0.0036 1-5hr retrieval
+GLACIER_DEEP:       $0.00099 12-48hr (compliance 7yr)
+
+Lifecycle policy transitions automatically:
+Day 0 → STANDARD
+Day 30 → STANDARD_IA (46% savings)
+Day 90 → GLACIER (84% savings)
+Day 365 → DEEP_ARCHIVE (96% savings)
+Day 2555 → DELETE (expire)
+
+Also: AbortIncompleteMultipartUpload (7 days)
+Prevents: incomplete uploads accumulating cost

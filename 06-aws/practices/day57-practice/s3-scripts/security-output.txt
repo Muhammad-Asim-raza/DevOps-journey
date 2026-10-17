@@ -1,0 +1,135 @@
+============================================
+   S3 SECURITY
+   Multiple layers of access control
+============================================
+
+[ S3 ACCESS CONTROL LAYERS ]
+
+  Request to S3 Object
+          │
+          ▼
+  ┌───────────────────────────────────────┐
+  │ 1. Block Public Access Settings       │
+  │    (Account-level or bucket-level)    │
+  │    If blocks public: DENY immediately │
+  └──────────────────┬────────────────────┘
+                     │
+          ▼ (if not blocked)
+  ┌───────────────────────────────────────┐
+  │ 2. AWS Organizations SCP             │
+  │    (if using Organizations)          │
+  └──────────────────┬────────────────────┘
+                     │
+          ▼
+  ┌───────────────────────────────────────┐
+  │ 3. IAM Identity Policy               │
+  │    (attached to user/role)           │
+  │    Does identity have permission?    │
+  └──────────────────┬────────────────────┘
+                     │
+          ▼
+  ┌───────────────────────────────────────┐
+  │ 4. S3 Bucket Policy                  │
+  │    (resource-based policy on bucket) │
+  │    Additional ALLOW or DENY?         │
+  └──────────────────┬────────────────────┘
+                     │
+          ▼ (both must allow for cross-account)
+  ┌───────────────────────────────────────┐
+  │ 5. S3 ACL (legacy, avoid for new)    │
+  │    Object-level ACL                  │
+  └──────────────────┬────────────────────┘
+                     │
+                ALLOW or DENY
+
+[ BUCKET POLICY EXAMPLES ]
+
+  1. Allow specific IAM role to access bucket:
+s3-scripts/03-s3-security.sh: line 62: ../s3-configs/role-access-policy.json: No such file or directory
+  Saved: s3-configs/role-access-policy.json
+
+  2. Enforce HTTPS-only access:
+s3-scripts/03-s3-security.sh: line 90: ../s3-configs/https-only-policy.json: No such file or directory
+  Saved: s3-configs/https-only-policy.json
+  Effect: blocks ALL non-HTTPS requests
+  aws:SecureTransport: false = HTTP (not HTTPS)
+
+  3. Allow CloudFront to access private bucket:
+s3-scripts/03-s3-security.sh: line 118: ../s3-configs/cloudfront-oac-policy.json: No such file or directory
+  Saved: s3-configs/cloudfront-oac-policy.json
+  OAC = Origin Access Control (modern)
+  Bucket is private, only CloudFront can read
+
+  4. Enforce encryption on upload:
+s3-scripts/03-s3-security.sh: line 145: ../s3-configs/enforce-encryption-policy.json: No such file or directory
+  Saved: s3-configs/enforce-encryption-policy.json
+  Blocks uploads without encryption header
+  Ensures even accidental plaintext uploads fail
+
+[ APPLY BUCKET POLICY ]
+
+  aws s3api put-bucket-policy \
+    --bucket devops-journey-demo-day57 \
+    --policy file://bucket-policy.json
+
+aws s3api put-bucket-policy \
+    --bucket "devops-journey-demo-day57" \
+    --policy file://../s3-configs/https-only-policy.json
+  (Would apply HTTPS-only policy)
+
+[ ENCRYPTION OPTIONS ]
+
+  SSE-S3 (Server-Side Encryption with S3 keys):
+  - AWS manages keys automatically
+  - AES-256 encryption
+  - Free
+  - Default for all new buckets
+  - Header: x-amz-server-side-encryption: AES256
+
+  SSE-KMS (Server-Side Encryption with KMS keys):
+  - You manage keys in AWS KMS
+  - Audit trail in CloudTrail
+  - KMS cost: ~/key/month + API calls
+  - Required for: compliance, fine-grained control
+  - Header: x-amz-server-side-encryption: aws:kms
+
+  SSE-C (Client-Side Encryption with customer key):
+  - You provide the key with each request
+  - AWS encrypts/decrypts, never stores key
+  - Most complex, most control
+  - Use when: must own all keys
+
+  Client-Side Encryption:
+  - You encrypt BEFORE uploading
+  - AWS never sees plaintext
+  - Use: highest security requirements
+
+[ PRE-SIGNED URLS ]
+
+  Share private objects temporarily
+  No AWS credentials needed by recipient
+  URL includes signature, expires after time
+
+  # Generate presigned URL (valid 1 hour):
+  aws s3 presign s3://devops-journey-demo-day57/docs/readme.txt \
+    --expires-in 3600
+
+  # With specific expiry (7 days max for CLI):
+  aws s3 presign s3://devops-journey-demo-day57/artifacts/build.zip \
+    --expires-in 604800
+
+  Use cases:
+  - Share files with external partners
+  - Allow upload without AWS creds
+  - Temporary download links
+  - Mobile app uploads directly to S3
+
+aws s3 presign \
+    "s3://devops-journey-demo-day57/docs/readme.txt" \
+    --expires-in 3600
+  Generated presigned URL (expires in 1hr):
+  https://BUCKET.s3.amazonaws.com/key?X-Amz-Algorithm=......
+
+============================================
+   S3 SECURITY COMPLETE
+============================================

@@ -1,0 +1,57 @@
+============================================
+   AWS S3 COMPLETE REFERENCE
+   Author: Asim Raza - Day 57
+============================================
+
+[ CORE CONCEPTS ]
+  Bucket: globally unique container
+  Object: file = key + value + metadata
+  Key:    'path' (not real folder, just naming)
+  URL:    https://BUCKET.s3.REGION.amazonaws.com/KEY
+
+[ BUCKET SETUP CHECKLIST ]
+  ✅ aws s3api create-bucket
+  ✅ put-public-access-block (block all)
+  ✅ put-bucket-versioning (enable)
+  ✅ put-bucket-encryption (AES256)
+  ✅ put-bucket-policy (HTTPS only)
+  ✅ put-bucket-lifecycle-configuration
+
+[ OBJECT OPERATIONS ]
+  aws s3 cp FILE s3://BUCKET/KEY        upload
+  aws s3 cp s3://BUCKET/KEY FILE        download
+  aws s3 sync ./DIR/ s3://BUCKET/       sync dir
+  aws s3 ls s3://BUCKET/ --recursive    list all
+  aws s3 rm s3://BUCKET/KEY             delete
+  aws s3 presign s3://BUCKET/KEY --expires-in 3600
+
+[ STORAGE CLASSES ]
+  STANDARD:       $0.023  active data
+  STANDARD_IA:    $0.0125 backups (monthly access)
+  GLACIER:        $0.0036 archive (hours retrieval)
+  GLACIER_DEEP:   $0.00099 compliance (12-48hr)
+
+[ SECURITY POLICIES ]
+  HTTPS-only:  Deny if SecureTransport=false
+  Encryption:  Deny PutObject without SSE header
+  Public site: Allow GetObject to Principal *
+  CloudFront:  Allow cloudfront.amazonaws.com
+
+[ DEVOPS PATTERNS ]
+  Terraform state: backend 's3' + DynamoDB lock
+  CI/CD artifacts: immutable SHA in key path
+  Static website: sync build + CloudFront
+  App uploads: presigned PUT URL to frontend
+  Events: S3 → Lambda (on ObjectCreated)
+  Replication: CRR (DR) or SRR (compliance)
+
+[ GOTCHAS ]
+  us-east-1 create-bucket: NO LocationConstraint
+  Other regions: NEED --create-bucket-configuration
+  Versioning on: rm creates delete marker (not permanent)
+  Bucket names: globally unique (across all AWS)
+  Data IN: free  |  Data OUT: $0.09/GB
+
+============================================
+   S3 REFERENCE COMPLETE
+============================================

@@ -1,0 +1,29 @@
+=== S3 DEVOPS PATTERNS ===
+Terraform state backend:
+  backend "s3" {
+    bucket         = "terraform-state"
+    key            = "prod/terraform.tfstate"
+    encrypt        = true
+    dynamodb_table = "terraform-lock"
+  }
+
+CI/CD artifacts:
+  s3://artifacts/builds/main/SHA/app.tar.gz
+  Immutable: SHA in path
+  aws s3 cp dist/ s3://BUCKET/builds/SHA/ --recursive
+
+Static website:
+  aws s3api put-bucket-website
+  aws s3 sync ./build/ s3://BUCKET/ --delete
+  index.html: no-cache header
+  assets: max-age=31536000 (hashed filenames)
+
+S3 Events → Lambda:
+  On s3:ObjectCreated:* in uploads/
+  Filter by suffix .jpg
+  Triggers: image resize, virus scan, pipeline
+
+Replication:
+  CRR: cross-region disaster recovery
+  SRR: compliance copies, log aggregation
+  Both need versioning on source + dest

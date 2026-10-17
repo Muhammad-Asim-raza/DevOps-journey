@@ -1,0 +1,100 @@
+============================================
+   S3 STORAGE CLASSES
+   Match class to access pattern = save money
+============================================
+
+[ STORAGE CLASS COMPARISON ]
+
+Class                        Cost/GB/mo   Retrieval    Use Case            
+-----                        ----------   ---------    --------            
+STANDARD                     $0.023       Immediate    Frequent access     
+INTELLIGENT_TIERING          $0.023+      Immediate    Unknown pattern     
+STANDARD_IA                  $0.0125      Immediate    Monthly access      
+ONEZONE_IA                   $0.01        Immediate    Recreatable data    
+GLACIER_IR                   $0.004       Immediate    Archive+fast        
+GLACIER                      $0.0036      1-5 hours    Archival            
+GLACIER_DEEP_ARCHIVE         $0.00099     12-48 hours  7+ year archive     
+
+[ DETAILED EXPLANATION ]
+
+  S3 STANDARD:
+  - 3+ AZs redundancy (highest durability)
+  - Immediate access
+  - No minimum storage duration
+  - Use: active content, frequently accessed data
+  - Cost: s3-scripts/02-storage-classes.sh.023/GB/month
+
+  S3 INTELLIGENT-TIERING:
+  - Automatically moves objects between tiers
+  - Frequent, Infrequent, Archive tiers
+  - Small monitoring fee per object
+  - Use: unknown or changing access patterns
+  - Great for: mixed workloads you can't predict
+
+  S3 STANDARD-IA (Infrequent Access):
+  - Same durability as Standard (3+ AZs)
+  - Retrieval fee per GB
+  - Minimum 30-day storage charge
+  - Use: backups accessed monthly
+  - Cost: s3-scripts/02-storage-classes.sh.0125/GB/month storage + retrieval
+
+  S3 ONE ZONE-IA:
+  - 1 AZ only (20% cheaper than Standard-IA)
+  - If AZ goes down: data UNAVAILABLE
+  - Use: ONLY for recreatable data
+  - Example: thumbnail images (regeneratable)
+  - Never for: primary backups, critical data
+
+  S3 GLACIER INSTANT RETRIEVAL:
+  - Same speed as Standard
+  - Minimum 90-day storage
+  - Use: quarterly accessed archives
+
+  S3 GLACIER FLEXIBLE RETRIEVAL:
+  - 1-5 hours retrieval (Expedited: minutes for $)
+  - Minimum 90-day storage
+  - Use: backups, disaster recovery archives
+
+  S3 GLACIER DEEP ARCHIVE:
+  - Cheapest option ($0.00099/GB/month)
+  - 12-48 hours retrieval
+  - Minimum 180-day storage
+  - Use: compliance data, 7+ year retention
+  - Example: medical records, financial records
+
+[ S3 LIFECYCLE POLICIES ]
+
+  Automatically transition objects between classes
+  Based on: age of object
+
+  Example lifecycle for backup files:
+  Day 0:   Upload → STANDARD
+  Day 30:  Transition → STANDARD_IA (saves 46%)
+  Day 90:  Transition → GLACIER
+  Day 365: Transition → GLACIER_DEEP_ARCHIVE
+  Day 2555 (7yr): Expire (delete permanently)
+s3-scripts/02-storage-classes.sh: line 97: ../s3-configs/lifecycle-policy.json: No such file or directory
+  Lifecycle policy saved: s3-configs/lifecycle-policy.json
+
+  Applying lifecycle policy...
+aws s3api put-bucket-lifecycle-configuration \
+    --bucket "devops-journey-demo-day57" \
+    --lifecycle-configuration \
+        file://../s3-configs/lifecycle-policy.json
+  aws s3api put-bucket-lifecycle-configuration \
+    --bucket BUCKET --lifecycle-configuration file://lifecycle.json
+
+[ COST SAVINGS EXAMPLE ]
+
+  100GB of CI/CD artifacts:
+  Without lifecycle:  100GB × $0.023 = $2.30/month
+  With lifecycle:
+    0-30 days:   100GB × $0.023  = $2.30
+    30-90 days:  100GB × $0.0125 = $1.25 (IA)
+    90-365 days: 100GB × $0.0036 = $0.36 (Glacier)
+    365+ days:   100GB × $0.00099= $0.10 (Deep)
+  Savings: up to 96% on old data
+
+============================================
+   STORAGE CLASSES COMPLETE
+============================================

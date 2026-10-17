@@ -1,0 +1,94 @@
+============================================
+   S3 STATIC WEBSITE HOSTING
+   Author: Asim Raza - Day 57
+============================================
+
+[ WHAT IS S3 STATIC WEBSITE HOSTING? ]
+
+  Host HTML/CSS/JS files on S3
+  S3 serves them as a website
+  No web server needed (no EC2, no nginx)
+  Infinitely scalable
+  Cost: cents per month for most sites
+
+  Limitations:
+  ONLY static files (no server-side code)
+  No PHP, Python, Node.js execution
+  Use CloudFront in front for:
+  - HTTPS (S3 website endpoint is HTTP only)
+  - Custom domain
+  - Performance (edge caching)
+  - DDoS protection
+
+[ STEP 1: Enable static website hosting ]
+aws s3api delete-public-access-block     --bucket "devops-journey-demo-day57"
+aws s3api put-bucket-website     --bucket "devops-journey-demo-day57"     --website-configuration '{
+        "IndexDocument": {"Suffix": "index.html"},
+        "ErrorDocument": {"Key": "error.html"}
+    }'
+  ✅ Static website hosting enabled
+
+[ STEP 2: Bucket policy for public read ]
+aws s3api put-bucket-policy     --bucket "devops-journey-demo-day57"     --policy file:///tmp/website-policy.json
+  ✅ Public read policy applied
+
+[ STEP 3: Upload website files ]
+aws s3 cp ../website-demo/index.html     "s3://devops-journey-demo-day57/index.html"     --content-type "text/html"
+  ✅ index.html uploaded
+aws s3 cp ../website-demo/error.html     "s3://devops-journey-demo-day57/error.html"     --content-type "text/html"
+  ✅ error.html uploaded
+
+[ WEBSITE ENDPOINTS ]
+
+  HTTP (S3 website endpoint):
+  http://devops-journey-demo-day57.s3-website-us-east-1.amazonaws.com
+
+  REST endpoint (not website):
+  https://devops-journey-demo-day57.s3.amazonaws.com/index.html
+  (Different! REST = downloads, website = browser)
+
+[ PRODUCTION PATTERN: S3 + CloudFront ]
+
+  S3 static website (HTTP only) ← not ideal
+  S3 + CloudFront (HTTPS + custom domain) ← production
+
+  Benefits of CloudFront in front:
+  ✅ HTTPS with SSL certificate (free via ACM)
+  ✅ Custom domain (www.mysite.com)
+  ✅ Edge caching (faster worldwide)
+  ✅ DDoS protection (AWS Shield Standard)
+  ✅ Geo restrictions
+  ✅ Access logs
+
+  Setup:
+  1. S3 bucket: PRIVATE (not website mode)
+  2. CloudFront: Origin = S3 bucket
+  3. OAC: CloudFront → S3 bucket policy
+  4. ACM: free SSL cert for your domain
+  5. Route53: CNAME to CloudFront URL
+
+[ SYNC FOR DEPLOYMENTS ]
+
+  Deploy React/Vue/Next.js build:
+  npm run build
+  aws s3 sync ./build/ s3://my-website/ \
+    --delete \
+    --cache-control 'max-age=31536000' \
+    --exclude 'index.html'
+
+  # Upload index.html separately (no long cache)
+  aws s3 cp ./build/index.html s3://my-website/ \
+    --cache-control 'no-cache, no-store'
+
+  # Invalidate CloudFront cache:
+  aws cloudfront create-invalidation \
+    --distribution-id DIST_ID \
+    --paths '/*'
+
+  Why different cache for index.html?
+  Assets: long cache (hash in filename = changes on deploy)
+  index.html: no cache (must reload to get new asset hashes)
+
+============================================
+   STATIC WEBSITE COMPLETE
+============================================
