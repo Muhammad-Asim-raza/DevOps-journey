@@ -1,0 +1,120 @@
+============================================
+   CREATE RDS POSTGRESQL INSTANCE
+   Author: Asim Raza - Day 58
+============================================
+
+  DB Identifier: devops-journey-postgres
+  Engine:        postgres 16.3
+  Instance:      db.t3.micro
+  Region:        us-east-1
+
+[ STEP 1: Create DB Subnet Group ]
+
+  DB Subnet Group = which subnets RDS can use
+  Must span at least 2 AZs (for Multi-AZ)
+  Use PRIVATE subnets (database layer)
+  NEVER put RDS in public subnets!
+
+aws ec2 describe-vpcs     --filters 'Name=isDefault,Values=true'     --query 'Vpcs[0].VpcId'     --output text     --region "us-east-1"
+aws ec2 describe-subnets     --filters 'Name=vpc-id,Values=vpc-demo'     --query 'Subnets[*].SubnetId'     --output text     --region "us-east-1"
+  VPC: vpc-demo
+  Subnets: subnet-demo1 subnet-demo2
+aws rds create-db-subnet-group     --db-subnet-group-name "devops-journey-db-subnet-group"     --db-subnet-group-description "DB subnets for devops-journey"     --subnet-ids subnet-demo1 subnet-demo2     --tags Key=Name,Value="devops-journey-db-subnet-group"     --region "us-east-1"
+  ✅ DB subnet group created
+
+[ STEP 2: Create RDS Security Group ]
+
+  DB Security Group allows access from app servers ONLY
+  Port 5432 from App-Server-SG (NOT from internet)
+
+aws ec2 create-security-group     --group-name "devops-journey-rds-sg"     --description "RDS PostgreSQL - devops-journey"     --vpc-id "vpc-demo"     --tag-specifications         'ResourceType=security-group,Tags=[{Key=Name,Value=devops-journey-rds-sg}]'     --query 'GroupId'     --output text     --region "us-east-1"
+  DB Security Group: sg-demo12345
+
+  In production, allow from App-SG only:
+  aws ec2 authorize-security-group-ingress \
+    --group-id sg-demo12345 \
+    --protocol tcp \
+    --port 5432 \
+    --source-group APP_SERVER_SG_ID
+
+  For demo: allow from VPC CIDR
+aws ec2 authorize-security-group-ingress     --group-id "sg-demo12345"     --protocol tcp     --port "5432"     --cidr '10.0.0.0/8'     --region "us-east-1"
+  ✅ Port 5432 allowed from VPC CIDR
+
+[ STEP 3: Store Password in Secrets Manager ]
+
+  NEVER pass passwords as plain CLI arguments
+  They appear in: CloudTrail, bash history, process list
+
+  Use Secrets Manager:
+aws secretsmanager create-secret     --name "devops-journey/rds/password"     --description "RDS password for devops-journey"     --secret-string '{"username":"dbadmin","password":"P3yucI14IK8I1Wsd"}'     --region "us-east-1"
+  ✅ Password stored in Secrets Manager
+
+  Retrieve in application:
+  aws secretsmanager get-secret-value \
+    --secret-id devops-journey/rds/password \
+    --query SecretString --output text | \
+    python3 -c "import json,sys; d=json.load(sys.stdin); print(d['password'])"
+
+[ STEP 4: Create RDS PostgreSQL Instance ]
+
+  Command breakdown:
+  --db-instance-identifier: unique name for this instance
+  --db-instance-class:      hardware (db.t3.micro = free tier)
+  --engine:                 database engine
+  --engine-version:         specific version to pin
+  --master-username:        root DB user
+  --master-user-password:   password (from Secrets Manager!)
+  --db-name:                initial database to create
+  --allocated-storage:      GB (minimum 20 for gp2/gp3)
+  --storage-type:           gp3 (best price/performance)
+  --storage-encrypted:      encrypt at rest (always!)
+  --multi-az:               deploy standby in other AZ
+  --db-subnet-group-name:   which subnets to use
+  --vpc-security-group-ids: firewall rules
+  --backup-retention-period: days of automated backups
+  --preferred-backup-window: when to take daily backup
+  --preferred-maintenance-window: when to apply patches
+  --deletion-protection:    prevent accidental delete
+  --enable-performance-insights: query performance data
+  --publicly-accessible:    ALWAYS false for production!
+
+  aws rds create-db-instance \
+    --db-instance-identifier devops-journey-postgres \
+    --db-instance-class db.t3.micro \
+    --engine postgres \
+    --engine-version 16.3 \
+    --master-username dbadmin \
+    --master-user-password '$SECRET' \
+    --db-name devopsdb \
+    --allocated-storage 20 \
+    --storage-type gp3 \
+    --storage-encrypted \
+    --multi-az \
+    --db-subnet-group-name devops-journey-db-subnet-group \
+    --vpc-security-group-ids sg-demo12345 \
+    --backup-retention-period 7 \
+    --preferred-backup-window '03:00-04:00' \
+    --preferred-maintenance-window 'sun:04:00-sun:05:00' \
+    --deletion-protection \
+    --enable-performance-insights \
+    --no-publicly-accessible
+aws rds create-db-instance     --db-instance-identifier "devops-journey-postgres"     --db-instance-class "db.t3.micro"     --engine "postgres"     --engine-version "16.3"     --master-username "dbadmin"     --master-user-password "P3yucI14IK8I1Wsd"     --db-name "devopsdb"     --allocated-storage 20     --storage-type gp3     --storage-encrypted     --db-subnet-group-name "devops-journey-db-subnet-group"     --vpc-security-group-ids "sg-demo12345"     --backup-retention-period 7     --preferred-backup-window '03:00-04:00'     --preferred-maintenance-window 'sun:04:00-sun:05:00'     --no-deletion-protection     --no-publicly-accessible     --tags Key=Name,Value="devops-journey-postgres"            Key=Environment,Value=learning            Key=Day,Value=58     --region "us-east-1"
+
+  ✅ RDS instance creation started
+
+[ STEP 5: Wait for instance to be available ]
+
+  RDS takes 5-10 minutes to provision
+
+  # Wait command:
+  aws rds wait db-instance-available \
+    --db-instance-identifier devops-journey-postgres \
+    --region us-east-1
+
+  # Get connection endpoint:
+  aws rds describe-db-instances \
+    --db-instance-identifier devops-journey-postgres \
+    --query 'DBInstances[0].Endpoint.Address' \
+    --output text
+rds-scripts/01-create-rds.sh: line 228: ../rds-configs/rds-config.sh: No such file or directory
