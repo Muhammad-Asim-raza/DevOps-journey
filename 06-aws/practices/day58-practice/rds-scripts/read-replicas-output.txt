@@ -1,0 +1,157 @@
+============================================
+   RDS READ REPLICAS
+   Scale reads. Don't overload primary.
+============================================
+
+[ READ REPLICA vs MULTI-AZ STANDBY ]
+
+Feature                        Multi-AZ Standby          Read Replica             
+-------                        ----------------          ------------             
+Readable                       NO                        YES                      
+Purpose                        HA / Failover             Scale reads              
+Replication                    Synchronous               Asynchronous             
+Lag                            Zero (synchronous)        Seconds to minutes       
+Failover                       Automatic                 Manual promote           
+Region                         Same region               Same OR cross-region     
+Count                          1 per instance            Up to 5 (MySQL/PG)       
+Cost                           2x primary                1x primary + storage     
+
+[ READ REPLICA ARCHITECTURE ]
+
+  Application
+  ├── Writes → Primary (writer endpoint)
+  └── Reads  → Read Replica(s) (reader endpoint)
+
+  ┌─────────────────────────────────────────────┐
+  │  us-east-1                                  │
+  │  ┌─────────────────────────────────────┐    │
+  │  │  PRIMARY (writer)                   │    │
+  │  │  db.m5.large                        │    │
+  │  │  Handles: writes + some reads       │    │
+  │  └──────────────────┬──────────────────┘    │
+  │                     │ async replication      │
+  │                     ▼                       │
+  │  ┌──────────────────────────────────────┐   │
+  │  │  READ REPLICA 1  READ REPLICA 2     │   │
+  │  │  db.r5.large     db.r5.large        │   │
+  │  │  Reports/Dashboards                  │   │
+  │  │  Analytics/Search                    │   │
+  │  └──────────────────────────────────────┘   │
+  │                                             │
+  │  us-west-2 (cross-region replica)           │
+  │  ┌────────────────────────────────────┐     │
+  │  │  READ REPLICA 3                    │     │
+  │  │  US West coast users               │     │
+  │  │  DR: promote to primary if needed  │     │
+  │  └────────────────────────────────────┘     │
+  └─────────────────────────────────────────────┘
+
+
+[ CREATE READ REPLICA ]
+
+  # Create replica in same region:
+  aws rds create-db-instance-read-replica \
+    --db-instance-identifier devops-journey-postgres-replica-1 \
+    --source-db-instance-identifier devops-journey-postgres \
+    --db-instance-class db.t3.micro \
+    --availability-zone us-east-1b \
+    --port 5432 \
+    --no-publicly-accessible \
+    --tags Key=Name,Value=devops-journey-postgres-replica-1
+
+  (Configure credentials to create replica)
+
+  # Create cross-region replica (DR):
+  aws rds create-db-instance-read-replica \
+    --db-instance-identifier devops-journey-postgres-replica-dr \
+    --source-db-instance-identifier \
+      arn:aws:rds:us-east-1:ACCOUNT:db:devops-journey-postgres \
+    --db-instance-class db.t3.micro \
+    --region eu-west-1 \
+    --source-region us-east-1
+
+[ PROMOTE REPLICA TO STANDALONE DB ]
+
+  Use cases:
+  - Cross-region DR: primary region fails → promote replica
+  - Migration: create replica → catch up → promote → switch
+  - Create dev/staging copy of production
+
+  aws rds promote-read-replica \
+    --db-instance-identifier devops-journey-postgres-replica-1 \
+    --backup-retention-period 7 \
+    --preferred-backup-window '03:00-04:00'
+
+  After promote:
+  - Replica becomes standalone database
+  - Replication from primary STOPS
+  - Update app to use new endpoint
+
+[ APPLICATION-LEVEL ROUTING ]
+
+  Option 1: Two connection strings in app
+import psycopg2
+
+# Write operations → primary
+write_conn = psycopg2.connect(
+    host=PRIMARY_ENDPOINT,
+    user=DB_USER, password=DB_PASS, database=DB_NAME
+)
+
+# Read operations → replica
+read_conn = psycopg2.connect(
+    host=REPLICA_ENDPOINT,
+    user=DB_USER, password=DB_PASS, database=DB_NAME
+)
+
+# Usage:
+# write_conn.cursor().execute("INSERT INTO ...")
+# read_conn.cursor().execute("SELECT * FROM ...")
+
+  Option 2: Aurora cluster endpoint (automatic)
+  Cluster writer endpoint: always primary
+  Cluster reader endpoint: load balances across replicas
+  Application needs only TWO endpoints regardless of replicas
+
+[ SCALING STRATEGY ]
+
+  Read-heavy workload (80% reads, 20% writes):
+  → Add read replicas to distribute reads
+  → Route analytics/reports to replicas
+  → Protect primary from heavy read load
+
+  Write-heavy workload:
+  → Read replicas don't help writes
+  → Consider: sharding, write-through cache
+  → Or: scale up primary instance class
+  → Application-level write optimization
+
+  Connection overload:
+  → Use RDS Proxy (connection pooling)
+  → Lambda functions often hit connection limits
+  → See Lesson 5: RDS Proxy
+
+[ REPLICATION LAG MONITORING ]
+
+  Read replicas use ASYNC replication
+  Primary write → confirmed to primary
+  Replica update → happens shortly after
+  Gap = replication lag
+
+  Monitor: CloudWatch > ReplicaLag (seconds)
+  Alert if: lag > 60 seconds
+  Cause: heavy write load on primary
+
+  # Check replica lag:
+  aws cloudwatch get-metric-statistics \
+    --namespace AWS/RDS \
+    --metric-name ReplicaLag \
+    --dimensions Name=DBInstanceIdentifier,Value=devops-journey-postgres-replica-1 \
+    --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ) \
+    --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+    --period 60 \
+    --statistics Average
+
+============================================
+   READ REPLICAS COMPLETE
+============================================

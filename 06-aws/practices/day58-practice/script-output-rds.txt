@@ -1,0 +1,71 @@
+============================================
+   AWS RDS COMPLETE REFERENCE
+   Author: Asim Raza - Day 58
+============================================
+
+[ WHY RDS OVER SELF-MANAGED ]
+  AWS handles: patching, backups, failover, monitoring
+  You handle: schema, queries, application
+  3am primary dies → RDS auto-fails over in 60s
+  Self-managed → you wake up at 3am
+
+[ CREATE COMMAND ESSENTIALS ]
+  aws rds create-db-instance \
+    --db-instance-identifier NAME \
+    --engine postgres \
+    --engine-version 16.3 \
+    --db-instance-class db.t3.micro \
+    --master-username dbadmin \
+    --master-user-password PASS \
+    --db-name mydb \
+    --allocated-storage 20 \
+    --storage-type gp3 \
+    --storage-encrypted \
+    --multi-az \
+    --no-publicly-accessible \
+    --deletion-protection \
+    --backup-retention-period 7
+
+[ HA ARCHITECTURE ]
+  Single-AZ:  1 instance, dev/test only
+  Multi-AZ:   primary + standby, auto-failover ~60s
+  Aurora:     6 copies across 3 AZs, failover <30s
+
+[ READ SCALING ]
+  Multi-AZ standby: NOT readable (HA only)
+  Read replicas:    readable, async replication
+  Aurora readers:   up to 15, zero lag, shared storage
+
+[ BACKUP STRATEGY ]
+  Automated: daily + 5-min logs = point-in-time restore
+  Manual snapshot: before every major change
+  Cross-region copy: for DR
+  Test restores: quarterly!
+
+[ SECURITY CHECKLIST ]
+  ✅ Private subnet (no public access)
+  ✅ Security group: port 5432 from App-SG only
+  ✅ Storage encrypted (--storage-encrypted)
+  ✅ SSL in transit (sslmode=require)
+  ✅ Secrets Manager for password
+  ✅ Deletion protection enabled
+  ✅ IAM auth (for Aurora/Proxy)
+
+[ KEY CLI COMMANDS ]
+  aws rds describe-db-instances
+  aws rds create-db-snapshot --db-instance-identifier ID
+  aws rds restore-db-instance-to-point-in-time
+  aws rds modify-db-instance --db-instance-class NEW
+  aws rds create-db-instance-read-replica
+  aws rds promote-read-replica
+  aws rds start-db-instance / stop-db-instance
+
+[ AURORA vs RDS ]
+  RDS PostgreSQL: self-managed EBS, standard
+  Aurora:         distributed storage, 5x faster
+  Aurora Serverless v2: auto-scale, pay per use
+  Aurora Global DB: cross-region < 1 second lag
+
+============================================
+   RDS REFERENCE COMPLETE
+============================================

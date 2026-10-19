@@ -1,0 +1,188 @@
+============================================
+   AMAZON AURORA AND RDS PROXY
+   AWS-native database + connection pooling
+============================================
+
+[ WHAT IS AURORA? ]
+
+  Aurora = AWS re-engineered relational database
+  Compatible with: MySQL 5.7/8.0 and PostgreSQL 13-16
+  Drop-in replacement: same SQL, drivers, tools
+
+  HOW IT'S DIFFERENT from RDS MySQL/PostgreSQL:
+
+  RDS MySQL:
+  ┌─────────────────────────────────────┐
+  │ Instance (compute + OS)             │
+  │ ┌──────────────────────────────┐   │
+  │ │ MySQL engine                 │   │
+  │ └──────────────────────────────┘   │
+  │ ┌──────────────────────────────┐   │
+  │ │ EBS Volume (data storage)    │   │
+  │ └──────────────────────────────┘   │
+  └─────────────────────────────────────┘
+  Storage: single EBS, replicated to standby
+
+  Aurora:
+  ┌───────────────────────────────────────────────┐
+  │ Writer Instance    Reader Instances (up to 15)│
+  │ (compute only)     (compute only)             │
+  └──────────┬─────────────────────┬─────────────┘
+             │                     │
+             ▼                     ▼
+  ┌───────────────────────────────────────────────┐
+  │ Aurora Storage (separate, distributed)        │
+  │ 6 copies across 3 AZs (2 per AZ)            │
+  │ Auto-grows in 10GB increments (up to 128TB)  │
+  │ Repairs itself from corruption automatically  │
+  └───────────────────────────────────────────────┘
+
+[ AURORA ADVANTAGES ]
+
+  Performance:
+  5x faster than MySQL
+  3x faster than PostgreSQL
+  Reason: custom storage, no binlog overhead
+
+  Storage:
+  Shared storage layer (writer + all readers share)
+  6 copies across 3 AZs (automatic)
+  Auto-scales: 10GB → 128TB
+  No storage provisioning needed
+
+  Availability:
+  Writer failover: < 30 seconds
+  (faster than RDS Multi-AZ ~60 seconds)
+  Can lose 2 of 6 storage copies: reads still work
+  Can lose 3 of 6 storage copies: writes stop
+
+  Readers:
+  Up to 15 read replicas (RDS MySQL: 5)
+  Same shared storage → zero replica lag!
+  No data to copy to replicas
+  Cluster reader endpoint load-balances automatically
+
+  Aurora Serverless v2:
+  Scales compute up/down automatically
+  Minimum: 0.5 ACU (Aurora Capacity Units)
+  Maximum: you set (e.g., 128 ACU)
+  Perfect for: unpredictable traffic, dev/test
+
+[ AURORA CLUSTER ENDPOINTS ]
+
+  Cluster endpoints (use these, not instance):
+
+  Writer (cluster endpoint):
+  mydb.cluster-xxx.us-east-1.rds.amazonaws.com
+  → always points to current writer
+  → reconnect automatically after failover
+
+  Reader (cluster reader endpoint):
+  mydb.cluster-ro-xxx.us-east-1.rds.amazonaws.com
+  → load-balances across all reader instances
+  → add more readers → automatic load distribution
+
+  Custom endpoints:
+  Point to subset of instances
+  Use: large instances for heavy analytics
+       small instances for lightweight queries
+
+[ CREATE AURORA POSTGRESQL CLUSTER ]
+
+  # Step 1: Create cluster parameter group
+  aws rds create-db-cluster-parameter-group \
+    --db-cluster-parameter-group-name aurora-pg16-params \
+    --db-parameter-group-family aurora-postgresql16 \
+    --description 'Aurora PostgreSQL 16 params'
+
+  # Step 2: Create Aurora cluster
+  aws rds create-db-cluster \
+    --db-cluster-identifier devops-journey-aurora \
+    --engine aurora-postgresql \
+    --engine-version 16.3 \
+    --master-username dbadmin \
+    --master-user-password '$SECRET' \
+    --database-name devopsdb \
+    --db-subnet-group-name devops-journey-db-subnet-group \
+    --vpc-security-group-ids sg-xxx \
+    --backup-retention-period 7 \
+    --storage-encrypted \
+    --deletion-protection
+
+  # Step 3: Add writer instance
+  aws rds create-db-instance \
+    --db-instance-identifier devops-journey-aurora-writer \
+    --db-cluster-identifier devops-journey-aurora \
+    --engine aurora-postgresql \
+    --db-instance-class db.r6g.large \
+    --availability-zone us-east-1a
+
+  # Step 4: Add reader instance
+  aws rds create-db-instance \
+    --db-instance-identifier devops-journey-aurora-reader-1 \
+    --db-cluster-identifier devops-journey-aurora \
+    --engine aurora-postgresql \
+    --db-instance-class db.r6g.large \
+    --availability-zone us-east-1b
+
+[ RDS PROXY ]
+
+  PROBLEM: Database connection limits
+
+  RDS PostgreSQL db.t3.micro: max_connections ~87
+  100 Lambda functions × 1 connection each = 100
+  EXCEEDS LIMIT: 'too many connections' error
+
+  Lambda specific problem:
+  Each Lambda invocation opens DB connection
+  Lambda scales to 1000 concurrent = 1000 connections
+  Database falls over
+
+  RDS PROXY SOLUTION:
+
+  Lambda ×1000     Lambda ×1000
+  functions        functions
+      │                 │
+      │ 1000 connections│
+      ▼                 ▼
+  ┌───────────────────────────────┐
+  │  RDS PROXY                    │
+  │  Connection pool              │
+  │  Multiplexes connections      │
+  │  Reuses idle connections      │
+  └───────────────────────────────┘
+          │ 20-50 connections
+          ▼
+  ┌──────────────────┐
+  │ RDS PostgreSQL   │
+  │ 87 max_conn: OK! │
+  └──────────────────┘
+
+  RDS Proxy benefits:
+  ✅ Connection pooling (share connections)
+  ✅ Failover faster (proxy holds connections)
+  ✅ IAM authentication to database
+  ✅ Secrets Manager integration
+  ✅ Reduces DB load (fewer open connections)
+
+  Create RDS Proxy:
+  aws rds create-db-proxy \
+    --db-proxy-name devops-journey-proxy \
+    --engine-family POSTGRESQL \
+    --auth AuthScheme=SECRETS,\
+           SecretArn=arn:aws:secretsmanager:us-east-1:xxx:secret:rds/password,\
+           IAMAuth=REQUIRED \
+    --role-arn arn:aws:iam::xxx:role/RDSProxyRole \
+    --vpc-subnet-ids subnet-xxx subnet-yyy \
+    --vpc-security-group-ids sg-xxx \
+    --require-tls
+
+  Proxy endpoint (use this in Lambda/ECS):
+  devops-journey-proxy.proxy-xxx.us-east-1.rds.amazonaws.com
+
+  Cost: rds-scripts/04-aurora-proxy.sh.015/vCPU/hour of proxied DB instance
+  Worth it for: Lambda, ECS, many microservices
+
+============================================
+   AURORA AND RDS PROXY COMPLETE
+============================================

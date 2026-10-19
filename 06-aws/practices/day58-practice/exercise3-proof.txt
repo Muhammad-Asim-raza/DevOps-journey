@@ -1,0 +1,23 @@
+=== BACKUPS AND SNAPSHOTS ===
+Automated backups:
+  Daily full backup + 5-min transaction logs
+  Enables: point-in-time restore (to any second!)
+  Retention: 1-35 days (configure 7+ for production)
+  Storage: free (= DB size)
+  Auto-deleted: when retention expires
+
+Manual snapshots:
+  You trigger: create-db-snapshot
+  Kept: FOREVER until you delete
+  Use: before major changes, deployments
+  Copy: cross-region for DR
+  Share: with other AWS accounts
+
+Point-in-time restore:
+  Restore to ANY second within retention window
+  Creates NEW instance (doesn't overwrite existing!)
+  Scenario: DROP TABLE at 9am → restore to 8:59:59am
+
+Best practice: ALWAYS snapshot before:
+  Engine upgrades, schema changes, instance resize
+  If anything goes wrong: restore in minutes

@@ -1,0 +1,20 @@
+=== MULTI-AZ vs READ REPLICAS ===
+Multi-AZ Standby:
+  Purpose: High Availability (HA) / failover
+  Readable: NO
+  Replication: Synchronous (zero lag)
+  Failover: Automatic (~60 seconds)
+  Count: 1 per instance
+  Cost: 2x primary
+
+Read Replica:
+  Purpose: Scale read traffic
+  Readable: YES (that's the point!)
+  Replication: Asynchronous (seconds of lag)
+  Failover: Manual promote
+  Count: up to 5 (MySQL/PostgreSQL), 15 (Aurora)
+  Cross-region: Yes (for DR)
+
+Combined: Multi-AZ + Read Replicas
+  Primary (Multi-AZ) → HA + reads + writes
+  Replicas → distributed read scaling

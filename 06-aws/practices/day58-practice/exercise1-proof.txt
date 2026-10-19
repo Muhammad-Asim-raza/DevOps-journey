@@ -1,0 +1,24 @@
+=== RDS FUNDAMENTALS ===
+RDS = managed database service
+AWS handles: patching, backups, HA, failover, monitoring
+You handle: schema, queries, application logic
+
+Supported engines:
+MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, Aurora
+
+Instance classes:
+db.t3.micro  (free tier, dev/test)
+db.t3.medium (small production)
+db.m5.large  (general production)
+db.r5.large  (memory-optimized, large DBs)
+
+Key settings:
+--storage-type gp3         (best price/performance)
+--storage-encrypted        (always!)
+--multi-az                 (production only)
+--no-publicly-accessible   (always!)
+--deletion-protection      (production)
+--backup-retention-period 7 (minimum)
+
+Password: ALWAYS use Secrets Manager
+Never pass as CLI argument (shows in CloudTrail)

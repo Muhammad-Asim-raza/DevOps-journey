@@ -1,0 +1,87 @@
+#!/bin/bash
+# ================================================
+# rds-reference.sh
+# RDS Complete Reference
+# Author: Asim Raza - Day 58
+# ================================================
+
+echo "============================================"
+echo "   AWS RDS COMPLETE REFERENCE"
+echo "   Author: Asim Raza - Day 58"
+echo "============================================"
+
+echo ""
+echo "[ WHY RDS OVER SELF-MANAGED ]"
+echo "  AWS handles: patching, backups, failover, monitoring"
+echo "  You handle: schema, queries, application"
+echo "  3am primary dies → RDS auto-fails over in 60s"
+echo "  Self-managed → you wake up at 3am"
+
+echo ""
+echo "[ CREATE COMMAND ESSENTIALS ]"
+echo "  aws rds create-db-instance \\"
+echo "    --db-instance-identifier NAME \\"
+echo "    --engine postgres \\"
+echo "    --engine-version 16.3 \\"
+echo "    --db-instance-class db.t3.micro \\"
+echo "    --master-username dbadmin \\"
+echo "    --master-user-password PASS \\"
+echo "    --db-name mydb \\"
+echo "    --allocated-storage 20 \\"
+echo "    --storage-type gp3 \\"
+echo "    --storage-encrypted \\"
+echo "    --multi-az \\"
+echo "    --no-publicly-accessible \\"
+echo "    --deletion-protection \\"
+echo "    --backup-retention-period 7"
+
+echo ""
+echo "[ HA ARCHITECTURE ]"
+echo "  Single-AZ:  1 instance, dev/test only"
+echo "  Multi-AZ:   primary + standby, auto-failover ~60s"
+echo "  Aurora:     6 copies across 3 AZs, failover <30s"
+
+echo ""
+echo "[ READ SCALING ]"
+echo "  Multi-AZ standby: NOT readable (HA only)"
+echo "  Read replicas:    readable, async replication"
+echo "  Aurora readers:   up to 15, zero lag, shared storage"
+
+echo ""
+echo "[ BACKUP STRATEGY ]"
+echo "  Automated: daily + 5-min logs = point-in-time restore"
+echo "  Manual snapshot: before every major change"
+echo "  Cross-region copy: for DR"
+echo "  Test restores: quarterly!"
+
+echo ""
+echo "[ SECURITY CHECKLIST ]"
+echo "  ✅ Private subnet (no public access)"
+echo "  ✅ Security group: port 5432 from App-SG only"
+echo "  ✅ Storage encrypted (--storage-encrypted)"
+echo "  ✅ SSL in transit (sslmode=require)"
+echo "  ✅ Secrets Manager for password"
+echo "  ✅ Deletion protection enabled"
+echo "  ✅ IAM auth (for Aurora/Proxy)"
+
+echo ""
+echo "[ KEY CLI COMMANDS ]"
+echo "  aws rds describe-db-instances"
+echo "  aws rds create-db-snapshot --db-instance-identifier ID"
+echo "  aws rds restore-db-instance-to-point-in-time"
+echo "  aws rds modify-db-instance --db-instance-class NEW"
+echo "  aws rds create-db-instance-read-replica"
+echo "  aws rds promote-read-replica"
+echo "  aws rds start-db-instance / stop-db-instance"
+
+echo ""
+echo "[ AURORA vs RDS ]"
+echo "  RDS PostgreSQL: self-managed EBS, standard"
+echo "  Aurora:         distributed storage, 5x faster"
+echo "  Aurora Serverless v2: auto-scale, pay per use"
+echo "  Aurora Global DB: cross-region < 1 second lag"
+
+echo ""
+echo "============================================"
+echo "   RDS REFERENCE COMPLETE"
+echo "============================================"

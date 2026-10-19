@@ -1,0 +1,22 @@
+=== AURORA AND RDS PROXY ===
+Aurora advantages over RDS MySQL/PostgreSQL:
+  5x faster MySQL, 3x faster PostgreSQL
+  6 copies across 3 AZs (storage layer)
+  Auto-scaling storage (10GB → 128TB)
+  Failover: < 30 seconds (vs RDS ~60s)
+  Up to 15 read replicas (vs 5 for MySQL)
+  Zero replica lag (shared storage!)
+  Aurora Serverless v2: auto-scale compute
+
+Aurora endpoints:
+  Writer: mydb.cluster-xxx.rds.amazonaws.com
+  Reader: mydb.cluster-ro-xxx.rds.amazonaws.com
+  (Always use cluster endpoints, not instance)
+
+RDS Proxy (connection pooling):
+  Problem: Lambda × 1000 = 1000 DB connections (limit exceeded)
+  Solution: Proxy pools connections
+    1000 Lambda → RDS Proxy → 20 DB connections
+  Benefits: IAM auth, faster failover, fewer connections
+  Cost: $0.015/vCPU-hour of proxied DB
+  Use for: Lambda, ECS, microservices

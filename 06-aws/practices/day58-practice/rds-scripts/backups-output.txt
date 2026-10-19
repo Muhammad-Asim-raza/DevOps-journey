@@ -1,0 +1,132 @@
+source ../rds-configs/rds-config.sh 2>/dev/null || {
+}
+============================================
+   RDS BACKUPS AND RESTORE
+   Author: Asim Raza - Day 58
+============================================
+
+[ TWO TYPES OF BACKUPS ]
+
+  1. AUTOMATED BACKUPS (continuous):
+     - Daily full backup during backup window
+     - Transaction logs every 5 minutes
+     - Enables: point-in-time restore
+     - Retention: 1-35 days (you choose)
+     - Stored in S3 (free storage = DB size)
+     - Auto-deleted when retention expires
+     - Enabled by default (backup-retention-period > 0)
+
+  2. MANUAL SNAPSHOTS:
+     - You trigger them explicitly
+     - Kept FOREVER (until you delete)
+     - Good for: before major changes
+     - Copy to other regions (cross-region DR)
+     - Share with other AWS accounts
+     - Charged: rds-scripts/02-backups-restore.sh.095/GB/month beyond free tier
+
+[ AUTOMATED BACKUP SETTINGS ]
+
+  # Set backup retention to 7 days:
+  aws rds modify-db-instance \
+    --db-instance-identifier devops-journey-postgres \
+    --backup-retention-period 7 \
+    --preferred-backup-window '03:00-04:00' \
+    --apply-immediately
+
+  Backup window: choose low-traffic time
+  03:00-04:00 UTC = common choice
+  Brief performance impact during backup
+  Multi-AZ: backup taken from standby (no impact!)
+
+[ MANUAL SNAPSHOT OPERATIONS ]
+
+  # Take manual snapshot:
+aws rds create-db-snapshot \
+    --db-instance-identifier "devops-journey-postgres" \
+    --db-snapshot-identifier "devops-journey-postgres-snap-day58" \
+    --tags Key=Purpose,Value=day58-demo \
+    --region "us-east-1" 2>/dev/null && \
+  ✅ Snapshot started: devops-journey-postgres-snap-day58
+    --db-instance-identifier devops-journey-postgres \
+    --db-snapshot-identifier devops-journey-postgres-snap-day58
+
+  # List snapshots for an instance:
+  aws rds describe-db-snapshots \
+    --db-instance-identifier devops-journey-postgres \
+    --output table
+aws rds describe-db-snapshots \
+    --db-instance-identifier "devops-journey-postgres" \
+    --query 'DBSnapshots[*].[DBSnapshotIdentifier,Status,SnapshotCreateTime,AllocatedStorage]' \
+    --output table \
+    --region "us-east-1" 2>/dev/null || \
+  (no snapshots or credentials not configured)
+
+  # Copy snapshot to another region (DR!):
+  aws rds copy-db-snapshot \
+    --source-db-snapshot-identifier \
+      arn:aws:rds:us-east-1:123456789012:snapshot:devops-journey-postgres-snap \
+    --target-db-snapshot-identifier devops-journey-postgres-snap-eu \
+    --source-region us-east-1 \
+    --region eu-west-1 \
+    --copy-tags
+
+  # Share snapshot with another AWS account:
+  aws rds modify-db-snapshot-attribute \
+    --db-snapshot-identifier devops-journey-postgres-snap \
+    --attribute-name restore \
+    --values-to-add PARTNER-ACCOUNT-ID
+
+[ POINT-IN-TIME RESTORE ]
+
+  The most powerful RDS recovery feature!
+  Restore to any second within retention period
+
+  Scenario:
+  9:00am: developer runs 'DROP TABLE users;'
+  9:05am: alert fires (users table missing!)
+  9:06am: restore to 8:59:59am
+  9:15am: data fully restored
+
+  # Restore to specific time:
+  aws rds restore-db-instance-to-point-in-time \
+    --source-db-instance-identifier devops-journey-postgres \
+    --target-db-instance-identifier devops-journey-postgres-restored \
+    --restore-time 2024-08-14T08:59:59Z \
+    --db-instance-class db.t3.micro \
+    --db-subnet-group-name devops-journey-db-subnet-group \
+    --vpc-security-group-ids sg-xxx \
+    --no-publicly-accessible
+
+  IMPORTANT: restores to a NEW instance
+  Does NOT overwrite existing database
+  After restore: verify data, then update
+  app connection string to new endpoint
+
+  # Restore from manual snapshot:
+  aws rds restore-db-instance-from-db-snapshot \
+    --db-instance-identifier devops-journey-postgres-from-snap \
+    --db-snapshot-identifier devops-journey-postgres-snap \
+    --db-instance-class db.t3.micro \
+    --db-subnet-group-name devops-journey-db-subnet-group
+
+[ BACKUP BEST PRACTICES ]
+
+  ✅ Retention: minimum 7 days (14-35 for compliance)
+  ✅ Manual snapshot: before every major deployment
+  ✅ Copy snapshots: cross-region for DR
+  ✅ Test restores: quarterly restore drills
+     (If you never test, backups are useless!)
+  ✅ Multi-AZ: backups from standby (no performance hit)
+  ✅ Deletion protection: prevent accidental delete
+  ✅ Enable enhanced monitoring: OS-level metrics
+
+  BACKUP BEFORE:
+  - Engine version upgrades
+  - Major schema changes
+  - Parameter group changes
+  - Instance class changes
+  - Storage modifications
+
+============================================
+   BACKUPS AND RESTORE COMPLETE
+============================================
