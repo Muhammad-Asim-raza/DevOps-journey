@@ -1,0 +1,119 @@
+============================================
+   ECR - ELASTIC CONTAINER REGISTRY
+   Your private Docker registry on AWS
+   Author: Asim Raza - Day 59
+============================================
+
+  Account:  253918335624
+  Region:   us-east-1
+  ECR URI:  253918335624.dkr.ecr.us-east-1.amazonaws.com
+  Image:    253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform
+
+[ WHY ECR OVER DOCKER HUB? ]
+
+  Docker Hub:
+  ✗ Rate limits (100 pulls/6hr unauthenticated)
+  ✗ Public by default (extra config for private)
+  ✗ Separate credentials to manage
+  ✗ No native IAM integration
+
+  ECR:
+  ✅ IAM-controlled access (same as all AWS)
+  ✅ No pull rate limits (within AWS network)
+  ✅ Private by default
+  ✅ Same-region pulls: FREE (no data transfer)
+  ✅ Image scanning (Trivy-powered, built-in)
+  ✅ Lifecycle policies (auto-delete old images)
+  ✅ Immutable tags (prevent overwrite)
+  Cost: $0.10/GB/month after first 500MB free
+
+[ STEP 1: Create ECR Repository ]
+
+aws ecr create-repository     --repository-name "devops-cicd-platform"     --image-scanning-configuration scanOnPush=true     --image-tag-mutability IMMUTABLE     --encryption-configuration encryptionType=AES256     --tags Key=Name,Value="devops-cicd-platform"            Key=Project,Value="devops-journey"     --region "us-east-1"
+  (Print only - ECR repository not created)
+
+  Settings explained:
+  scanOnPush=true:       scan every pushed image
+  IMMUTABLE tags:        sha-abc123 cannot be overwritten
+  AES256 encryption:     at-rest encryption
+
+  ⚠️  IMMUTABLE is best practice:
+  Without: overwrite sha-abc123 with different image
+  With:    sha-abc123 ALWAYS = same image (safe)
+
+[ STEP 2: Set Lifecycle Policy ]
+
+  Auto-delete old images to save storage cost
+
+aws ecr put-lifecycle-policy     --repository-name "devops-cicd-platform"     --lifecycle-policy-text         file://../ecs-configs/ecr-lifecycle.json     --region "us-east-1"
+  (Print only - lifecycle policy not applied)
+
+[ STEP 3: Authenticate Docker to ECR ]
+
+  ECR login (token valid for 12 hours):
+  aws ecr get-login-password --region us-east-1 | \
+    docker login \
+    --username AWS \
+    --password-stdin \
+    253918335624.dkr.ecr.us-east-1.amazonaws.com
+
+aws ecr get-login-password         --region "us-east-1" |         docker login             --username AWS             --password-stdin             "253918335624.dkr.ecr.us-east-1.amazonaws.com"
+  (Print only - Docker not authenticated)
+
+[ STEP 4: Build and Push Image ]
+
+  # Build your Day 52 project image:
+  cd ~/DevOps-journey/05-cicd/project/devops-cicd-platform
+  docker build \
+    --build-arg APP_VERSION=1.0.59 \
+    --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
+    -t 253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-$(git rev-parse --short HEAD) \
+    -t 253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:latest \
+    -f app/Dockerfile \
+    .
+
+  # Push to ECR:
+  docker push 253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-$(git rev-parse --short HEAD)
+  docker push 253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:latest
+
+  Building: devops-cicd-platform:sha-3a509b1
+docker build             --build-arg APP_VERSION="1.0.59"             --build-arg GIT_COMMIT="3a509b1"             -t "devops-cicd-platform:sha-3a509b1"             -t "devops-cicd-platform:latest"             -f "/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform/app/Dockerfile"             "/home/asim-raza/DevOps-journey/05-cicd/project/devops-cicd-platform"
+  (Print only - Docker image not built)
+
+  Tag for ECR:
+docker tag "devops-cicd-platform:sha-3a509b1" "253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-3a509b1"
+  (Print only - Docker image not tagged)
+
+  Push to ECR:
+  docker push 253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-3a509b1
+  (Skipping actual push in demo)
+
+[ ECR CLI REFERENCE ]
+
+  # List repositories:
+  aws ecr describe-repositories
+
+  # List images in repo:
+  aws ecr list-images \
+    --repository-name devops-cicd-platform \
+    --filter tagStatus=TAGGED
+
+  # Get image scan results:
+  aws ecr describe-image-scan-findings \
+    --repository-name devops-cicd-platform \
+    --image-id imageTag=latest
+
+  # Delete specific image:
+  aws ecr batch-delete-image \
+    --repository-name devops-cicd-platform \
+    --image-ids imageTag=sha-abc123
+
+  # Delete repository (including all images):
+  aws ecr delete-repository \
+    --repository-name devops-cicd-platform \
+    --force
+
+============================================
+   ECR SETUP COMPLETE
+   Repository: 253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform
+============================================

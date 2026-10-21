@@ -1,0 +1,5 @@
+ACCOUNT_ID=""
+REGION=""
+REPO_NAME=""
+ECR_URI=""
+IMAGE_URI=""
