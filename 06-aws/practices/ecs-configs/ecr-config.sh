@@ -1,5 +1,0 @@
-ACCOUNT_ID="253918335624"
-REGION="us-east-1"
-REPO_NAME="devops-cicd-platform"
-ECR_URI="253918335624.dkr.ecr.us-east-1.amazonaws.com"
-IMAGE_URI="253918335624.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform"

@@ -1,0 +1,131 @@
+{
+  "_comment": "ECS Task Definition - DevOps CI/CD Platform",
+  "_author": "Asim Raza - Day 59",
+  "_description": "Complete task definition with all fields explained",
+
+  "family": "devops-cicd-platform",
+  "_comment_family": "family = task definition name. New versions increment: devops-cicd-platform:1, :2, :3",
+
+  "networkMode": "awsvpc",
+  "_comment_network": "awsvpc = each task gets its own ENI (Elastic Network Interface). Required for Fargate. Gives task its own private IP in VPC subnet. Other modes: bridge (EC2 only), host (EC2 only)",
+
+  "requiresCompatibilities": ["FARGATE"],
+  "_comment_launch": "FARGATE = serverless, AWS manages servers. EC2 = you manage EC2 instances in cluster",
+
+  "cpu": "256",
+  "_comment_cpu": "256 = 0.25 vCPU. Valid Fargate combinations: 256(.25vCPU):512/1024/2048MB, 512(.5vCPU):1024-4096MB, 1024(1vCPU):2048-8192MB, 2048(2vCPU):4096-16384MB, 4096(4vCPU):8192-30720MB",
+
+  "memory": "512",
+  "_comment_memory": "512MB RAM for the entire task. Must match valid CPU/memory combination",
+
+  "executionRoleArn": "arn:aws:iam::ACCOUNT:role/ecsTaskExecutionRole",
+  "_comment_execution_role": "EXECUTION ROLE: used by ECS AGENT to: pull image from ECR, write logs to CloudWatch, read Secrets Manager. NOT your app's permissions. AWS provides: AmazonECSTaskExecutionRolePolicy",
+
+  "taskRoleArn": "arn:aws:iam::ACCOUNT:role/devops-platform-task-role",
+  "_comment_task_role": "TASK ROLE: permissions your APPLICATION needs. S3 access, DynamoDB, SQS, etc. This is what your code uses when calling AWS SDK. Different from execution role!",
+
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "_comment_name": "Container name. Referenced in: logs, exec commands, service discovery",
+
+      "image": "ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-abc123",
+      "_comment_image": "ALWAYS use specific SHA tag in production. Never :latest in production! SHA = immutable = reproducible",
+
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+          "_comment": "containerPort: port your app listens on. hostPort NOT specified for Fargate (awsvpc mode handles it)"
+        }
+      ],
+
+      "essential": true,
+      "_comment_essential": "true = if this container stops, the entire TASK stops. false = other containers keep running if this one dies. Set true for your main app container",
+
+      "environment": [
+        {
+          "name": "APP_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "8000"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "INFO"
+        }
+      ],
+      "_comment_env": "NON-SENSITIVE config. These appear in logs and console. Never put passwords here. Use secrets: for sensitive values",
+
+      "secrets": [
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:ACCOUNT:secret:prod/app/db-password"
+        },
+        {
+          "name": "API_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT:parameter/prod/app/api-key"
+        }
+      ],
+      "_comment_secrets": "SENSITIVE config from Secrets Manager or SSM Parameter Store. Injected as env vars at container start. NEVER in environment[] above. Requires execution role to read secrets",
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/devops-cicd-platform",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "app",
+          "awslogs-create-group": "true"
+        }
+      },
+      "_comment_logs": "awslogs = send stdout/stderr to CloudWatch Logs. Group: /ecs/APP-NAME. Stream: app/CONTAINER/TASK-ID. Create group: auto-create if not exists. View: aws logs tail /ecs/devops-cicd-platform --follow",
+
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8000/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "_comment_health": "ECS uses this to mark task healthy/unhealthy. interval: check every 30s. timeout: fail if > 5s. retries: 3 fails = unhealthy. startPeriod: grace period for startup (don't check first 60s)",
+
+      "cpu": 0,
+      "memory": 512,
+
+      "readonlyRootFilesystem": true,
+      "_comment_readonly": "Matches Day 33/52 Docker security! Container cannot write to filesystem. Forces: all writes to mounted volumes",
+
+      "user": "1001",
+      "_comment_user": "Run as UID 1001 (non-root). Matches our Dockerfile: useradd --uid 1001",
+
+      "linuxParameters": {
+        "capabilities": {
+          "drop": ["ALL"]
+        },
+        "initProcessEnabled": true
+      },
+      "_comment_linux": "Drop ALL Linux capabilities (Day 33 pattern). initProcessEnabled: use PID 1 init process (handles zombie processes)",
+
+      "mountPoints": [
+        {
+          "sourceVolume": "tmp-volume",
+          "containerPath": "/tmp",
+          "readOnly": false
+        }
+      ],
+      "_comment_mounts": "readonlyRootFilesystem=true but /tmp needs to be writable. Mount in-memory volume for /tmp"
+    }
+  ],
+
+  "volumes": [
+    {
+      "name": "tmp-volume"
+    }
+  ],
+  "_comment_volumes": "Empty volume for /tmp mount. No host binding needed (Fargate manages it). Data lost when task stops"
+}

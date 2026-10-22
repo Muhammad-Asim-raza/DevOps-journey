@@ -1,0 +1,78 @@
+source ../ecs-configs/ecr-config.sh
+git -C "$HOME/DevOps-journey" rev-parse --short HEAD
+============================================
+   REGISTER ECS TASK DEFINITION
+   Author: Asim Raza - Day 59
+============================================
+
+[ STEP 1: Create IAM Roles ]
+
+  Two distinct roles needed:
+
+  1. EXECUTION ROLE (for ECS agent):
+     What: pulls image from ECR, writes CloudWatch logs
+     Policy: AmazonECSTaskExecutionRolePolicy (AWS managed)
+
+  2. TASK ROLE (for your application):
+     What: S3, DynamoDB, Secrets Manager access
+     Policy: your custom policy (least privilege)
+
+  Creating execution role...
+aws iam create-role     --role-name ecsTaskExecutionRole     --assume-role-policy-document         file:///tmp/ecs-trust-policy.json
+  (PRINT ONLY - execution role not created)
+aws iam attach-role-policy     --role-name ecsTaskExecutionRole     --policy-arn         arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  (PRINT ONLY - execution policy not attached)
+
+  Creating task role (app permissions)...
+aws iam create-role     --role-name "devops-cicd-platform-task-role"     --assume-role-policy-document         file:///tmp/ecs-trust-policy.json
+  (PRINT ONLY - task role not created)
+aws iam put-role-policy     --role-name "devops-cicd-platform-task-role"     --policy-name "devops-cicd-platform-task-policy"     --policy-document file:///tmp/task-policy.json
+  (PRINT ONLY - task policy not attached)
+
+[ STEP 2: Register Task Definition ]
+
+aws logs create-log-group     --log-group-name "/ecs/devops-cicd-platform"     --region "us-east-1"
+  Task definition saved: task-definitions/devops-platform-td.json
+
+aws ecs register-task-definition     --cli-input-json         file://../task-definitions/devops-platform-td.json     --query 'taskDefinition.taskDefinitionArn'     --output text     --region "us-east-1"
+  (PRINT ONLY - task definition not registered)
+  Demo ARN: arn:aws:ecs:us-east-1:DEMO:task-definition/devops-cicd-platform:1
+
+[ TASK DEFINITION FIELD SUMMARY ]
+
+  family:                 name (versioned auto)
+  networkMode: awsvpc     each task = own ENI + IP
+  requiresCompatibilities FARGATE or EC2
+  cpu / memory:           task-level limits
+  executionRoleArn:       ECS agent permissions
+                          (pull ECR, write logs)
+  taskRoleArn:            app permissions
+                          (S3, DynamoDB, etc.)
+  containerDefinitions:   list of containers
+    image:                ECR URI:tag
+    essential:true:       task stops if this stops
+    environment:          non-sensitive config
+    secrets:              from Secrets Manager/SSM
+    logConfiguration:     CloudWatch Logs
+    healthCheck:          container health probe
+
+[ EXECUTION ROLE vs TASK ROLE ]
+
+Who uses it                    Execution Role                 Task Role                     
+-----------                    --------------                 ---------                     
+Used by                        ECS Agent                      Your App code                 
+For                            Infrastructure                 Business logic                
+Examples                       Pull ECR image                 Read S3 bucket                
+                               Write CW Logs                  Call DynamoDB                 
+                               Read Secrets                   Send SES email                
+Policy                         AWS Managed                    Your custom                   
+
+  This is the most common ECS interview question!
+  Execution role = infrastructure operations
+  Task role = application operations
+
+============================================
+   TASK DEFINITION COMPLETE
+   DEMO ARN: arn:aws:ecs:us-east-1:DEMO:task-definition/devops-cicd-platform:1
+   PRINT-ONLY MODE - NO AWS RESOURCES CREATED
+============================================

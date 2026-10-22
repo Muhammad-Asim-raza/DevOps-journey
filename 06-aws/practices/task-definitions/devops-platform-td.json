@@ -1,0 +1,70 @@
+{
+    "family": "devops-cicd-platform",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::123456789012:role/devops-cicd-platform-task-role",
+    "containerDefinitions": [
+        {
+            "name": "app",
+            "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-demo123",
+            "portMappings": [
+                {
+                    "containerPort": 8000,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {"name": "APP_ENV",   "value": "production"},
+                {"name": "PORT",      "value": "8000"},
+                {"name": "LOG_LEVEL", "value": "INFO"}
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/devops-cicd-platform",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "app",
+                    "awslogs-create-group": "true"
+                }
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 60
+            },
+            "readonlyRootFilesystem": true,
+            "user": "1001",
+            "linuxParameters": {
+                "capabilities": {
+                    "drop": ["ALL"]
+                },
+                "initProcessEnabled": true
+            },
+            "mountPoints": [
+                {
+                    "sourceVolume": "tmp-volume",
+                    "containerPath": "/tmp",
+                    "readOnly": false
+                }
+            ]
+        }
+    ],
+    "volumes": [
+        {
+            "name": "tmp-volume"
+        }
+    ],
+    "tags": [
+        {"key": "Project", "value": "devops-journey"},
+        {"key": "Day", "value": "59"}
+    ]
+}
