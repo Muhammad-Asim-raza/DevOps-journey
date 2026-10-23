@@ -1,0 +1,25 @@
+=== ECR AND IMAGE MANAGEMENT ===
+ECR = Elastic Container Registry (private Docker registry)
+URI format: ACCOUNT.dkr.ecr.REGION.amazonaws.com/REPO
+
+Create repository:
+aws ecr create-repository \
+  --repository-name myapp \
+  --image-scanning-configuration scanOnPush=true \
+  --image-tag-mutability IMMUTABLE
+
+IMMUTABLE tags: sha-abc123 cannot be overwritten (safety!)
+scanOnPush: CVE scan every pushed image (free Trivy-based)
+
+Authenticate:
+aws ecr get-login-password --region REGION | \
+  docker login --username AWS --password-stdin ECR_URI
+
+ECR Lifecycle policy:
+Keep last 20 SHA-tagged images
+Delete untagged after 1 day
+Prevents storage cost accumulation
+
+Why ECR over Docker Hub:
+No rate limits, IAM-controlled, private by default
+Same-region pulls: FREE, deeper AWS integration

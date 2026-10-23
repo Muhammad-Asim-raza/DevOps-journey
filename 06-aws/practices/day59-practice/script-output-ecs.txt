@@ -1,0 +1,63 @@
+============================================
+   AWS ECS COMPLETE REFERENCE
+   Author: Asim Raza - Day 59
+============================================
+
+[ ECS CONCEPTS ]
+  Cluster:         logical grouping of compute
+  Task Definition: blueprint (image, CPU, RAM, ports)
+  Task:            running container instance
+  Service:         keeps N tasks alive, rolling deploys
+
+[ LAUNCH TYPES ]
+  EC2:     you manage EC2 instances in cluster
+  Fargate: AWS manages servers (serverless containers)
+  Default choice: Fargate (less ops burden)
+
+[ IAM ROLES (most important ECS concept) ]
+  Execution Role: ECS agent uses this
+    → pull from ECR, write CloudWatch logs
+    → Policy: AmazonECSTaskExecutionRolePolicy
+  Task Role: YOUR app code uses this
+    → S3, DynamoDB, Secrets Manager
+    → Custom least-privilege policy
+
+[ ECR COMMANDS ]
+  # Authenticate:
+  aws ecr get-login-password --region REGION | \
+  docker login --username AWS --password-stdin ACCOUNT.dkr.ecr.REGION.amazonaws.com
+
+  # Create repo:
+  aws ecr create-repository --repository-name NAME \
+    --image-scanning-configuration scanOnPush=true \
+    --image-tag-mutability IMMUTABLE
+
+  # List images:
+  aws ecr list-images --repository-name NAME
+
+[ ECS CLI COMMANDS ]
+  aws ecs list-clusters
+  aws ecs list-services --cluster CLUSTER
+  aws ecs list-tasks --cluster CLUSTER --service-name SVC
+  aws ecs describe-services --cluster C --services SVC
+  aws ecs update-service --cluster C --service SVC \
+    --task-definition TD:VERSION --force-new-deployment
+  aws ecs execute-command --cluster C --task T \
+    --container app --interactive --command '/bin/sh'
+
+[ DEPLOYMENT SETTINGS ]
+  minimumHealthyPercent: 100  (zero downtime)
+  maximumPercent: 200         (2x during deploy)
+  deploymentCircuitBreaker:
+    enable: true
+    rollback: true            (auto-rollback on failure!)
+
+[ AUTO-SCALING ]
+  Target: CPU 70%, Memory 80%, 1000 req/task
+  Scale out cooldown: 60s (fast)
+  Scale in cooldown: 300s (slow, safe)
+  min: 2, max: 20
+
+============================================
+   ECS REFERENCE COMPLETE
+============================================

@@ -1,0 +1,31 @@
+{
+    "cluster": "",
+    "serviceName": "-service",
+    "taskDefinition": "",
+    "launchType": "FARGATE",
+    "desiredCount": 2,
+    "networkConfiguration": {
+        "awsvpcConfiguration": {
+            "subnets": [""],
+            "securityGroups": [""],
+            "assignPublicIp": "DISABLED"
+        }
+    },
+    "deploymentConfiguration": {
+        "minimumHealthyPercent": 100,
+        "maximumPercent": 200,
+        "deploymentCircuitBreaker": {
+            "enable": true,
+            "rollback": true
+        }
+    },
+    "deploymentController": {
+        "type": "ECS"
+    },
+    "enableECSManagedTags": true,
+    "enableExecuteCommand": true,
+    "tags": [
+        {"key": "Project", "value": "devops-journey"},
+        {"key": "Day",     "value": "59"}
+    ]
+}

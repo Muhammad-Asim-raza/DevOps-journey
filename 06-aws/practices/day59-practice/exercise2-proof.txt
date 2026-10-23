@@ -1,0 +1,28 @@
+=== ECS TASK DEFINITION ===
+Task Definition fields:
+family:              name (auto-versioned: :1, :2, :3)
+networkMode: awsvpc  each task = own ENI (Fargate required)
+requiresCompatibilities: [FARGATE]
+cpu/memory:          256/512 (0.25vCPU / 512MB)
+executionRoleArn:    ECS agent permissions (pull ECR, write logs)
+taskRoleArn:         Application permissions (S3, DynamoDB)
+
+CRITICAL DISTINCTION:
+Execution Role: used by ECS AGENT
+  - Pull image from ECR
+  - Write logs to CloudWatch
+  - Read secrets for injection
+  Policy: AmazonECSTaskExecutionRolePolicy (AWS managed)
+
+Task Role: used by YOUR APPLICATION
+  - Read from S3
+  - Call DynamoDB
+  - Send SES email
+  Policy: your custom least-privilege policy
+
+Secrets injection:
+"secrets": [{"name": "DB_PASSWORD",
+             "valueFrom": "arn:...:secret:prod/db"}]
+→ injected as env var at container start
+→ never in logs or console
+→ use for passwords, API keys, tokens

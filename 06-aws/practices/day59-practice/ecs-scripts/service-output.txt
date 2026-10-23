@@ -1,0 +1,42 @@
+source ../ecs-configs/ecr-config.sh 2>/dev/null
+============================================
+   CREATE ECS CLUSTER AND SERVICE
+   Author: Asim Raza - Day 59
+============================================
+
+[ STEP 1: Create ECS Cluster ]
+
+  Cluster = logical grouping of compute
+  Fargate cluster: no EC2 instances to manage!
+
+aws ecs create-cluster     --cluster-name "devops-cicd-platform-cluster"     --capacity-providers FARGATE FARGATE_SPOT     --default-capacity-provider-strategy         capacityProvider=FARGATE,weight=1         capacityProvider=FARGATE_SPOT,weight=1     --settings name=containerInsights,value=enabled     --tags key=Project,value=devops-journey            key=Day,value=59     --region "us-east-1"
+  (PRINT ONLY - Cluster not created: devops-cicd-platform-cluster)
+
+  Capacity providers explained:
+  FARGATE:      on-demand pricing (always available)
+  FARGATE_SPOT: up to 70% cheaper, can be interrupted
+  weight=1 each: 50/50 split between providers
+  For prod: FARGATE only (reliable)
+  For dev:  FARGATE_SPOT (cheaper)
+
+  containerInsights=enabled:
+  Detailed CPU/memory metrics per container
+  Costs extra (~ecs-scripts/03-ecs-service.sh.35/million metrics)
+
+[ STEP 2: Create Service Security Group ]
+
+aws ec2 describe-vpcs     --filters "Name=isDefault,Values=true"     --query 'Vpcs[0].VpcId'     --output text     --region "us-east-1"
+aws ec2 create-security-group     --group-name "devops-cicd-platform-ecs-sg"     --description "ECS Fargate tasks - devops-cicd-platform"     --vpc-id "vpc-demo"     --tag-specifications         "ResourceType=security-group,Tags=[{Key=Name,Value=devops-cicd-platform-ecs-sg}]"     --query 'GroupId'     --output text     --region "us-east-1"
+  ECS Security Group: sg-ecs-demo
+aws ec2 authorize-security-group-ingress     --group-id "sg-ecs-demo"     --protocol tcp     --port 8000     --cidr "10.0.0.0/8"     --region "us-east-1"
+  Port 8000 allowed from VPC (ALB would be SG reference)
+aws ec2 describe-subnets     --filters "Name=vpc-id,Values=vpc-demo"     --query 'Subnets[*].SubnetId'     --output text     --region "us-east-1"
+  Subnets: subnet-demo1,subnet-demo2
+
+[ STEP 3: Create ECS Service ]
+
+  Service keeps N tasks running at all times
+  Integrates with load balancer
+  Handles rolling deployments
+
+ecs-scripts/03-ecs-service.sh: line 111: ../ecs-configs/service-definition.json: No such file or directory

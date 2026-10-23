@@ -1,0 +1,20 @@
+=== ECS CLUSTER AND SERVICE ===
+Cluster: logical grouping of compute resources
+  Fargate cluster: no EC2 to manage
+  Settings: containerInsights=enabled
+
+Service: keeps N tasks running
+  desiredCount: 2 (always 2 tasks)
+  minimumHealthyPercent: 100 (zero downtime)
+  maximumPercent: 200 (2x tasks during deploy)
+  deploymentCircuitBreaker: true + rollback: true
+
+Circuit breaker is critical:
+  Without: failing deploy loops forever at 3am
+  With: auto-rollback on consecutive health check failures
+
+enableExecuteCommand: true
+  → ECS Exec: aws ecs execute-command
+  → Shell into running Fargate container
+  → Modern alternative to SSH
+  → Works on private tasks, no bastion needed

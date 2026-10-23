@@ -1,0 +1,23 @@
+=== DEPLOYMENTS AND AUTO-SCALING ===
+Rolling Deployment (default):
+  minimumHealthyPercent: 100 → zero downtime
+  maximumPercent: 200 → 2x tasks during deploy
+  Start new before stop old
+
+Blue/Green (CodeDeploy):
+  Two target groups: blue (live) + green (new)
+  Shift traffic: canary → full
+  Rollback: instant (switch traffic back)
+
+Auto-scaling (two types):
+Service Auto-Scaling:
+  Target tracking: CPU%, Memory%, Requests/task
+  Scale out fast (60s cooldown)
+  Scale in slow (300s cooldown)
+  min: 2, max: 20
+
+Fargate Spot:
+  70% cheaper, can be interrupted
+  2-min warning before reclaim
+  Use: batch jobs, dev environments
+  Not for: stateful, latency-sensitive web serving

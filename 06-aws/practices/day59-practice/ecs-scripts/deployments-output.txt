@@ -1,0 +1,142 @@
+source ../ecs-configs/ecr-config.sh 2>/dev/null
+============================================
+   ECS DEPLOYMENTS AND AUTO-SCALING
+   Author: Asim Raza - Day 59
+============================================
+
+[ ROLLING DEPLOYMENT (DEFAULT) ]
+
+  Default ECS rolling update:
+  desiredCount: 2
+  minimumHealthyPercent: 100  ← zero downtime
+  maximumPercent: 200          ← 2x during deploy
+
+  Deployment timeline:
+  Before:  [task-v1] [task-v1]
+  Step 1:  [task-v1] [task-v1] [task-v2] [task-v2]
+  Step 2:  [task-v2] [task-v2]
+           (v1 tasks stopped after v2 healthy)
+
+  Deploy new version:
+git -C "$HOME/DevOps-journey" rev-parse --short HEAD
+
+  # Option 1: Update service with new image
+  # (update task definition first, then service)
+
+  # Register new task def revision:
+  aws ecs register-task-definition \
+    --family devops-cicd-platform \
+    --container-definitions '[{"name":"app","image":"123456789012.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-newsha123","...":"..."}]'
+
+  # Update service to use new revision:
+  aws ecs update-service \
+    --cluster devops-cicd-platform-cluster \
+    --service devops-cicd-platform-service \
+    --task-definition devops-cicd-platform:LATEST_REVISION \
+    --force-new-deployment
+
+  # Option 2: Force redeploy (same task def):
+  aws ecs update-service \
+    --cluster devops-cicd-platform-cluster \
+    --service devops-cicd-platform-service \
+    --force-new-deployment
+  # Use when: ECR image changed but same tag
+
+[ DEPLOYMENT CIRCUIT BREAKER ]
+
+  Without circuit breaker:
+  Deploy → bad code → health check fails forever
+  ECS keeps retrying new tasks
+  Result: 3am, 200 failed task restarts, no rollback
+
+  With circuit breaker (ALWAYS enable!):
+  Deploy → 10% tasks fail health checks
+  Circuit breaker trips
+  ECS: AUTO-ROLLBACK to previous task def
+  Result: old version restored in minutes
+
+  Enable in service:
+  deploymentConfiguration:
+    deploymentCircuitBreaker:
+      enable: true
+      rollback: true  ← this is the key one
+
+[ BLUE/GREEN DEPLOYMENT WITH CODE DEPLOY ]
+
+  Alternative deployment strategy:
+  Requires: CodeDeploy + ALB
+
+  ALB Listener
+       │
+  ┌────▼────────────────┐
+  │  Target Group BLUE  │ ← 100% traffic (production)
+  │  [task-v1] [task-v1]│
+  └─────────────────────┘
+  ┌─────────────────────┐
+  │  Target Group GREEN │ ← 0% traffic (new version)
+  │  [task-v2] [task-v2]│
+  └─────────────────────┘
+
+  1. CodeDeploy starts green tasks
+  2. Green passes health checks
+  3. Traffic shifted: 90% blue → 10% green (canary)
+  4. After wait: 100% to green
+  5. Blue tasks kept as rollback for 1 hour
+  6. Rollback: instant (just shift traffic back)
+
+  Use blue/green when:
+  ✅ Need instant rollback (< 1 second)
+  ✅ Production payment/auth services
+  ✅ Zero-tolerance for errors
+  Default rolling: good for most services
+
+[ AUTO-SCALING ]
+
+  Two types of ECS auto-scaling:
+
+  1. Service Auto-Scaling (scale tasks):
+  Auto-scaling config saved: ecs-configs/autoscaling.sh
+
+  Auto-scaling explained:
+  min-capacity: 2    (always at least 2 tasks)
+  max-capacity: 20   (scale up to 20 tasks max)
+  CPU target: 70%    (scale when avg CPU > 70%)
+  ScaleOut: 60s      (add tasks quickly)
+  ScaleIn: 300s      (remove tasks slowly)
+
+  Scale in slowly = avoid removing tasks
+  while traffic is still draining to them
+
+  2. Fargate Capacity Providers:
+  FARGATE (on-demand):  reliable, full price
+  FARGATE_SPOT:         70% cheaper, can interrupt
+  Strategy: SPOT for batch, on-demand for web serving
+  AWS gives 2-minute warning before reclaiming SPOT
+
+[ ECS EXEC (Connect to Container) ]
+
+  Like docker exec but for Fargate/ECS
+  No SSH, no bastion, works on private tasks
+
+  Requires:
+  1. enableExecuteCommand=true on service
+  2. Task role: ssmmessages:* permission
+  3. SSM Session Manager plugin installed
+
+  Connect:
+  aws ecs execute-command \
+    --cluster devops-cicd-platform-cluster \
+    --task TASK_ARN \
+    --container app \
+    --interactive \
+    --command '/bin/sh'
+
+  Common debugging commands once inside:
+  env                    ← see all env vars
+  cat /proc/meminfo      ← memory usage
+  netstat -tlnp          ← listening ports
+  curl localhost:8000/health
+
+============================================
+   DEPLOYMENTS AND SCALING COMPLETE
+============================================
