@@ -1,0 +1,135 @@
+set -euo pipefail
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+============================================
+   EKSCTL - THE EKS CLI TOOL
+   Author: Asim Raza - Day 60
+============================================
+
+[ WHAT IS eksctl? ]
+
+  eksctl = official CLI tool for EKS
+  Created by: Weaveworks (GitOps pioneers)
+  Adopted by: AWS as official tool
+
+  Without eksctl: 15+ manual AWS CLI commands
+    Create VPC, subnets, IGW, NAT GW
+    Create IAM roles (10+ policies)
+    Create EKS cluster
+    Create node groups
+    Configure kubeconfig
+    Install add-ons
+    = 2-3 hours of work
+
+  With eksctl:
+  eksctl create cluster --name my-cluster
+  = 15-20 minutes, everything done
+
+[ INSTALL eksctl ]
+
+if ! command -v eksctl &>/dev/null; then
+    echo "  Installing eksctl..."
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "x86_64" ]; then
+        PLATFORM="linux_amd64"
+    elif [ "$ARCH" = "aarch64" ]; then
+        PLATFORM="linux_arm64"
+    else
+        PLATFORM="linux_amd64"
+    fi
+    curl -sLo /tmp/eksctl.tar.gz \
+        "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" \
+        2>/dev/null || true
+    if [ -f /tmp/eksctl.tar.gz ]; then
+        tar -xzf /tmp/eksctl.tar.gz -C /tmp/
+        sudo mv /tmp/eksctl /usr/local/bin/ 2>/dev/null || \
+            mv /tmp/eksctl ~/bin/ 2>/dev/null || true
+        echo "  ✅ eksctl installed"
+    else
+        echo "  Manual install:"
+        echo "  curl -sLo eksctl.tar.gz \\"
+        echo "    https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+        echo "  tar -xzf eksctl.tar.gz"
+        echo "  sudo mv eksctl /usr/local/bin/"
+    fi
+else
+    echo "  ✅ eksctl already installed"
+fi
+eksctl version 2>/dev/null || echo "  (eksctl version check)"
+
+[ INSTALL kubectl (if not installed) ]
+
+if ! command -v kubectl &>/dev/null; then
+    echo "  Installing kubectl..."
+    KUBECTL_VERSION=$(curl -s \
+        https://dl.k8s.io/release/stable.txt \
+        2>/dev/null || echo "v1.29.0")
+    curl -sLo /tmp/kubectl \
+        "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
+        2>/dev/null || true
+    if [ -f /tmp/kubectl ]; then
+        chmod +x /tmp/kubectl
+        sudo mv /tmp/kubectl /usr/local/bin/ 2>/dev/null || \
+            mv /tmp/kubectl ~/bin/ 2>/dev/null || true
+        echo "  ✅ kubectl installed"
+    fi
+else
+    echo "  ✅ kubectl already installed"
+fi
+kubectl version --client 2>/dev/null || \
+    echo "  (kubectl version check)"
+
+[ CLUSTER CREATION OPTIONS ]
+
+  Option 1: Quick cluster (dev/learning)
+  eksctl create cluster \
+    --name devops-journey \
+    --region us-east-1 \
+    --nodes 2 \
+    --node-type t3.medium \
+    --managed
+  Time: ~15 minutes
+  Creates: VPC, subnets, nodes, everything
+
+  Option 2: Config file (production)
+  eksctl create cluster -f cluster-config.yaml
+  Full control over all settings
+  Version controlled in Git
+
+  Option 3: Using existing VPC
+  eksctl create cluster \
+    --vpc-private-subnets subnet-xxx,subnet-yyy \
+    --vpc-public-subnets subnet-aaa,subnet-bbb \
+    ...
+  Use with your Day 55 VPC!
+
+[ CLUSTER LIFECYCLE COMMANDS ]
+
+  # Create:
+  eksctl create cluster -f cluster.yaml
+
+  # Delete (EXPENSIVE if left running!):
+  eksctl delete cluster --name devops-journey
+
+  # Get clusters:
+  eksctl get cluster
+
+  # Update kubeconfig:
+  aws eks update-kubeconfig \
+    --name devops-journey \
+    --region us-east-1
+
+  # Scale node group:
+  eksctl scale nodegroup \
+    --cluster devops-journey \
+    --name ng-workers \
+    --nodes 5
+
+  # Upgrade cluster version:
+  eksctl upgrade cluster \
+    --name devops-journey \
+    --version 1.30 \
+    --approve
+
+============================================
+   EKSCTL SETUP COMPLETE
+============================================

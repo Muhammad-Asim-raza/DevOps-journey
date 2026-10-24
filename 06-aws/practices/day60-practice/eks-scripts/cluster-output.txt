@@ -1,0 +1,130 @@
+set -euo pipefail
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+CLUSTER_NAME="devops-journey"
+============================================
+   EKS CLUSTER CREATION
+   Author: Asim Raza - Day 60
+============================================
+
+[ PRE-CREATION CHECKLIST ]
+
+  Before creating EKS cluster:
+  ✅ AWS credentials configured
+  ✅ eksctl installed (Lesson 1)
+  ✅ kubectl installed
+  ✅ IAM permissions (AdministratorAccess or EKS-specific)
+  ✅ VPC planned (or let eksctl create one)
+  ✅ K8s version chosen (1.29 or 1.30)
+
+  ⚠️  COST WARNING:
+  EKS cluster: $0.10/hour = $73/month
+  2× m5.large nodes: 2 × $0.096 = $0.192/hour
+  Total minimum: ~$0.29/hour = ~$216/month
+  DELETE when done learning!
+
+[ CREATING CLUSTER FROM CONFIG FILE ]
+
+  eksctl create cluster \
+    -f eks-configs/cluster-config.yaml \
+    --kubeconfig ~/.kube/devops-journey.yaml
+
+  Takes approximately 15-20 minutes
+  Creates:
+  - VPC with public and private subnets
+  - Internet Gateway + NAT Gateways
+  - EKS control plane
+  - Managed node group (EC2 instances)
+  - IAM roles and OIDC provider
+  - All EKS add-ons
+
+[ QUICK CLUSTER FOR LEARNING (cheaper) ]
+
+  # Minimal cluster (1 node, t3.small):
+  eksctl create cluster \
+    --name $CLUSTER_NAME \
+    --region ${AWS_DEFAULT_REGION:-us-east-1} \
+    --nodes 1 \
+    --node-type t3.small \
+    --managed \
+    --with-oidc \
+    --spot
+
+  # Cost: ~$0.13/hour = ~$97/month
+  # ALWAYS delete after learning:
+  eksctl delete cluster --name $CLUSTER_NAME
+
+[ CONFIGURE KUBECTL AFTER CREATION ]
+
+  # Update kubeconfig (adds cluster to ~/.kube/config):
+  aws eks update-kubeconfig \
+    --name $CLUSTER_NAME \
+    --region ${AWS_DEFAULT_REGION:-us-east-1}
+
+  # Verify connection:
+  kubectl get nodes
+  kubectl get pods -A
+  kubectl cluster-info
+if command -v kubectl &>/dev/null && \
+   aws eks describe-cluster --name "$CLUSTER_NAME" \
+   --region "$REGION" &>/dev/null 2>&1; then
+    echo ""
+    echo "[ LIVE CLUSTER STATUS ]"
+    aws eks update-kubeconfig \
+        --name "$CLUSTER_NAME" \
+        --region "$REGION" 2>/dev/null || true
+    kubectl get nodes 2>/dev/null || true
+    kubectl get pods -A 2>/dev/null || true
+else
+    echo ""
+    echo "  (No cluster running - follow steps above to create)"
+fi
+
+[ KUBECONFIG MANAGEMENT ]
+
+  Multiple clusters = multiple kubeconfigs
+
+  # List contexts:
+  kubectl config get-contexts
+
+  # Switch context:
+  kubectl config use-context CONTEXT_NAME
+
+  # Set as current context:
+  aws eks update-kubeconfig \
+    --name $CLUSTER_NAME \
+    --alias $CLUSTER_NAME
+
+  # View current context:
+  kubectl config current-context
+
+  # Rename context:
+  kubectl config rename-context \
+    arn:aws:eks:us-east-1:xxx:cluster/$CLUSTER_NAME \
+    $CLUSTER_NAME
+
+  ⚠️  Never run kubectl on wrong cluster!
+  Always check: kubectl config current-context
+  Before: kubectl delete, kubectl apply in production
+
+[ CHECK CLUSTER VERSION ]
+
+  # Check K8s version:
+  kubectl version
+
+  # List available EKS versions:
+  aws eks describe-addon-versions \
+    --query 'addons[0].addonVersions[*].compatibilities[*].clusterVersion' \
+    --output text | tr ' ' '\n' | sort -u
+
+  # Upgrade cluster (one version at a time!):
+  eksctl upgrade cluster \
+    --name $CLUSTER_NAME \
+    --version 1.30 \
+    --approve
+  # Then upgrade node groups
+  # Then upgrade add-ons
+  # Must go: 1.28 → 1.29 → 1.30 (no skipping!)
+
+============================================
+   CLUSTER CREATION GUIDE COMPLETE
+============================================
