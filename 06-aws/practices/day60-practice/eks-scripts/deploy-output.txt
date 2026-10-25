@@ -1,0 +1,148 @@
+============================================
+   DEPLOY TO EKS
+   Connecting Day 49 (ArgoCD) + Day 52 (CI/CD)
+   to Day 60 (EKS)
+   Author: Asim Raza - Day 60
+============================================
+
+[ INSTALL AWS LOAD BALANCER CONTROLLER ]
+
+  Required to use ALB with EKS
+  Uses IRSA for permissions (no static keys)
+
+  # Install via Helm:
+  helm repo add eks https://aws.github.io/eks-charts
+  helm repo update
+
+  helm install aws-load-balancer-controller \
+    eks/aws-load-balancer-controller \
+    -n kube-system \
+    --set clusterName=devops-journey \
+    --set serviceAccount.create=false \
+    --set serviceAccount.name=aws-load-balancer-controller
+
+  # Verify installation:
+  kubectl get deployment -n kube-system \
+    aws-load-balancer-controller
+
+[ INSTALL METRICS SERVER ]
+
+  Required for HPA (Horizontal Pod Autoscaler)
+  kubectl apply -f \
+    https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+  kubectl top nodes
+  kubectl top pods -n production
+
+[ DEPLOY MANIFESTS ]
+
+  # Apply in order:
+
+  1. Namespaces first:
+  kubectl apply -f k8s-manifests/namespace.yaml
+
+  2. Service Account (IRSA link):
+  kubectl apply -f k8s-manifests/service-account.yaml
+
+  3. Deploy application:
+  kubectl apply -f k8s-manifests/deployment-eks.yaml
+
+  4. Service and Ingress (creates ALB):
+  kubectl apply -f k8s-manifests/service-ingress.yaml
+
+  # Check everything:
+  kubectl get all -n production
+
+[ APPLYING MANIFESTS (demo) ]
+  (Apply when cluster is running)
+  Namespaces: staging, production
+
+[ USEFUL kubectl COMMANDS FOR EKS ]
+
+  # Watch pods start:
+  kubectl get pods -n production -w
+
+  # See pod details (events, errors):
+  kubectl describe pod POD_NAME -n production
+
+  # Check pod logs:
+  kubectl logs -f POD_NAME -n production
+  kubectl logs -f -l app=devops-platform -n production
+
+  # Execute in pod:
+  kubectl exec -it POD_NAME -n production -- /bin/sh
+
+  # Check ALB creation:
+  kubectl describe ingress devops-platform-ingress \
+    -n production
+
+  # Port-forward for local testing:
+  kubectl port-forward svc/devops-platform-svc 8000:80 \
+    -n production
+
+  # Check HPA:
+  kubectl get hpa -n production
+  kubectl describe hpa devops-platform-hpa -n production
+
+[ GITOPS WITH ARGOCD ON EKS ]
+
+  Install ArgoCD on EKS:
+  kubectl create namespace argocd
+  kubectl apply -n argocd -f \
+    https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+  # Access ArgoCD UI:
+  kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+  # Apply Day 49 ArgoCD Application:
+  kubectl apply -f \
+    ~/DevOps-journey/05-cicd/practices/day49-practice/gitops-repo/argocd/applications/
+
+  Day 49 → Day 60 connection:
+  ArgoCD watches your Git manifests
+  Auto-deploys to this EKS cluster
+  FULL GitOps on production EKS!
+
+[ CLUSTER AUTOSCALER ]
+
+  Scale NODES when pods cannot be scheduled
+  (HPA scales pods, CA scales nodes)
+
+  Install:
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+
+  Configure:
+  kubectl -n kube-system annotate deployment.apps/cluster-autoscaler \
+    cluster-autoscaler.kubernetes.io/safe-to-evict='false'
+
+  Workflow:
+  Pod cannot schedule (insufficient resources)
+  → CA detects unschedulable pod
+  → CA checks node group min/max
+  → CA adds EC2 node (5-10 minutes)
+  → Pod schedules on new node
+
+  HPA + CA together = full auto-scaling:
+  Traffic spike → HPA adds pods
+  Pods can't fit → CA adds nodes
+  Traffic drops → HPA removes pods
+  Nodes underutilized → CA removes nodes
+
+[ ⚠️  CLEANUP - IMPORTANT! ]
+
+  EKS is expensive! Delete when done:
+
+  # Delete Kubernetes resources first:
+  kubectl delete all --all -n production
+  kubectl delete all --all -n staging
+
+  # Delete cluster (this removes everything):
+  eksctl delete cluster --name devops-journey
+
+  # Verify deletion:
+  aws eks list-clusters --region us-east-1
+  aws ec2 describe-vpcs --filter Name=tag:alpha.eksctl.io/cluster-name,Values=devops-journey
+
+============================================
+   EKS DEPLOYMENT GUIDE COMPLETE
+============================================

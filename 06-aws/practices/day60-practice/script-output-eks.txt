@@ -1,0 +1,63 @@
+============================================
+   AWS EKS COMPLETE REFERENCE
+   Author: Asim Raza - Day 60
+============================================
+
+[ EKS ARCHITECTURE ]
+  Control Plane: AWS-managed (pay /home/asim-raza/DevOps-journey/06-aws/practices/day60-practice/eks-reference.sh.10/hr)
+  Data Plane:    your EC2 nodes
+  Node types:    Managed, Self-managed, Fargate
+
+[ EKSCTL COMMANDS ]
+  eksctl create cluster -f cluster.yaml
+  eksctl delete cluster --name NAME
+  eksctl get cluster
+  eksctl scale nodegroup --cluster C --name NG --nodes N
+  eksctl upgrade cluster --name NAME --version 1.30
+  eksctl create iamserviceaccount  ← IRSA setup
+
+[ KUBECTL ON EKS ]
+  aws eks update-kubeconfig --name CLUSTER --region REGION
+  kubectl config current-context  ← check before any command!
+  kubectl get nodes
+  kubectl get pods -A
+  kubectl apply -f manifests/
+  kubectl logs -f -l app=NAME -n NS
+  kubectl exec -it POD -n NS -- /bin/sh
+  kubectl top nodes / kubectl top pods
+
+[ IRSA PATTERN ]
+  1. OIDC provider (eksctl: withOIDC: true)
+  2. IAM role trust policy → OIDC + SA name
+  3. K8s ServiceAccount annotation:
+     eks.amazonaws.com/role-arn: arn:...role/NAME
+  4. Deployment: serviceAccountName: SA_NAME
+  5. SDK auto-detects → gets temp credentials
+
+[ AUTO-SCALING ]
+  HPA: scales pods (CPU/memory/custom)
+  CA:  scales nodes (when pods unschedulable)
+  Together: full elastic infrastructure
+
+[ EKS vs ECS ]
+  ECS: simpler, AWS-native, lower ops burden
+  EKS: powerful, CNCF ecosystem, multi-cloud
+  Fargate: both offer serverless option
+  Choose ECS: small teams, AWS-only, simple apps
+  Choose EKS: large teams, complex, multi-cloud
+
+[ COST WARNING ]
+  Control plane: /home/asim-raza/DevOps-journey/06-aws/practices/day60-practice/eks-reference.sh.10/hr = 3/month
+  2x m5.large:   /home/asim-raza/DevOps-journey/06-aws/practices/day60-practice/eks-reference.sh.19/hr = 40/month
+  Total min:     ~13/month
+  DELETE when done: eksctl delete cluster --name NAME
+
+[ CONNECT TO DAY 49 ARGOCD ]
+  Install ArgoCD on EKS cluster
+  Point Application at your GitOps repo
+  Day 49 manifests → auto-deploy to EKS
+  Full GitOps on production Kubernetes!
+
+============================================
+   EKS REFERENCE COMPLETE
+============================================

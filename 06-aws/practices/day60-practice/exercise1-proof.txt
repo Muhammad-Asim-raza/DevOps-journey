@@ -1,0 +1,22 @@
+=== EKS ARCHITECTURE ===
+EKS Architecture:
+  Control Plane: AWS manages (kube-apiserver, etcd, scheduler)
+  Cost: $0.10/hour (~$73/month)
+  You never see the control plane
+
+  Data Plane: YOU manage (worker nodes)
+  Three node types:
+    Managed Node Groups: AWS updates EC2 nodes
+    Self-Managed: you do everything
+    Fargate Profiles: serverless pods
+
+Node group config:
+  privateNetworking: true (ALWAYS!)
+  volumeEncrypted: true
+  updateConfig.maxUnavailable: 1
+  Spot instances: 70% cheaper, interruptible
+
+eksctl create cluster -f cluster-config.yaml
+  Creates: VPC, subnets, IGW, NAT GW, IAM roles
+  Time: 15-20 minutes
+  Everything from one config file

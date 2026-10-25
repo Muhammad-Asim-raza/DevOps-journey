@@ -1,0 +1,27 @@
+=== AUTO-SCALING ===
+Two levels of scaling in EKS:
+
+HPA (Horizontal Pod Autoscaler):
+  Scales PODS based on CPU/Memory/custom metrics
+  Min: 3, Max: 20
+  CPU target: 70%
+  Scale out stabilization: 60s
+  Scale in stabilization: 300s
+
+Cluster Autoscaler:
+  Scales NODES when pods can't schedule
+  Detects: unschedulable pods
+  Adds: EC2 nodes (5-10 minutes)
+  Removes: underutilized nodes
+
+Together:
+  Traffic spike → HPA adds pods
+  Pods can't fit on nodes → CA adds nodes
+  Traffic drops → HPA removes pods
+  Nodes empty → CA removes nodes
+  Full elastic infrastructure!
+
+Fargate alternative:
+  No node management at all
+  Pod = micro-VM = no CA needed
+  Trade: higher cost, less control

@@ -1,0 +1,22 @@
+# ================================================
+# namespace.yaml
+# Kubernetes Namespaces for DevOps Journey
+# Author: Asim Raza - Day 60
+# ================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    environment: staging
+    project: devops-journey
+    managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    environment: production
+    project: devops-journey
+    managed-by: argocd

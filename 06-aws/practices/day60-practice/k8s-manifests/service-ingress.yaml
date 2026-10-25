@@ -1,0 +1,69 @@
+# ================================================
+# service-ingress.yaml
+# K8s Service + AWS ALB Ingress
+# Author: Asim Raza - Day 60
+# ================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-platform-svc
+  namespace: production
+  labels:
+    app: devops-platform
+spec:
+  selector:
+    app: devops-platform
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+  type: ClusterIP
+  # ClusterIP: internal only
+  # ALB Ingress routes external traffic in
+
+---
+# AWS ALB Ingress Controller creates actual ALB
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: devops-platform-ingress
+  namespace: production
+  annotations:
+    # AWS ALB Ingress Controller annotations
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    # internet-facing: public ALB (external traffic)
+    # internal: private ALB (internal only)
+
+    alb.ingress.kubernetes.io/target-type: ip
+    # ip: route to pod IPs directly (not node)
+    # Requires: VPC CNI plugin (enabled by default)
+
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:ACCOUNT:certificate/CERT-ID
+    # certificate-arn: SSL cert from ACM (free!)
+    # Enables HTTPS on the ALB
+
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type":"redirect","RedirectConfig":{"Protocol":"HTTPS","StatusCode":"HTTP_301"}}'
+    # Redirect HTTP → HTTPS automatically
+
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+
+    alb.ingress.kubernetes.io/tags: "Project=devops-journey,Day=60"
+    # Tag the ALB for cost tracking
+
+spec:
+  rules:
+    - host: api.devops-journey.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: devops-platform-svc
+                port:
+                  number: 80

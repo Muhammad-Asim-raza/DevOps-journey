@@ -1,0 +1,25 @@
+=== EKS DEPLOYMENTS ===
+Deploy Day 49 manifests to EKS:
+  kubectl apply -f namespace.yaml
+  kubectl apply -f service-account.yaml
+  kubectl apply -f deployment-eks.yaml
+  kubectl apply -f service-ingress.yaml
+
+EKS-specific additions to Day 49 manifests:
+  topologySpreadConstraints: spread across AZs
+    topologyKey: topology.kubernetes.io/zone
+  nodeAffinity: target specific node groups
+  podAntiAffinity: spread across nodes
+  serviceAccountName: IRSA for AWS access
+
+ALB Ingress:
+  annotations control ALB behavior
+  alb.ingress.kubernetes.io/scheme: internet-facing
+  alb.ingress.kubernetes.io/target-type: ip
+  alb.ingress.kubernetes.io/certificate-arn: ACM cert
+  Creates actual AWS ALB automatically!
+
+ArgoCD on EKS:
+  Install ArgoCD in EKS
+  Point at Day 49 GitOps repo
+  Full GitOps on production EKS!

@@ -1,0 +1,171 @@
+# ================================================
+# deployment-eks.yaml
+# Day 49 Deployment + EKS-specific features
+# Author: Asim Raza - Day 60
+# ================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-platform
+  namespace: production
+  labels:
+    app: devops-platform
+    version: "1.0.0"
+  annotations:
+    kubernetes.io/change-cause: "Day 60 EKS deployment"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  selector:
+    matchLabels:
+      app: devops-platform
+
+  template:
+    metadata:
+      labels:
+        app: devops-platform
+        version: "1.0.0"
+
+    spec:
+      # ── IRSA Integration ───────────────────────
+      serviceAccountName: devops-platform-sa
+      # Links pod to IAM role via IRSA
+      # No AWS credentials in pod!
+
+      # ── Security (from Day 33/49/52 patterns) ──
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+
+      # ── Topology Spread (EKS multi-AZ) ────────
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          # topology.kubernetes.io/zone = AWS AZ
+          # Spreads pods across us-east-1a, 1b, 1c
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: devops-platform
+
+      # ── Node Affinity (use general nodes) ──────
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values: [worker]
+        # Don't schedule on spot nodes
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: devops-platform
+                topologyKey: kubernetes.io/hostname
+                # Prefer different nodes for each pod
+
+      containers:
+        - name: app
+          image: ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/devops-cicd-platform:sha-abc123
+          # Replace with your actual ECR image from Day 59
+
+          ports:
+            - containerPort: 8000
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+
+          env:
+            - name: APP_ENV
+              value: production
+            - name: PORT
+              value: "8000"
+
+          # Get DB password from AWS Secrets Manager
+          # via External Secrets Operator (production pattern)
+          # OR via env from ConfigMap/Secret
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+
+      # ── Termination Grace ──────────────────────
+      terminationGracePeriodSeconds: 30
+      # Matches your Day 52 SIGTERM handler
+
+---
+# ── HPA (Horizontal Pod Autoscaler) ───────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: devops-platform-hpa
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: devops-platform
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      # Wait 60s before scaling up again
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      # Wait 5min before scaling down (same as ECS)

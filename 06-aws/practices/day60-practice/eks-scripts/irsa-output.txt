@@ -1,0 +1,209 @@
+============================================
+   IRSA - IAM ROLES FOR SERVICE ACCOUNTS
+   How pods get AWS permissions (securely)
+   Author: Asim Raza - Day 60
+============================================
+
+[ THE PROBLEM WITHOUT IRSA ]
+
+  Option 1: EC2 node IAM role (BAD)
+  Node IAM role has S3 access
+  ALL pods on that node can access S3
+  Even pods that shouldn't!
+  One compromised pod = all pods compromised
+
+  Option 2: Static credentials in pod (WORSE)
+  env:
+    - name: AWS_ACCESS_KEY_ID
+      value: AKIAIOSFODNN7EXAMPLE
+  Credentials in YAML = in Git = exposed
+
+  Option 3: IRSA (CORRECT)
+  Each pod gets its OWN IAM role
+  Pod A: only reads bucket-a
+  Pod B: only writes to DynamoDB
+  No sharing, no over-privilege
+
+[ HOW IRSA WORKS ]
+
+  OIDC Provider (cluster identity)
+  URL: oidc.eks.us-east-1.amazonaws.com/id/CLUSTER-ID
+         │
+         │ issues token to pod
+         ▼
+  ┌─────────────────────────────────┐
+  │  Pod running in EKS             │
+  │  serviceAccountName: my-app-sa  │
+  │                                 │
+  │  env (auto-injected):           │
+  │  AWS_ROLE_ARN: arn:...role/...  │
+  │  AWS_WEB_IDENTITY_TOKEN_FILE    │
+  │                                 │
+  │  boto3/SDK: detects these       │
+  │  calls sts:AssumeRoleWithWeb... │
+  └─────────────────────────────────┘
+         │
+         │ exchanges OIDC token for
+         │ temporary AWS credentials
+         ▼
+  ┌─────────────────────────────────┐
+  │  AWS STS                        │
+  │  Returns: AccessKey, SecretKey  │
+  │  Expiry: 1 hour (auto-renew)   │
+  └─────────────────────────────────┘
+         │
+         ▼
+  ┌─────────────────────────────────┐
+  │  IAM Role                       │
+  │  Trust: oidc.eks.../sa/my-app   │
+  │  Permissions: s3:GetObject      │
+  │  on specific bucket only        │
+  └─────────────────────────────────┘
+
+
+[ SET UP IRSA FOR YOUR APPLICATION ]
+
+  STEP 1: Ensure OIDC provider exists
+  eksctl utils associate-iam-oidc-provider \
+    --cluster devops-journey \
+    --region us-east-1 \
+    --approve
+
+  aws eks describe-cluster \
+    --name "devops-journey" \
+    --query 'cluster.identity.oidc.issuer' \
+    --output text \
+    --region "us-east-1"
+  OIDC Provider URL: oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE
+
+  STEP 2: Create IAM trust policy for the role
+  cat > ../eks-configs/irsa-trust-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE:aud": "sts.amazonaws.com",
+          "oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE:sub": "system:serviceaccount:production:devops-platform-sa"
+        }
+      }
+    }
+  ]
+}
+EOF
+  Trust policy saved: eks-configs/irsa-trust-policy.json
+
+  Condition breakdown:
+  aud: sts.amazonaws.com (token audience)
+  sub: system:serviceaccount:NAMESPACE:SA-NAME
+       → ONLY this specific service account can assume role
+       → Even other SAs in same cluster cannot!
+
+  STEP 3: Create the IAM role
+  aws iam create-role \
+    --role-name devops-platform-irsa-role \
+    --assume-role-policy-document file://irsa-trust-policy.json
+
+  STEP 4: Attach permissions (least privilege)
+  cat > ../eks-configs/irsa-permissions.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:ListBucket"],
+      "Resource": [
+        "arn:aws:s3:::devops-journey-artifacts",
+        "arn:aws:s3:::devops-journey-artifacts/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetSecretValue"],
+      "Resource": "arn:aws:secretsmanager:us-east-1:123456789012:secret:prod/devops-platform/*"
+    }
+  ]
+}
+EOF
+  Permissions policy saved: eks-configs/irsa-permissions.json
+
+  STEP 5: Create Kubernetes Service Account
+  cat > ../k8s-manifests/service-account.yaml << EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: devops-platform-sa
+  namespace: production
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/devops-platform-irsa-role
+    # This annotation is the IRSA link
+    # EKS sees this → injects OIDC token into pod
+    # Pod can then assume the IAM role
+EOF
+  Service account manifest: k8s-manifests/service-account.yaml
+
+  STEP 6: Use in your Deployment
+  cat >> ../k8s-manifests/service-account.yaml << 'SAEOF'
+---
+# In your deployment:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-platform
+  namespace: production
+spec:
+  template:
+    spec:
+      serviceAccountName: devops-platform-sa
+      # This links the pod to the IAM role via IRSA!
+      # No credentials needed in the pod
+      # AWS SDK automatically uses OIDC token
+      containers:
+        - name: app
+          image: IMAGE
+          # boto3.client('s3') just works!
+          # SDK finds OIDC token → calls STS
+          # Gets temporary credentials
+SAEOF
+
+[ eksctl SHORTCUT FOR IRSA ]
+
+  eksctl can create IAM role + K8s SA in one command:
+
+  eksctl create iamserviceaccount \
+    --cluster devops-journey \
+    --namespace production \
+    --name devops-platform-sa \
+    --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess \
+    --approve \
+    --override-existing-serviceaccounts
+
+  Creates:
+  - IAM role with trust policy pointing to cluster OIDC
+  - K8s ServiceAccount with correct annotation
+  - All in one command!
+
+[ VERIFY IRSA WORKING ]
+
+  # Check service account has annotation:
+  kubectl describe serviceaccount devops-platform-sa \
+    -n production
+
+  # Check pod has OIDC token mounted:
+  kubectl exec POD_NAME -n production -- \
+    env | grep AWS
+  # Should see: AWS_ROLE_ARN and AWS_WEB_IDENTITY_TOKEN_FILE
+
+  # Test S3 access from pod:
+  kubectl exec POD_NAME -n production -- \
+    aws s3 ls s3://devops-journey-artifacts/
+
+============================================
+   IRSA SETUP GUIDE COMPLETE
+============================================

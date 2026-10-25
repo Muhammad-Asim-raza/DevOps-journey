@@ -1,0 +1,29 @@
+=== IRSA (IAM Roles for Service Accounts) ===
+IRSA = IAM Roles for Service Accounts
+The EKS equivalent of EC2 instance profiles
+
+Without IRSA (bad options):
+  Node IAM role: ALL pods get same AWS access
+  Static creds: credentials in YAML = in Git = exposed
+
+With IRSA:
+  Each K8s ServiceAccount → own IAM Role
+  Pod gets OIDC token at startup
+  SDK exchanges token for temp credentials
+  One pod: S3 only
+  Another pod: DynamoDB only
+  Zero credential sharing
+
+Setup:
+  1. Cluster OIDC provider (withOIDC: true in eksctl)
+  2. IAM role with OIDC trust policy
+     Condition: sub = system:serviceaccount:NS:SA-NAME
+  3. K8s ServiceAccount with annotation:
+     eks.amazonaws.com/role-arn: arn:...role/...
+  4. Pod spec: serviceAccountName: my-sa
+  5. SDK just works! (detects OIDC token automatically)
+
+eksctl shortcut:
+  eksctl create iamserviceaccount
+    --cluster NAME --namespace NS --name SA
+    --attach-policy-arn POLICY_ARN --approve
