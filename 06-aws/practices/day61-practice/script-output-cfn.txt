@@ -1,0 +1,57 @@
+============================================
+   AWS CLOUDFORMATION REFERENCE
+   Author: Asim Raza - Day 61
+============================================
+
+[ TEMPLATE SECTIONS ]
+  AWSTemplateFormatVersion: '2010-09-09' (required)
+  Description: text
+  Parameters: inputs
+  Mappings: lookup tables
+  Conditions: boolean expressions
+  Resources: ONLY REQUIRED SECTION
+  Outputs: export values
+
+[ INTRINSIC FUNCTIONS ]
+  !Ref X          → value/physical-ID
+  !Sub 'text'     → string substitution
+  !GetAtt R.Attr  → resource attribute
+  !FindInMap [M,K,V] → mapping lookup
+  !If [C,T,F]     → conditional
+  !Select [i,list] → list item
+  !GetAZs ''       → AZ list
+  !ImportValue N   → cross-stack reference
+  !Join [d,list]   → join strings
+  !Base64 str      → base64 encode
+  !Cidr [r,c,b]    → generate CIDRs
+
+[ KEY CLI COMMANDS ]
+  aws cloudformation validate-template
+  aws cloudformation deploy (create or update)
+  aws cloudformation create-change-set
+  aws cloudformation describe-change-set
+  aws cloudformation execute-change-set
+  aws cloudformation detect-stack-drift
+  aws cloudformation describe-stacks
+  aws cloudformation list-stacks
+  aws cloudformation delete-stack
+  aws cloudformation update-termination-protection
+
+[ CFN vs TERRAFORM ]
+  CloudFormation: AWS-only, auto-rollback, free, AWS support
+  Terraform:      multi-cloud, HCL, state file, huge community
+  Both: IaC, version-controlled, reproducible
+
+[ DELETION POLICIES ]
+  Delete:   removed when stack deleted (default)
+  Retain:   kept after stack deleted (S3 with data)
+  Snapshot: snapshot taken then deleted (RDS, EBS)
+
+[ STACK STATUSES ]
+  CREATE_COMPLETE   update_COMPLETE → success
+  *_FAILED          *_ROLLBACK_*   → failure
+  DELETE_FAILED → resource blocking deletion
+
+============================================
+   REFERENCE COMPLETE
+============================================

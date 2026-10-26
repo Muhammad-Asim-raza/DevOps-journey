@@ -1,0 +1,368 @@
+# ================================================
+# 01-template-anatomy.yaml
+# Complete CloudFormation Template Anatomy
+# Author: Asim Raza - Day 61
+# Every section and field explained
+# ================================================
+
+# ── TEMPLATE FORMAT VERSION ──────────────────────
+AWSTemplateFormatVersion: "2010-09-09"
+# ALWAYS this value. Never changes.
+# Only valid value as of 2026.
+# Required in every template.
+
+# ── DESCRIPTION ──────────────────────────────────
+Description: >
+  DevOps Journey Day 61 - Complete CloudFormation Anatomy.
+  Demonstrates all template sections with explanations.
+  Author: Asim Raza
+
+# ── METADATA ─────────────────────────────────────
+Metadata:
+  # Metadata does NOT affect resource creation
+  # Used for: Console UI hints, documentation
+
+  AWS::CloudFormation::Interface:
+    # Groups parameters in Console UI
+    ParameterGroups:
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcCidr
+          - Environment
+      - Label:
+          default: "Application Configuration"
+        Parameters:
+          - AppName
+          - InstanceType
+
+    ParameterLabels:
+      VpcCidr:
+        default: "VPC CIDR Block"
+      Environment:
+        default: "Deployment Environment"
+
+# ── PARAMETERS ───────────────────────────────────
+Parameters:
+  # Parameters: inputs at stack creation/update
+  # Like function arguments for your template
+
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues:
+      - development
+      - staging
+      - production
+    Description: >
+      Deployment environment.
+      Controls instance sizes and retention.
+    # AllowedValues: CloudFormation validates input!
+    # Bad value → immediate error before any resource created
+
+  AppName:
+    Type: String
+    Default: devops-journey
+    MinLength: 3
+    MaxLength: 20
+    AllowedPattern: "[a-z0-9-]+"
+    Description: Application name (lowercase, hyphens only)
+    # AllowedPattern: regex validation
+    # MinLength/MaxLength: length constraints
+
+  VpcCidr:
+    Type: String
+    Default: "10.0.0.0/16"
+    AllowedPattern: >
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}
+      ([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])
+      (\/([0-9]|[1-2][0-9]|3[0-2]))$
+    Description: CIDR block for the VPC
+
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - m5.large
+    Description: EC2 instance type
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    # NoEcho: value is MASKED in console + logs
+    # Use for: passwords, secrets
+    # Better: use Secrets Manager reference
+    MinLength: 8
+    MaxLength: 41
+    Description: Database admin password (min 8 chars)
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    # Special type: validates key pair exists!
+    # Dropdown in console shows your key pairs
+    Description: EC2 Key Pair for SSH access
+
+# ── MAPPINGS ─────────────────────────────────────
+Mappings:
+  # Mappings: static lookup tables
+  # Like a dictionary/switch statement
+
+  EnvironmentMap:
+    development:
+      InstanceType: t3.micro
+      MinSize: 1
+      MaxSize: 2
+    staging:
+      InstanceType: t3.small
+      MinSize: 1
+      MaxSize: 3
+    production:
+      InstanceType: t3.medium
+      MinSize: 2
+      MaxSize: 10
+  # Usage: !FindInMap [EnvironmentMap, !Ref Environment, InstanceType]
+
+  RegionAMIMap:
+    us-east-1:
+      AmazonLinux2023: ami-0c02fb55956c7d316
+    us-west-2:
+      AmazonLinux2023: ami-0ce2cb35386fc22e9
+    eu-west-1:
+      AmazonLinux2023: ami-07d9160fa81ccffb5
+  # Usage: !FindInMap [RegionAMIMap, !Ref AWS::Region, AmazonLinux2023]
+  # AWS::Region is a pseudo-parameter (always available)
+
+# ── CONDITIONS ───────────────────────────────────
+Conditions:
+  # Conditions: boolean expressions
+  # Control whether resources are created
+
+  IsProduction: !Equals [!Ref Environment, production]
+  # IsProduction: true when Environment = "production"
+
+  IsNotDevelopment: !Not [!Equals [!Ref Environment, development]]
+  # IsNotDevelopment: true when NOT development
+
+  CreateMultiAZ: !Or
+    - !Equals [!Ref Environment, staging]
+    - !Equals [!Ref Environment, production]
+  # CreateMultiAZ: true for staging OR production
+
+  # Usage in resource:
+  # MultiAZ: !If [IsProduction, true, false]
+  # DeletionPolicy: !If [IsProduction, Retain, Delete]
+
+# ── RESOURCES ────────────────────────────────────
+Resources:
+  # Resources: THE ONLY REQUIRED SECTION
+  # What AWS resources to create
+
+  # ── VPC ───────────────────────────────────────
+  MyVPC:
+    # LogicalId: YOUR name for this resource
+    # Used in: Ref, Fn::GetAtt, DependsOn
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      # !Ref VpcCidr: reference the Parameter above
+
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AppName}-${Environment}-vpc"
+          # !Sub: string substitution
+          # ${AppName} = Parameter value
+          # ${Environment} = Parameter value
+          # Result: "devops-journey-staging-vpc"
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+    DeletionPolicy: Delete
+    # DeletionPolicy:
+    #   Delete (default): delete resource when stack deleted
+    #   Retain: keep resource after stack deleted
+    #   Snapshot: take snapshot before delete (RDS, EBS)
+
+  # ── Internet Gateway ──────────────────────────
+  MyIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AppName}-${Environment}-igw"
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      # !Ref on a resource: returns its physical ID
+      # MyVPC → returns "vpc-abc12345"
+      InternetGatewayId: !Ref MyIGW
+    DependsOn:
+      - MyVPC
+      - MyIGW
+    # DependsOn: explicit ordering (usually auto-detected)
+    # Use when CloudFormation can't detect dependency
+
+  # ── Public Subnet ─────────────────────────────
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Select [0, !Cidr [!Ref VpcCidr, 6, 8]]
+      # !Cidr: generates CIDR from parent range
+      # [VpcCidr, 6 subnets, /24 each]
+      # !Select [0, ...]: pick first subnet
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      # !GetAZs "": list AZs in current region
+      # !Select [0, ...]: pick first AZ
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AppName}-${Environment}-public-1"
+
+  # ── Security Group ────────────────────────────
+  WebServerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Web server security group
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: "0.0.0.0/0"
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: "0.0.0.0/0"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AppName}-${Environment}-web-sg"
+
+  # ── EC2 Instance ──────────────────────────────
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap
+        - RegionAMIMap
+        - !Ref AWS::Region
+        - AmazonLinux2023
+      # !FindInMap [MapName, Key1, Key2]
+      # AWS::Region = pseudo-parameter (current region)
+
+      InstanceType: !FindInMap
+        - EnvironmentMap
+        - !Ref Environment
+        - InstanceType
+      # Gets instance type from Mappings based on env
+
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref WebServerSG
+
+      Tags:
+        - Key: Name
+          Value: !Sub "${AppName}-${Environment}-web"
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # Fn::Base64 encodes for EC2 UserData
+          # !Sub: substitutes variables
+          yum update -y
+          yum install -y docker
+          systemctl start docker
+          echo "Stack: ${AWS::StackName}" > /var/www/html/index.html
+          echo "Region: ${AWS::Region}" >> /var/www/html/index.html
+          echo "App: ${AppName}-${Environment}" >> /var/www/html/index.html
+          # AWS::StackName, AWS::Region = pseudo-parameters
+          # AppName = our Parameter
+
+    # Condition: only create if NOT dev
+    # Condition: IsNotDevelopment
+    # (uncomment to enable condition)
+
+  # ── RDS Database ──────────────────────────────
+  Database:
+    Type: AWS::RDS::DBInstance
+    Condition: IsNotDevelopment
+    # Condition: only create RDS for staging/production
+    # Development: skip (save cost)
+    Properties:
+      DBInstanceIdentifier: !Sub "${AppName}-${Environment}-db"
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: "16.3"
+      MasterUsername: dbadmin
+      MasterUserPassword: !Ref DBPassword
+      AllocatedStorage: 20
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: !If [IsProduction, true, false]
+      # !If [Condition, ValueIfTrue, ValueIfFalse]
+      # Production: Multi-AZ=true
+      # Staging: Multi-AZ=false
+      PubliclyAccessible: false
+      BackupRetentionPeriod: !If [IsProduction, 7, 1]
+      DeletionPolicy: !If [IsProduction, Snapshot, Delete]
+      # Production: take snapshot before delete
+      # Others: just delete
+    DeletionPolicy: Snapshot
+    # This overrides above (DeletionPolicy in resource)
+
+# ── OUTPUTS ──────────────────────────────────────
+Outputs:
+  # Outputs: values to display after stack creation
+  # Used for: cross-stack references, documentation
+
+  VpcId:
+    Description: VPC ID for this environment
+    Value: !Ref MyVPC
+    Export:
+      Name: !Sub "${AppName}-${Environment}-VpcId"
+    # Export: make available to OTHER stacks
+    # Import in another stack:
+    # !ImportValue devops-journey-staging-VpcId
+
+  PublicSubnet1Id:
+    Description: Public Subnet 1 ID
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub "${AppName}-${Environment}-PublicSubnet1"
+
+  WebServerPublicIP:
+    Description: Web server public IP
+    Value: !GetAtt WebServer.PublicIp
+    # !GetAtt: get an attribute of a resource
+    # WebServer.PublicIp = public IP of EC2
+    # Other GetAtt examples:
+    #   SecurityGroup.GroupId
+    #   LoadBalancer.DNSName
+    #   RDS.Endpoint.Address
+
+  WebServerURL:
+    Description: Web server URL
+    Value: !Sub "http://${WebServer.PublicIp}"
+
+  StackRegion:
+    Description: Region where stack is deployed
+    Value: !Ref AWS::Region
+    # AWS::Region, AWS::AccountId, AWS::StackName
+    # AWS::StackId, AWS::NoValue
+    # These are PSEUDO-PARAMETERS (always available)
+
+  DatabaseEndpoint:
+    Description: RDS endpoint (staging and production only)
+    Condition: IsNotDevelopment
+    # Conditional output: only shown when condition true
+    Value: !GetAtt Database.Endpoint.Address
