@@ -1,0 +1,190 @@
+============================================
+   CLOUDFORMATION STACK OPERATIONS
+   Author: Asim Raza - Day 61
+============================================
+
+[ VALIDATE TEMPLATE FIRST ]
+
+  Always validate before deploying!
+
+  aws cloudformation validate-template \
+    --template-body file://templates/02-production-vpc.yaml
+
+aws cloudformation validate-template \
+    --template-body \
+        file://templates/02-production-vpc.yaml \
+    --region us-east-1
+  ✅ Validation command printed only (NOT executed)
+
+[ CREATE STACK ]
+
+  # Create with parameters:
+  aws cloudformation create-stack \
+    --stack-name devops-journey-staging-vpc \
+    --template-body file://templates/02-production-vpc.yaml \
+    --parameters \
+      ParameterKey=AppName,ParameterValue=devops-journey \
+      ParameterKey=Environment,ParameterValue=staging \
+      ParameterKey=VpcCidr,ParameterValue=10.0.0.0/16 \
+    --capabilities CAPABILITY_IAM \
+    --tags \
+      Key=Project,Value=devops-journey \
+      Key=Day,Value=61 \
+    --region us-east-1
+
+  --capabilities CAPABILITY_IAM:
+  Required when template creates IAM resources
+  You explicitly acknowledge it will create IAM
+  --capabilities CAPABILITY_NAMED_IAM: when naming IAM resources
+  --capabilities CAPABILITY_AUTO_EXPAND: for SAM/macros
+
+  # Wait for creation to complete:
+  aws cloudformation wait stack-create-complete \
+    --stack-name devops-journey-staging-vpc
+
+  # Check status:
+  aws cloudformation describe-stacks \
+    --stack-name devops-journey-staging-vpc \
+    --query 'Stacks[0].StackStatus'
+
+[ STACK DEPLOYMENT METHODS ]
+
+  Method 1: cloudformation deploy (RECOMMENDED)
+  Uses change sets automatically
+  Creates OR updates (idempotent)
+
+  aws cloudformation deploy \
+    --template-file templates/02-production-vpc.yaml \
+    --stack-name devops-journey-staging-vpc \
+    --parameter-overrides \
+      AppName=devops-journey \
+      Environment=staging \
+    --capabilities CAPABILITY_IAM \
+    --no-fail-on-empty-changeset \
+    --region us-east-1
+
+  Method 2: create/update separately (older approach)
+  Must know if stack exists first
+  Less idiomatic, more error-prone
+
+  Attempting deploy... (PRINT ONLY)
+aws cloudformation deploy \
+    --template-file templates/02-production-vpc.yaml \
+    --stack-name devops-journey-staging-vpc \
+    --parameter-overrides \
+        AppName=devops-journey \
+        Environment=staging \
+    --capabilities CAPABILITY_IAM \
+    --no-fail-on-empty-changeset \
+    --tags Project=devops-journey Day=61 \
+    --region us-east-1
+  ✅ Deployment command printed only (NOT executed)
+
+[ CHANGE SETS - Preview Before Apply ]
+
+  Change Set = 'what WILL change if I apply this?'
+  Like: terraform plan
+  ALWAYS use for production updates!
+
+  # Create change set:
+  aws cloudformation create-change-set \
+    --stack-name devops-journey-staging-vpc \
+    --change-set-name my-changes-20261027 \
+    --template-body file://templates/02-production-vpc.yaml \
+    --parameters \
+      ParameterKey=AppName,ParameterValue=devops-journey \
+    --capabilities CAPABILITY_IAM
+
+  # Describe change set (see what will change):
+  aws cloudformation describe-change-set \
+    --stack-name devops-journey-staging-vpc \
+    --change-set-name my-changes-20261027
+
+  # Apply change set (after reviewing):
+  aws cloudformation execute-change-set \
+    --stack-name devops-journey-staging-vpc \
+    --change-set-name my-changes-20261027
+
+  # Delete if you don't want to apply:
+  aws cloudformation delete-change-set \
+    --stack-name devops-journey-staging-vpc \
+    --change-set-name my-changes-20261027
+
+[ CHANGE TYPES IN CHANGE SETS ]
+
+  Add:    new resource being created
+  Modify: existing resource being changed
+  Remove: resource being deleted
+
+  For Modify, 'Replacement' field shows:
+  True:         resource will be DELETED and RECREATED
+                → downtime! → data loss risk!
+  False:        resource updated in-place (safe)
+  Conditional:  depends on property change
+
+  ⚠️  Replacement=True on RDS = data loss!
+  ALWAYS check Replacement before applying
+
+[ DRIFT DETECTION ]
+
+  Drift: someone changed infra via console
+  (not through CloudFormation!)
+
+  # Detect drift:
+  aws cloudformation detect-stack-drift \
+    --stack-name devops-journey-staging-vpc
+
+  # Get drift results:
+  aws cloudformation describe-stack-resource-drifts \
+    --stack-name devops-journey-staging-vpc \
+    --stack-resource-drift-status-filters MODIFIED DELETED
+
+  Drift status:
+  IN_SYNC:     matches template
+  MODIFIED:    different from template
+  DELETED:     resource was deleted externally
+  NOT_CHECKED: drift not yet detected
+
+[ STACK STATUS VALUES ]
+
+  CREATE_IN_PROGRESS    → creating
+  CREATE_COMPLETE       → success ✅
+  CREATE_FAILED         → failed, check Events
+  ROLLBACK_IN_PROGRESS  → reverting...
+  ROLLBACK_COMPLETE     → reverted (stack exists but empty)
+  UPDATE_IN_PROGRESS    → updating
+  UPDATE_COMPLETE       → updated ✅
+  UPDATE_ROLLBACK_*     → update failed, reverting
+  DELETE_IN_PROGRESS    → deleting
+  DELETE_COMPLETE       → deleted
+  DELETE_FAILED         → deletion failed (check resources)
+
+[ GET OUTPUTS ]
+
+  # Get all outputs:
+  aws cloudformation describe-stacks \
+    --stack-name devops-journey-staging-vpc \
+    --query 'Stacks[0].Outputs'
+
+  # Get specific output:
+  aws cloudformation describe-stacks \
+    --stack-name devops-journey-staging-vpc \
+    --query 'Stacks[0].Outputs[?OutputKey==`VpcId`].OutputValue' \
+    --output text
+
+[ DELETE STACK ]
+
+  aws cloudformation delete-stack \
+    --stack-name devops-journey-staging-vpc \
+    --region us-east-1
+
+  # Wait for deletion:
+  aws cloudformation wait stack-delete-complete \
+    --stack-name devops-journey-staging-vpc
+
+  ⚠️  DeletionPolicy: Retain resources won't be deleted
+  Must delete them manually afterward
+
+============================================
+   STACK OPERATIONS COMPLETE
+============================================

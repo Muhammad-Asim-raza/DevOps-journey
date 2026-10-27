@@ -1,0 +1,23 @@
+=== CLOUDFORMATION FUNDAMENTALS ===
+CloudFormation = AWS Infrastructure as Code
+Template → Stack (running infrastructure)
+YAML or JSON format
+
+Template sections:
+AWSTemplateFormatVersion: "2010-09-09" (always this)
+Description: what this template does
+Metadata: console UI hints
+Parameters: inputs (like function arguments)
+Mappings: static lookup tables
+Conditions: boolean expressions (IsProduction)
+Resources: ONLY REQUIRED SECTION
+Outputs: values to display / export
+
+Resources format:
+LogicalId:             (your name)
+  Type: AWS::Service::Resource
+  Properties:
+    Property: Value
+  DeletionPolicy: Delete|Retain|Snapshot
+  Condition: ConditionName
+  DependsOn: OtherResource

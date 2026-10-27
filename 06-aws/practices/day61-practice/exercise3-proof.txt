@@ -1,0 +1,28 @@
+=== STACK OPERATIONS ===
+Validate (always first!):
+aws cloudformation validate-template \
+  --template-body file://template.yaml
+
+Deploy (create or update):
+aws cloudformation deploy \
+  --template-file template.yaml \
+  --stack-name STACK-NAME \
+  --parameter-overrides Key=Value \
+  --capabilities CAPABILITY_IAM
+
+Change Set (preview before update):
+1. aws cloudformation create-change-set
+2. aws cloudformation describe-change-set  ← review!
+3. aws cloudformation execute-change-set   ← apply
+
+Check Replacement=True BEFORE applying!
+Replacement=True on RDS = data loss
+
+Stack statuses:
+CREATE_COMPLETE, UPDATE_COMPLETE = success
+CREATE_FAILED → check Events tab
+ROLLBACK_COMPLETE = create failed, stack empty
+
+Drift detection:
+aws cloudformation detect-stack-drift
+Someone changed infra in console → drift

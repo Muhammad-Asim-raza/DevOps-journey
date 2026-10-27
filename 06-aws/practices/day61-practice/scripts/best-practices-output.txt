@@ -1,0 +1,136 @@
+============================================
+   CLOUDFORMATION BEST PRACTICES
+============================================
+
+[ 1. ALWAYS VALIDATE BEFORE DEPLOY ]
+
+  aws cloudformation validate-template \
+    --template-body file://template.yaml
+
+  Catches: YAML syntax errors, invalid references
+  Does NOT catch: wrong values, permission issues
+
+[ 2. USE CHANGE SETS FOR UPDATES ]
+
+  # Never do this in production:
+  aws cloudformation update-stack ...  ← blind update
+
+  # Always do this:
+  1. Create change set
+  2. Review changes (especially Replacement=True!)
+  3. Apply if safe
+
+  Replacement=True = resource DELETED and RECREATED
+  RDS: data loss! EC2: new instance (new IP)!
+
+[ 3. USE PARAMETERS FOR ENVIRONMENT DIFFERENCES ]
+
+  One template → multiple environments
+  dev: t3.micro, single-AZ, no deletion protection
+  prod: m5.large, multi-AZ, deletion protection
+
+  Parameters:
+    Environment: dev | staging | production
+  Conditions:
+    IsProduction: !Equals [!Ref Environment, production]
+  Usage:
+    MultiAZ: !If [IsProduction, true, false]
+
+[ 4. ALWAYS TAG RESOURCES ]
+
+  Tags on every resource:
+    Name, Environment, Project, ManagedBy
+
+  Use AWS::CloudFormation::Stack tags
+  to propagate to all resources automatically
+
+  aws cloudformation create-stack \
+    --tags Key=Project,Value=app \
+           Key=ManagedBy,Value=CloudFormation
+
+[ 5. ENABLE TERMINATION PROTECTION ]
+
+  Prevents accidental stack deletion!
+
+  aws cloudformation update-termination-protection \
+    --enable-termination-protection \
+    --stack-name PRODUCTION-STACK
+
+  To delete: must disable first
+  Extra friction = prevents accidents
+
+[ 6. STORE TEMPLATES IN S3 ]
+
+  Large templates (>51,200 bytes): must use S3
+  Best practice: always use S3
+
+  # Upload template:
+  aws s3 cp templates/ s3://my-cfn-templates/ --recursive
+
+  # Deploy from S3:
+  aws cloudformation create-stack \
+    --template-url https://s3.amazonaws.com/my-cfn-templates/vpc.yaml
+
+  # Package (upload nested stack templates):
+  aws cloudformation package \
+    --template-file root-stack.yaml \
+    --s3-bucket my-cfn-templates \
+    --output-template-file packaged-template.yaml
+
+[ 7. DELETION POLICY FOR STATEFUL RESOURCES ]
+
+  DeletionPolicy: Snapshot  ← ALWAYS for RDS, EBS
+  DeletionPolicy: Retain    ← for S3 buckets with data
+  DeletionPolicy: Delete    ← for stateless resources
+
+  # Example:
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    # Delete stack → take snapshot → then delete RDS
+
+[ 8. USE SSM PARAMETER STORE FOR CROSS-STACK CONFIG ]
+
+  # Instead of just !ImportValue:
+  # SSM is better for configs that change often
+
+  # Template A: store in SSM
+  SSMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /${AppName}/${Environment}/VpcId
+      Type: String
+      Value: !Ref VPC
+
+  # Template B: read from SSM
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /devops-journey/production/VpcId
+
+[ 9. USE CFNLINT FOR LINTING ]
+
+  pip install cfn-lint
+  cfn-lint templates/02-production-vpc.yaml
+
+  Catches: more errors than validate-template
+  Checks: best practices, deprecated properties
+  Integrate: pre-commit hooks, CI/CD pipeline
+
+[ 10. ROLLBACK CONFIGURATION ]
+
+  Default: roll back entire stack on any failure
+  For debugging: disable rollback to see what failed
+
+  # Disable rollback (debugging only!):
+  aws cloudformation create-stack \
+    --on-failure DO_NOTHING \
+    ...
+
+  # Normal (always use in production):
+  aws cloudformation create-stack \
+    --on-failure ROLLBACK \
+    ...
+
+============================================
+   BEST PRACTICES COMPLETE
+============================================

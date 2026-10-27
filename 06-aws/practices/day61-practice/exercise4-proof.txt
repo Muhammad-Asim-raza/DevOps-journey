@@ -1,0 +1,18 @@
+=== BEST PRACTICES ===
+10 CloudFormation best practices:
+1. validate-template before every deploy
+2. Change sets for ALL production updates
+3. Parameters for environment differences
+4. Tag ALL resources (Name, Environment, ManagedBy)
+5. Termination protection on production stacks
+6. Store templates in S3 (scalable, version-controlled)
+7. DeletionPolicy: Snapshot for RDS/EBS
+8. SSM Parameter Store for cross-stack config
+9. cfn-lint for advanced linting
+10. Never disable rollback in production
+
+Nested stacks:
+Split complex templates into layers
+Network, Security, Application stacks
+Root stack orchestrates all nested stacks
+Each nested stack = focused, reusable

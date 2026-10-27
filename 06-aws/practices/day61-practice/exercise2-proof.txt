@@ -1,0 +1,25 @@
+=== INTRINSIC FUNCTIONS ===
+!Ref Resource     → physical ID (vpc-abc123)
+!Ref Parameter    → parameter value ('staging')
+!Ref AWS::Region  → 'us-east-1'
+
+!Sub '${AppName}-${Environment}-vpc'
+→ 'devops-journey-staging-vpc'
+
+!GetAtt Resource.Attribute
+→ EC2.PublicIp, RDS.Endpoint.Address, ALB.DNSName
+
+!FindInMap [MapName, Key1, Key2]
+→ look up in Mappings section
+
+!If [Condition, IfTrue, IfFalse]
+→ conditional values
+
+!Select [0, !GetAZs ''] → first AZ
+!Cidr [VpcCidr, 6, 8]  → generate /24 subnets
+
+!ImportValue StackName-ExportName
+→ reference output from another stack
+
+Pseudo-parameters (always available):
+AWS::Region, AWS::AccountId, AWS::StackName, AWS::StackId

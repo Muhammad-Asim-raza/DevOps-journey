@@ -1,0 +1,82 @@
+# ================================================
+# root-stack.yaml
+# Nested Stacks Pattern
+# Author: Asim Raza - Day 61
+# ================================================
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Root stack - orchestrates nested stacks
+
+Parameters:
+  AppName:
+    Type: String
+    Default: devops-journey
+  Environment:
+    Type: String
+    Default: staging
+  TemplateBucket:
+    Type: String
+    Description: S3 bucket containing nested templates
+
+Resources:
+
+  # ── Network Stack ─────────────────────────────
+  NetworkStack:
+    Type: AWS::CloudFormation::Stack
+    # Type for nested stack is always this
+    Properties:
+      TemplateURL: !Sub
+        - "https://s3.amazonaws.com/${Bucket}/templates/vpc.yaml"
+        - Bucket: !Ref TemplateBucket
+      # TemplateURL: must be S3 URL (not local file)
+      # Upload templates to S3 first!
+
+      Parameters:
+        AppName: !Ref AppName
+        Environment: !Ref Environment
+
+      TimeoutInMinutes: 30
+      # Timeout for this nested stack to complete
+
+      Tags:
+        - Key: Layer
+          Value: network
+
+  # ── Security Stack ────────────────────────────
+  SecurityStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: NetworkStack
+    # Wait for network before creating security groups
+    Properties:
+      TemplateURL: !Sub
+        - "https://s3.amazonaws.com/${Bucket}/templates/security.yaml"
+        - Bucket: !Ref TemplateBucket
+      Parameters:
+        AppName: !Ref AppName
+        Environment: !Ref Environment
+        VpcId: !GetAtt NetworkStack.Outputs.VpcId
+        # Pass output from NetworkStack as parameter!
+        # GetAtt on nested stack → gets its Outputs
+
+  # ── Application Stack ─────────────────────────
+  ApplicationStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - NetworkStack
+      - SecurityStack
+    Properties:
+      TemplateURL: !Sub
+        - "https://s3.amazonaws.com/${Bucket}/templates/app.yaml"
+        - Bucket: !Ref TemplateBucket
+      Parameters:
+        AppName: !Ref AppName
+        Environment: !Ref Environment
+        VpcId: !GetAtt NetworkStack.Outputs.VpcId
+        PrivateSubnet1: !GetAtt NetworkStack.Outputs.PrivateSubnet1Id
+        PrivateSubnet2: !GetAtt NetworkStack.Outputs.PrivateSubnet2Id
+        AppSecurityGroup: !GetAtt SecurityStack.Outputs.AppSGId
+
+Outputs:
+  ApplicationEndpoint:
+    Value: !GetAtt ApplicationStack.Outputs.LoadBalancerDNS
+    Description: Application load balancer endpoint

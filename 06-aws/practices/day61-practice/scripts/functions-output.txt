@@ -1,0 +1,189 @@
+============================================
+   CLOUDFORMATION INTRINSIC FUNCTIONS
+   The building blocks of dynamic templates
+============================================
+
+[ !Ref ]
+  Returns the VALUE of a parameter or
+  the PHYSICAL ID of a resource
+
+  # Parameter reference:
+  !Ref Environment     → 'production' (string value)
+  !Ref VpcCidr         → '10.0.0.0/16'
+
+  # Resource reference:
+  !Ref MyVPC           → 'vpc-abc12345' (physical ID)
+  !Ref MySecurityGroup → 'sg-xyz98765'
+
+  # Pseudo-parameter reference:
+  !Ref AWS::Region      → 'us-east-1'
+  !Ref AWS::AccountId   → '123456789012'
+  !Ref AWS::StackName   → 'devops-journey-prod'
+  !Ref AWS::NoValue     → removes property
+
+[ !Sub ]
+  String substitution (like bash ${VAR})
+
+  # Simple substitution:
+  !Sub '${AppName}-${Environment}-vpc'
+  → 'devops-journey-staging-vpc'
+
+  # With AWS pseudo-parameters:
+  !Sub 'arn:aws:s3:::${AWS::AccountId}-${AppName}'
+  → 'arn:aws:s3:::123456789012-devops-journey'
+
+  # Multi-line with Fn::Sub:
+  Fn::Sub: |
+    #!/bin/bash
+    echo 'Region: ${AWS::Region}'
+    echo 'Stack: ${AWS::StackName}'
+    echo 'App: ${AppName}'
+
+[ !GetAtt ]
+  Get an ATTRIBUTE of a created resource
+  (different from Ref which gives physical ID)
+
+  # EC2 attributes:
+  !GetAtt MyEC2.PublicIp         → '54.123.45.67'
+  !GetAtt MyEC2.PrivateIp        → '10.0.1.42'
+  !GetAtt MyEC2.AvailabilityZone → 'us-east-1a'
+
+  # Load Balancer attributes:
+  !GetAtt MyALB.DNSName          → 'my-alb-xxx.us-east-1.elb.amazonaws.com'
+
+  # RDS attributes:
+  !GetAtt MyDB.Endpoint.Address  → 'mydb.xxx.us-east-1.rds.amazonaws.com'
+  !GetAtt MyDB.Endpoint.Port     → '5432'
+
+  # Security Group:
+  !GetAtt MySG.GroupId           → 'sg-abc12345'
+
+  # IAM Role:
+  !GetAtt MyRole.Arn             → 'arn:aws:iam::...'
+
+[ !FindInMap ]
+  Look up a value in Mappings section
+
+  # Template Mappings:
+  Mappings:
+    EnvironmentSizes:
+      production:
+        InstanceType: m5.large
+      staging:
+        InstanceType: t3.medium
+
+  # Usage:
+  !FindInMap [EnvironmentSizes, !Ref Environment, InstanceType]
+  With Environment=staging → 't3.medium'
+
+[ !If ]
+  Conditional value
+
+  # Syntax: !If [ConditionName, IfTrue, IfFalse]
+
+  MultiAZ: !If [IsProduction, true, false]
+  # Production: MultiAZ=true
+  # Other: MultiAZ=false
+
+  BackupRetentionPeriod: !If [IsProduction, 7, 1]
+
+  DeletionPolicy: !If [IsProduction, Retain, Delete]
+
+[ !Select ]
+  Pick item from a list by index
+
+  # Pick first AZ:
+  !Select [0, !GetAZs '']
+  → 'us-east-1a'
+
+  # Pick second AZ:
+  !Select [1, !GetAZs '']
+  → 'us-east-1b'
+
+  # Pick from hardcoded list:
+  !Select [1, [a, b, c]]
+  → 'b'
+
+[ !GetAZs ]
+  Get list of AZs in a region
+
+  !GetAZs ''      → AZs in current region
+  !GetAZs us-east-1 → ['us-east-1a','us-east-1b',...]
+
+  # Combined with !Select:
+  AvailabilityZone: !Select [0, !GetAZs '']
+
+[ !Join ]
+  Join list of strings
+
+  !Join [',', [value1, value2, value3]]
+  → 'value1,value2,value3'
+
+  # Join ARNs:
+  !Join
+    - ','
+    - - !Ref Subnet1
+      - !Ref Subnet2
+      - !Ref Subnet3
+
+[ !Split ]
+  Split string into list
+
+  !Split [',', 'a,b,c']
+  → [a, b, c]
+
+[ !ImportValue ]
+  Import exported value from ANOTHER stack
+
+  # Stack A exports:
+  Outputs:
+    VpcId:
+      Export:
+        Name: MyApp-VpcId
+      Value: !Ref MyVPC
+
+  # Stack B imports:
+  VpcId: !ImportValue MyApp-VpcId
+
+  This is cross-stack referencing!
+  Change VPC in Stack A → Stack B auto-references new value
+
+[ !Base64 ]
+  Encode string to Base64
+  Required for EC2 UserData
+
+  UserData:
+    !Base64 |
+      #!/bin/bash
+      yum update -y
+
+  # With Fn::Sub for variable substitution:
+  UserData:
+    Fn::Base64:
+      !Sub |
+        #!/bin/bash
+        echo ${Environment} > /tmp/env.txt
+
+[ !Cidr ]
+  Generate CIDR blocks from parent CIDR
+
+  !Cidr [!Ref VpcCidr, 6, 8]
+  # VpcCidr=10.0.0.0/16, 6 subnets, /24 each
+  → [10.0.0.0/24, 10.0.1.0/24, ...]
+
+  Combined:
+  !Select [0, !Cidr [!Ref VpcCidr, 6, 8]]
+  → First /24 subnet
+
+[ YAML SHORTHAND vs FULL SYNTAX ]
+  # Both are identical:
+  !Ref MyVPC           = Ref: MyVPC
+  !Sub 'hello ${Name}' = Fn::Sub: 'hello ${Name}'
+  !GetAtt R.Attr       = Fn::GetAtt: [R, Attr]
+  !If [C, T, F]        = Fn::If: [C, T, F]
+  !FindInMap [M, K, V] = Fn::FindInMap: [M, K, V]
+  # Use YAML shorthand (!X) for cleaner templates
+
+============================================
+   INTRINSIC FUNCTIONS COMPLETE
+============================================
