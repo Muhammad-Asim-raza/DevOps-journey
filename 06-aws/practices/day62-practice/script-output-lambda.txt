@@ -1,0 +1,63 @@
+============================================
+   AWS LAMBDA COMPLETE REFERENCE
+   Author: Asim Raza - Day 62
+============================================
+
+[ WHAT IS LAMBDA ]
+  Serverless = no servers to manage
+  Pay per invocation + GB-second
+  Idle: /home/asim-raza/DevOps-journey/06-aws/practices/day62-practice/lambda-reference.sh.00
+  Max: 15 minutes, 10GB memory
+  Scale: automatic (thousands concurrent)
+
+[ HANDLER ANATOMY ]
+  def handler(event, context):
+    event = trigger payload (dict)
+    context.function_name, .aws_request_id
+    context.get_remaining_time_in_millis()
+    return JSON-serializable value
+
+[ COLD vs WARM ]
+  Cold: download code + init runtime + run init code
+  Warm: just run handler (fast!)
+  Init outside handler = faster warm starts
+
+[ TRIGGERS ]
+  Sync:    API Gateway, ALB
+  Async:   S3, EventBridge, SNS → retries + DLQ
+  Polling: SQS, Kinesis, DynamoDB Streams
+
+[ DEPLOYMENT ]
+  aws lambda create-function \
+    --function-name NAME \
+    --runtime python3.11 \
+    --handler handler.handler \
+    --role ROLE_ARN \
+    --zip-file fileb://function.zip \
+    --timeout 30 \
+    --memory-size 512
+
+  aws lambda invoke \
+    --function-name NAME \
+    --payload '{"key":"value"}' \
+    --cli-binary-format raw-in-base64-out \
+    response.json
+
+[ CONCURRENCY ]
+  Default: 1000 concurrent/account
+  Reserved: protect downstream (DB!)
+  Provisioned: keep warm (costs, no cold start)
+
+  aws lambda put-function-concurrency \
+    --function-name NAME \
+    --reserved-concurrent-executions 50
+
+[ KEY METRICS ]
+  Invocations, Errors, Throttles
+  Duration (p50, p95, p99)
+  ConcurrentExecutions
+  Alert on: Errors > 5, Throttles > 10
+
+============================================
+   LAMBDA REFERENCE COMPLETE
+============================================
