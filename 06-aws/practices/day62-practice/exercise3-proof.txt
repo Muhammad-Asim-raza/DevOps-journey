@@ -1,0 +1,27 @@
+=== LAMBDA IAM ===
+Lambda execution role = what your function can do
+Trust principal: lambda.amazonaws.com
+
+Base policy (always needed):
+  AWSLambdaBasicExecutionRole:
+    logs:CreateLogGroup
+    logs:CreateLogStream
+    logs:PutLogEvents
+
+Add based on what your function needs:
+  S3 access: custom policy with GetObject
+  DynamoDB: custom policy with PutItem/GetItem
+  SQS: ReceiveMessage, DeleteMessage, GetQueueAttributes
+  Secrets Manager: GetSecretValue for specific secret ARNs
+  X-Ray: AWSXRayDaemonWriteAccess
+
+Never: AdministratorAccess
+Always: least privilege per function
+
+Environment variables for config:
+  Non-sensitive: use Variables in config
+  Sensitive: use Secrets Manager reference
+    Type: AWS::Lambda::Function
+    Environment:
+      Variables:
+        DB_URL: !Sub /aws/reference/secretsmanager/${SecretArn}

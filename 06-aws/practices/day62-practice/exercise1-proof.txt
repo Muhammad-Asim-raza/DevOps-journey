@@ -1,0 +1,26 @@
+=== LAMBDA FUNDAMENTALS ===
+Lambda = event-driven serverless compute
+Pay: per invocation + GB-second of execution
+Idle: $0 (no servers running)
+Max: 15 minutes execution, 10GB memory
+
+Cold start: first invocation or after idle period
+  Downloads code, initializes runtime, runs init code
+  100-1000ms delay
+
+Warm start: reuses existing execution environment
+  Only handler code runs
+  <1ms overhead
+
+Optimization: module-level code runs ONCE:
+  DB connections, SDK clients, config loading
+  → ALWAYS initialize outside handler function
+
+Handler signature: def handler(event, context)
+  event: trigger payload (dict)
+  context: runtime info (function_name, request_id, etc.)
+  Returns: JSON-serializable value
+  For API Gateway: {statusCode, body, headers}
+
+Runtimes: Python 3.11/3.12, Node.js 20, Java 21,
+          Go, Ruby, .NET, Custom Runtime

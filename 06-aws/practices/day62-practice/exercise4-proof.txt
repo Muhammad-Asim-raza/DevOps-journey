@@ -1,0 +1,35 @@
+=== LAMBDA BEST PRACTICES ===
+1. Init outside handler (connections, clients)
+   DB connections, SDK clients, config loading
+   Reused across warm invocations
+
+2. Timeout: set generous but not unlimited
+   API: 30s max (user-facing)
+   Background: 300s
+   Batch: up to 900s (15 min)
+
+3. Memory: test with AWS Lambda Power Tuning
+   More memory = more CPU = faster = costs same
+   Often: 512MB faster+cheaper than 128MB
+
+4. DLQ for async functions
+   Failed messages go to SQS DLQ
+   Alert on DLQ depth
+   Investigate and replay
+
+5. Reserved concurrency for DB protection
+   100 Lambdas × 1 connection = 100 DB connections
+   db.t3.micro max_connections: 87 → crashes!
+   Solution: reserved concurrency=50 + RDS Proxy
+
+6. Environment variables: never hardcode
+   Non-sensitive: env vars
+   Sensitive: Secrets Manager
+
+7. Lambda Layers for dependencies
+   Shared across functions
+   Faster deployment (don't package deps every time)
+
+8. Enable X-Ray tracing
+   Trace every request through Lambda
+   Debug: which downstream call is slow?

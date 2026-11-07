@@ -1,0 +1,277 @@
+# ================================================
+# lambda-stack.yaml
+# Complete Lambda Function CloudFormation Template
+# Author: Asim Raza - Day 62
+# ================================================
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Lambda function with IAM role, CloudWatch logs,
+  SQS trigger, EventBridge schedule, and monitoring.
+
+Parameters:
+  AppName:
+    Type: String
+    Default: devops-journey
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [development, staging, production]
+  ArtifactBucket:
+    Type: String
+    Description: S3 bucket with Lambda ZIP
+  LambdaVersion:
+    Type: String
+    Default: latest
+    Description: S3 key version of the Lambda package
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, production]
+
+Resources:
+
+  # ── CloudWatch Log Group ──────────────────────
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AppName}-${Environment}-processor"
+      RetentionInDays: !If [IsProduction, 90, 14]
+      # Production: 90 days retention
+      # Others: 14 days (cheaper)
+    DeletionPolicy: Retain
+
+  # ── IAM Role ─────────────────────────────────
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AppName}-${Environment}-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+      Policies:
+        - PolicyName: !Sub "${AppName}-lambda-custom"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadS3Artifacts
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${ArtifactBucket}"
+                  - !Sub "arn:aws:s3:::${ArtifactBucket}/*"
+              - Sid: WriteDynamoDB
+                Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                Resource: !GetAtt MetadataTable.Arn
+              - Sid: ReadSQS
+                Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt InputQueue.Arn
+              - Sid: ReadSecrets
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${AppName}/${Environment}/*"
+
+  # ── DynamoDB Table ────────────────────────────
+  MetadataTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AppName}-${Environment}-metadata"
+      BillingMode: PAY_PER_REQUEST
+      # PAY_PER_REQUEST: serverless billing
+      # No capacity to provision!
+      AttributeDefinitions:
+        - AttributeName: objectKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: objectKey
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+    DeletionPolicy: !If [IsProduction, Retain, Delete]
+
+  # ── SQS Queue ─────────────────────────────────
+  InputQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AppName}-${Environment}-input"
+      VisibilityTimeout: 300
+      # VisibilityTimeout: must be >= Lambda timeout × 6
+      # Lambda timeout: 30s × 6 = 180s minimum
+      # Set 300 to be safe
+      MessageRetentionPeriod: 86400
+      # 1 day retention
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 3
+        # After 3 failed attempts → DLQ
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AppName}-${Environment}-dlq"
+      MessageRetentionPeriod: 1209600
+      # 14 days to investigate failures
+
+  # ── Lambda Function ───────────────────────────
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: LambdaLogGroup
+    Properties:
+      FunctionName: !Sub "${AppName}-${Environment}-processor"
+      Runtime: python3.11
+      Handler: handler.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Sub "lambda/processor-${LambdaVersion}.zip"
+      Timeout: 30
+      MemorySize: 512
+      # MemorySize: more memory = more CPU
+      # Lambda CPU is proportional to memory
+      # Optimize: test different sizes with AWS Lambda Power Tuning
+
+      ReservedConcurrentExecutions: !If
+        - IsProduction
+        - 100
+        - 10
+      # Limit concurrency to protect DynamoDB/RDS
+
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          METADATA_TABLE: !Ref MetadataTable
+          INPUT_QUEUE_URL: !Ref InputQueue
+          LOG_LEVEL: !If [IsProduction, "WARNING", "INFO"]
+
+      TracingConfig:
+        Mode: Active
+        # X-Ray: trace every request
+        # PassThrough: trace 5% (cheaper)
+
+      Layers:
+        - !Ref CommonDependenciesLayer
+        # Lambda Layer: shared dependencies
+
+      Tags:
+        - Key: Project
+          Value: devops-journey
+        - Key: Day
+          Value: "62"
+
+  # ── Lambda Layer (shared dependencies) ─────────
+  CommonDependenciesLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: !Sub "${AppName}-common-deps"
+      Description: Common Python dependencies
+      Content:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: "layers/common-deps.zip"
+      CompatibleRuntimes:
+        - python3.11
+        - python3.12
+
+  # ── SQS Event Source Mapping ──────────────────
+  SQSTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt InputQueue.Arn
+      FunctionName: !GetAtt LambdaFunction.Arn
+      BatchSize: 10
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+        # Only retry failed messages in batch
+        # Not the whole batch!
+
+  # ── EventBridge Schedule ──────────────────────
+  DailyScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${AppName}-${Environment}-daily"
+      Description: Daily scheduled task
+      ScheduleExpression: "cron(0 2 * * ? *)"
+      # Every day at 2:00 AM UTC
+      State: ENABLED
+      Targets:
+        - Id: lambda-target
+          Arn: !GetAtt LambdaFunction.Arn
+
+  SchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt LambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyScheduleRule.Arn
+
+  # ── CloudWatch Alarms ─────────────────────────
+  ErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AppName}-${Environment}-lambda-errors"
+      AlarmDescription: "Lambda error rate > 5%"
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunction
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Statistic: Sum
+      TreatMissingData: notBreaching
+
+  ThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AppName}-${Environment}-lambda-throttles"
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LambdaFunction
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      Statistic: Sum
+
+Outputs:
+  FunctionName:
+    Value: !Ref LambdaFunction
+    Export:
+      Name: !Sub "${AppName}-${Environment}-LambdaFunction"
+
+  FunctionArn:
+    Value: !GetAtt LambdaFunction.Arn
+    Export:
+      Name: !Sub "${AppName}-${Environment}-LambdaArn"
+
+  QueueUrl:
+    Value: !Ref InputQueue
+    Export:
+      Name: !Sub "${AppName}-${Environment}-QueueUrl"
+
+  DLQUrl:
+    Value: !Ref DeadLetterQueue
+    Export:
+      Name: !Sub "${AppName}-${Environment}-DLQUrl"

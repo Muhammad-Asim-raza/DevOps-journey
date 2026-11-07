@@ -1,0 +1,26 @@
+=== LAMBDA TRIGGERS ===
+Synchronous triggers (caller waits):
+  API Gateway, ALB, Cognito, CloudFront
+
+Asynchronous triggers (fire and forget):
+  S3 events, EventBridge, SNS
+  Lambda retries 2 times on failure
+  After 3 failures → Dead Letter Queue (DLQ)
+
+Polling triggers (Lambda reads from):
+  SQS, Kinesis, DynamoDB Streams, Kafka (MSK)
+  Event Source Mapping: Lambda polls and batches
+
+SQS trigger key settings:
+  BatchSize: 10 (process up to 10 messages)
+  ReportBatchItemFailures: retry only failed items
+  VisibilityTimeout: >= Lambda timeout × 6
+
+EventBridge schedule:
+  cron(0 2 * * ? *) = daily at 2am UTC
+  rate(5 minutes)   = every 5 minutes
+
+Concurrency:
+  Default: 1000 concurrent per account
+  Reserved: limit specific function (protect DB)
+  Provisioned: keep warm (no cold starts, costs $)
