@@ -1,4 +1,4 @@
-# Day 62 Exercises — AWS Lambda
+## Day 62 Exercises — AWS Lambda
 **Date:** Aug 19 2026
 **Status:** ✅ Completed
 
