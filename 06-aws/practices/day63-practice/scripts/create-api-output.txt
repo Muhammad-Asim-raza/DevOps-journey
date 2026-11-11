@@ -1,0 +1,53 @@
+============================================
+   CREATE HTTP API -> LAMBDA
+   Author: Asim Raza - Day 63
+============================================
+
+[ STEP 1: Create the API ]
+  --protocol-type HTTP selects the cheaper, faster HTTP API
+  --cors-configuration lets browsers call it from your frontend
+aws apigatewayv2 create-api     --name "devops-journey-http-api"     --protocol-type HTTP     --cors-configuration         AllowOrigins="https://app.example.com",AllowMethods="GET,POST,OPTIONS",AllowHeaders="content-type,authorization",MaxAge=3600     --tags Project=devops-journey,Day=63     --query ApiId --output text     --region "us-east-1"
+  API ID: abc123demo
+
+[ STEP 2: Create the Lambda integration ]
+  AWS_PROXY = pass the whole request to Lambda untouched
+  payload-format-version 2.0 = the newer, simpler event shape
+aws apigatewayv2 create-integration     --api-id "abc123demo"     --integration-type AWS_PROXY     --integration-uri "arn:aws:lambda:us-east-1:123456789012:function:devops-journey-api-handler"     --payload-format-version 2.0     --query IntegrationId --output text     --region "us-east-1"
+  Integration ID: int123demo
+
+[ STEP 3: Create routes ]
+  A route = METHOD + PATH -> integration
+aws apigatewayv2 create-route         --api-id "abc123demo"         --route-key "GET /"         --target "integrations/int123demo"         --region "us-east-1"
+  (would create route: GET /)
+aws apigatewayv2 create-route         --api-id "abc123demo"         --route-key "GET /health"         --target "integrations/int123demo"         --region "us-east-1"
+  (would create route: GET /health)
+aws apigatewayv2 create-route         --api-id "abc123demo"         --route-key "GET /build"         --target "integrations/int123demo"         --region "us-east-1"
+  (would create route: GET /build)
+aws apigatewayv2 create-route         --api-id "abc123demo"         --route-key "GET /status"         --target "integrations/int123demo"         --region "us-east-1"
+  (would create route: GET /status)
+
+[ STEP 4: Allow API Gateway to invoke the Lambda ]
+  Without this you get 500/502 errors even though the
+  route and integration look perfect.
+aws lambda add-permission     --function-name "devops-journey-api-handler"     --statement-id "apigw-invoke-abc123demo"     --action lambda:InvokeFunction     --principal apigateway.amazonaws.com     --source-arn "arn:aws:execute-api:us-east-1:123456789012:abc123demo/*/*"     --region "us-east-1"
+  (would add invoke permission)
+  source-arn restricts this to THIS API only (least privilege)
+
+[ STEP 5: Create stage with throttling ]
+  --auto-deploy: every change goes live automatically
+  (REST APIs need an explicit deployment instead)
+aws apigatewayv2 create-stage     --api-id "abc123demo"     --stage-name prod     --auto-deploy     --default-route-settings         ThrottlingBurstLimit=100,ThrottlingRateLimit=50     --region "us-east-1"
+  (would create stage)
+
+[ YOUR API URL ]
+  https://abc123demo.execute-api.us-east-1.amazonaws.com/prod
+  curl https://abc123demo.execute-api.us-east-1.amazonaws.com/prod/health
+echo "API_ID=abc123demo"        >  ../configs/api-config.sh
+echo "REGION=us-east-1"        >> ../configs/api-config.sh
+echo "INVOKE_URL=https://abc123demo.execute-api.us-east-1.amazonaws.com/prod" >> ../configs/api-config.sh
+
+[ CLEANUP ]
+  aws apigatewayv2 delete-api --api-id abc123demo
+============================================
+   HTTP API CREATION COMPLETE
+============================================
