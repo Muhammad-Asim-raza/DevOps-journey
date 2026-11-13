@@ -1,0 +1,70 @@
+============================================
+   API GATEWAY AUTHORIZERS
+============================================
+
+[ OPTION A: JWT AUTHORIZER (recommended for users) ]
+
+  aws apigatewayv2 create-authorizer \
+    --api-id abc123demo \
+    --authorizer-type JWT \
+    --name cognito-jwt \
+    --identity-source '$request.header.Authorization' \
+    --jwt-configuration \
+      Audience=YOUR_APP_CLIENT_ID,\
+      Issuer=https://cognito-idp.us-east-1.amazonaws.com/POOL_ID
+
+  API Gateway checks: signature, issuer, audience, expiry.
+  Invalid or missing token -> 401 (your Lambda never runs).
+
+[ OPTION B: LAMBDA AUTHORIZER (custom logic) ]
+
+  AUTH_ID=$(aws apigatewayv2 create-authorizer \
+    --api-id abc123demo \
+    --authorizer-type REQUEST \
+    --name token-check \
+    --authorizer-uri arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:253918335624:function:devops-journey-authorizer/invocations \
+    --authorizer-payload-format-version 2.0 \
+    --enable-simple-responses \
+    --identity-source '$request.header.Authorization' \
+    --authorizer-result-ttl-in-seconds 300 \
+    --query AuthorizerId --output text)
+
+  --enable-simple-responses: return just {isAuthorized: bool}
+  --authorizer-result-ttl-in-seconds 300: cache decisions 5 min
+  (fewer authorizer invocations, lower cost and latency)
+
+  Also allow API Gateway to invoke the AUTHORIZER Lambda:
+  aws lambda add-permission \
+    --function-name devops-journey-authorizer \
+    --statement-id apigw-authorizer \
+    --action lambda:InvokeFunction \
+    --principal apigateway.amazonaws.com \
+    --source-arn arn:aws:execute-api:us-east-1:253918335624:abc123demo/authorizers/$AUTH_ID
+
+[ ATTACH AUTHORIZER TO A ROUTE ]
+
+  aws apigatewayv2 update-route \
+    --api-id abc123demo \
+    --route-id ROUTE_ID \
+    --authorization-type CUSTOM \
+    --authorizer-id $AUTH_ID
+  (use --authorization-type JWT for JWT authorizers,
+   plus --authorization-scopes for OAuth scopes)
+
+  Leave /health PUBLIC for load balancer checks.
+  Protect /status and anything sensitive.
+
+[ OPTION C: IAM AUTH (service to service) ]
+  --authorization-type AWS_IAM on the route
+  Caller needs execute-api:Invoke permission:
+  {"Effect":"Allow","Action":"execute-api:Invoke",
+   "Resource":"arn:aws:execute-api:us-east-1:253918335624:abc123demo/prod/GET/status"}
+  Requests must be SigV4 signed: awscurl, boto3, SDKs.
+
+[ CHOOSING ]
+Need                   Use                               
+Logged-in users        JWT (Cognito/OIDC)                
+Custom/legacy tokens   Lambda authorizer                 
+AWS-to-AWS calls       IAM (SigV4)                       
+Metering customers     REST API keys (NOT security)      
+============================================

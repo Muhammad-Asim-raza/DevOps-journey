@@ -1,0 +1,87 @@
+#!/bin/bash
+# ================================================
+# 02-authorizers.sh
+# Attach authorizers to HTTP API routes
+# Author: Asim Raza - Day 63
+# ================================================
+source ../configs/api-config.sh 2>/dev/null || {
+    API_ID="abc123demo"; REGION="us-east-1"
+}
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account \
+    --output text 2>/dev/null || echo "123456789012")
+
+echo "============================================"
+echo "   API GATEWAY AUTHORIZERS"
+echo "============================================"
+
+echo ""
+echo "[ OPTION A: JWT AUTHORIZER (recommended for users) ]"
+echo ""
+echo "  aws apigatewayv2 create-authorizer \\"
+echo "    --api-id $API_ID \\"
+echo "    --authorizer-type JWT \\"
+echo "    --name cognito-jwt \\"
+echo "    --identity-source '\$request.header.Authorization' \\"
+echo "    --jwt-configuration \\"
+echo "      Audience=YOUR_APP_CLIENT_ID,\\"
+echo "      Issuer=https://cognito-idp.${REGION}.amazonaws.com/POOL_ID"
+echo ""
+echo "  API Gateway checks: signature, issuer, audience, expiry."
+echo "  Invalid or missing token -> 401 (your Lambda never runs)."
+
+echo ""
+echo "[ OPTION B: LAMBDA AUTHORIZER (custom logic) ]"
+echo ""
+echo "  AUTH_ID=\$(aws apigatewayv2 create-authorizer \\"
+echo "    --api-id $API_ID \\"
+echo "    --authorizer-type REQUEST \\"
+echo "    --name token-check \\"
+echo "    --authorizer-uri arn:aws:apigateway:${REGION}:lambda:path/2015-03-31/functions/arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:devops-journey-authorizer/invocations \\"
+echo "    --authorizer-payload-format-version 2.0 \\"
+echo "    --enable-simple-responses \\"
+echo "    --identity-source '\$request.header.Authorization' \\"
+echo "    --authorizer-result-ttl-in-seconds 300 \\"
+echo "    --query AuthorizerId --output text)"
+echo ""
+echo "  --enable-simple-responses: return just {isAuthorized: bool}"
+echo "  --authorizer-result-ttl-in-seconds 300: cache decisions 5 min"
+echo "  (fewer authorizer invocations, lower cost and latency)"
+echo ""
+echo "  Also allow API Gateway to invoke the AUTHORIZER Lambda:"
+echo "  aws lambda add-permission \\"
+echo "    --function-name devops-journey-authorizer \\"
+echo "    --statement-id apigw-authorizer \\"
+echo "    --action lambda:InvokeFunction \\"
+echo "    --principal apigateway.amazonaws.com \\"
+echo "    --source-arn arn:aws:execute-api:${REGION}:${ACCOUNT_ID}:${API_ID}/authorizers/\$AUTH_ID"
+
+echo ""
+echo "[ ATTACH AUTHORIZER TO A ROUTE ]"
+echo ""
+echo "  aws apigatewayv2 update-route \\"
+echo "    --api-id $API_ID \\"
+echo "    --route-id ROUTE_ID \\"
+echo "    --authorization-type CUSTOM \\"
+echo "    --authorizer-id \$AUTH_ID"
+echo "  (use --authorization-type JWT for JWT authorizers,"
+echo "   plus --authorization-scopes for OAuth scopes)"
+echo ""
+echo "  Leave /health PUBLIC for load balancer checks."
+echo "  Protect /status and anything sensitive."
+
+echo ""
+echo "[ OPTION C: IAM AUTH (service to service) ]"
+echo "  --authorization-type AWS_IAM on the route"
+echo "  Caller needs execute-api:Invoke permission:"
+echo "  {\"Effect\":\"Allow\",\"Action\":\"execute-api:Invoke\","
+echo "   \"Resource\":\"arn:aws:execute-api:${REGION}:${ACCOUNT_ID}:${API_ID}/prod/GET/status\"}"
+echo "  Requests must be SigV4 signed: awscurl, boto3, SDKs."
+
+echo ""
+echo "[ CHOOSING ]"
+printf "%-22s %-34s\n" "Need" "Use"
+printf "%-22s %-34s\n" "Logged-in users" "JWT (Cognito/OIDC)"
+printf "%-22s %-34s\n" "Custom/legacy tokens" "Lambda authorizer"
+printf "%-22s %-34s\n" "AWS-to-AWS calls" "IAM (SigV4)"
+printf "%-22s %-34s\n" "Metering customers" "REST API keys (NOT security)"
+echo "============================================"
