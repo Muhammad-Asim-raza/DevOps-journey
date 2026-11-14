@@ -1,0 +1,62 @@
+============================================
+   THROTTLING, USAGE PLANS, API KEYS
+============================================
+
+[ WHY THROTTLE? ]
+  One buggy client in a retry loop sends 10,000 req/s.
+  Without limits: Lambda scales up, DynamoDB/RDS melt,
+  your AWS bill explodes.
+  Throttling returns 429 early and cheaply.
+
+[ THROTTLING LEVELS ]
+  1. Account level: about 10,000 req/s per region by default
+     (soft limit, shared by ALL your APIs)
+  2. Stage/route level: YOU set it
+  3. (REST API) per-client level via usage plans
+
+  Two numbers:
+  RATE  = steady requests per second allowed
+  BURST = short spike capacity (token bucket size)
+
+[ HTTP API: per-route throttling ]
+  aws apigatewayv2 update-stage \
+    --api-id abc123demo --stage-name prod \
+    --route-settings '{"GET /status":{"ThrottlingRateLimit":5,"ThrottlingBurstLimit":10}}'
+  Expensive or sensitive routes get tighter limits.
+
+[ REST API: USAGE PLANS + API KEYS ]
+  HTTP APIs do NOT support these. Use a REST API for them.
+
+  # 1. Usage plan (limits for a customer tier)
+  PLAN_ID=$(aws apigateway create-usage-plan \
+    --name gold-tier \
+    --throttle burstLimit=200,rateLimit=100 \
+    --quota limit=100000,period=MONTH \
+    --api-stages apiId=REST_API_ID,stage=prod \
+    --query id --output text)
+
+  # 2. API key (identifies a customer)
+  KEY_ID=$(aws apigateway create-api-key \
+    --name customer-acme --enabled \
+    --query id --output text)
+
+  # 3. Attach key to plan
+  aws apigateway create-usage-plan-key \
+    --usage-plan-id $PLAN_ID \
+    --key-id $KEY_ID --key-type API_KEY
+
+  # 4. Client calls with header:
+  curl -H 'x-api-key: THE_KEY' https://.../prod/health
+  (method must have apiKeyRequired = true)
+
+[ ⚠️  API KEYS ARE NOT AUTHENTICATION ]
+  They identify and meter a caller. They are easily leaked,
+  have no expiry, and carry no identity or permissions.
+  Use them for QUOTAS. Use JWT/IAM/Lambda authorizers
+  for SECURITY. Often you use both together.
+
+[ WHAT CLIENTS SHOULD DO ON 429 ]
+  Retry with exponential backoff + jitter:
+  wait = min(cap, base * 2^attempt) * random(0.5, 1.5)
+  Honour the Retry-After header if present.
+============================================
