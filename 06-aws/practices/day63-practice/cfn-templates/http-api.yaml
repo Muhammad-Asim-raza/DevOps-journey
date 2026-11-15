@@ -1,0 +1,115 @@
+# ================================================
+# http-api.yaml
+# HTTP API + Lambda + stage + throttling + access logs
+# Author: Asim Raza - Day 63
+# ================================================
+AWSTemplateFormatVersion: "2010-09-09"
+Description: HTTP API in front of the Day 62 api-handler Lambda
+
+Parameters:
+  AppName:
+    Type: String
+    Default: devops-journey
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [development, staging, production]
+  LambdaFunctionArn:
+    Type: String
+    Description: ARN of the api-handler Lambda (Day 62)
+  AllowedOrigin:
+    Type: String
+    Default: "https://app.example.com"
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, production]
+
+Resources:
+
+  # Access logs: who called what, status, latency
+  ApiAccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/apigw/${AppName}-${Environment}"
+      RetentionInDays: !If [IsProduction, 90, 14]
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub "${AppName}-${Environment}-http-api"
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins: [!Ref AllowedOrigin]
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [content-type, authorization]
+        MaxAge: 3600
+      Tags:
+        Project: devops-journey
+
+  LambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Ref LambdaFunctionArn
+      PayloadFormatVersion: "2.0"
+      TimeoutInMillis: 10000   # fail fast; HTTP API max is 30000
+
+  HealthRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: "GET /health"
+      Target: !Sub "integrations/${LambdaIntegration}"
+
+  BuildRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: "GET /build"
+      Target: !Sub "integrations/${LambdaIntegration}"
+
+  StatusRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: "GET /status"
+      Target: !Sub "integrations/${LambdaIntegration}"
+
+  ProdStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: !Ref Environment
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingRateLimit: !If [IsProduction, 200, 20]
+        ThrottlingBurstLimit: !If [IsProduction, 400, 40]
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogs.Arn
+        Format: >-
+          {"requestId":"$context.requestId",
+          "ip":"$context.identity.sourceIp",
+          "method":"$context.httpMethod",
+          "route":"$context.routeKey",
+          "status":"$context.status",
+          "latencyMs":"$context.responseLatency",
+          "integrationError":"$context.integrationErrorMessage"}
+
+  # Without this, API Gateway cannot call the Lambda
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*/*"
+
+Outputs:
+  ApiUrl:
+    Description: Invoke URL
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+  ApiId:
+    Value: !Ref HttpApi
+    Export:
+      Name: !Sub "${AppName}-${Environment}-ApiId"

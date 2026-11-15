@@ -1,0 +1,7 @@
+=== THROTTLING ===
+RATE = steady req/s, BURST = spike capacity
+Levels: account (about 10k/s default), stage, route,
+        per-client via REST usage plans.
+Throttled request -> 429.
+Clients must retry with exponential backoff + jitter.
+Usage plan = throttle + quota per tier (REST only).

@@ -1,0 +1,14 @@
+=== API GATEWAY FUNDAMENTALS ===
+API Gateway = managed front door: HTTPS endpoint, auth,
+throttling, CORS, logging, routing to a backend.
+
+HTTP API:  cheaper, faster, JWT authorizer, built-in CORS,
+           auto-deploy. No usage plans/API keys/WAF/caching.
+REST API:  usage plans, API keys, validation, caching, WAF,
+           private endpoints. About 3.5x price.
+WebSocket: persistent two-way connections.
+Default choice: HTTP API.
+
+Build order (HTTP API):
+create-api -> create-integration (AWS_PROXY, payload 2.0)
+-> create-route -> lambda add-permission -> create-stage

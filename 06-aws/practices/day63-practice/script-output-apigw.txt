@@ -1,0 +1,15 @@
+============================================
+   API GATEWAY REFERENCE - Day 63
+============================================
+
+[ TYPES ]    HTTP (default) | REST (usage plans, WAF) | WebSocket
+[ PIPELINE ] request -> authorizer -> throttle -> route -> integration
+[ BUILD ]    create-api, create-integration, create-route,
+             lambda add-permission, create-stage
+[ AUTH ]     JWT | Lambda authorizer | IAM | (API keys = metering)
+[ LIMITS ]   29s REST / 30s HTTP integration timeout, 10MB payload
+[ THROTTLE ] rate + burst; 429; clients back off with jitter
+[ CORS ]     browser-enforced; configure on HTTP API; do not auth OPTIONS
+[ ERRORS ]   401/403 auth, 429 throttle, 500/502 Lambda, 504 timeout
+[ IaC ]      AWS::ApiGatewayV2::Api/Integration/Route/Stage + Lambda::Permission
+============================================

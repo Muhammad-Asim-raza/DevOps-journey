@@ -1,0 +1,8 @@
+=== AUTHORIZATION ===
+JWT authorizer:    users, OIDC/Cognito, no Lambda needed
+Lambda authorizer: custom logic, cache results (TTL)
+IAM (SigV4):       service-to-service
+API keys:          METERING only, NOT security
+
+Authorizer rejecting OPTIONS preflight = CORS error in browser.
+Keep /health public for health checks.

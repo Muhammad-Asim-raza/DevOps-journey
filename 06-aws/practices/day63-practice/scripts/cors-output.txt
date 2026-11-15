@@ -1,0 +1,55 @@
+============================================
+   CORS: CROSS-ORIGIN RESOURCE SHARING
+============================================
+
+[ THE ERROR ]
+  Access to fetch at 'https://api.example.com' from origin
+  'https://app.example.com' has been blocked by CORS policy
+
+[ WHY IT EXISTS ]
+  Browsers enforce the same-origin policy. A page on
+  app.example.com may not read responses from
+  api.example.com unless the API says it is allowed.
+  CORS is enforced by the BROWSER, not the server.
+  curl and Postman ignore it, so 'works in curl' proves nothing.
+
+[ HOW IT WORKS ]
+  Simple request (GET):
+    Browser sends request with Origin header.
+    API must reply: Access-Control-Allow-Origin: <origin>
+
+  Preflight (POST with JSON, custom headers, PUT, DELETE):
+    Browser FIRST sends: OPTIONS /resource
+      Origin: https://app.example.com
+      Access-Control-Request-Method: POST
+      Access-Control-Request-Headers: content-type,authorization
+    API must reply 2xx with:
+      Access-Control-Allow-Origin
+      Access-Control-Allow-Methods
+      Access-Control-Allow-Headers
+    Only then does the browser send the real request.
+
+[ HTTP API: built in, configure once ]
+  aws apigatewayv2 update-api --api-id API_ID \
+    --cors-configuration \
+      AllowOrigins='https://app.example.com',\
+      AllowMethods='GET,POST,OPTIONS',\
+      AllowHeaders='content-type,authorization',\
+      MaxAge=3600
+  API Gateway answers preflight itself; Lambda is not invoked.
+  Do NOT also add CORS headers in Lambda; duplicates break it.
+
+[ REST API: you do more work ]
+  Add an OPTIONS method (mock integration) per resource AND
+  return CORS headers from your Lambda proxy response.
+
+[ RULES THAT TRIP PEOPLE ]
+  1. Allow-Origin: * cannot be combined with credentials
+     (cookies / Authorization with credentials: include).
+  2. List exact origins in production, never * for private APIs.
+  3. Authorizer rejecting the OPTIONS preflight (401/403)
+     shows up in the browser as a CORS error. The preflight
+     carries no auth header and must not be authorized.
+  4. Error responses (4xx/5xx from API Gateway itself) need
+     CORS headers too, or the browser hides the real error.
+============================================

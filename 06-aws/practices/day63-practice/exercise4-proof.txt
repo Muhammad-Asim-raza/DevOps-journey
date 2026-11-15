@@ -1,0 +1,11 @@
+=== CORS AND TROUBLESHOOTING ===
+CORS is enforced by the BROWSER. curl ignores it.
+Preflight OPTIONS needed for JSON POST, custom headers,
+PUT/DELETE. HTTP API answers preflight itself.
+Wildcard origin cannot be used with credentials.
+
+Errors: 401/403 auth, 404 no route, 429 throttle,
+500 Lambda error or missing invoke permission,
+502 malformed Lambda response, 504 timeout.
+Debug: access logs -> Lambda logs -> direct invoke
+-> lambda get-policy.

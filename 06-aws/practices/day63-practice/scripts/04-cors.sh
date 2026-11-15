@@ -1,0 +1,67 @@
+#!/bin/bash
+# ================================================
+# 04-cors.sh
+# CORS explained and configured
+# Author: Asim Raza - Day 63
+# ================================================
+echo "============================================"
+echo "   CORS: CROSS-ORIGIN RESOURCE SHARING"
+echo "============================================"
+
+echo ""
+echo "[ THE ERROR ]"
+echo "  Access to fetch at 'https://api.example.com' from origin"
+echo "  'https://app.example.com' has been blocked by CORS policy"
+
+echo ""
+echo "[ WHY IT EXISTS ]"
+echo "  Browsers enforce the same-origin policy. A page on"
+echo "  app.example.com may not read responses from"
+echo "  api.example.com unless the API says it is allowed."
+echo "  CORS is enforced by the BROWSER, not the server."
+echo "  curl and Postman ignore it, so 'works in curl' proves nothing."
+
+echo ""
+echo "[ HOW IT WORKS ]"
+echo "  Simple request (GET):"
+echo "    Browser sends request with Origin header."
+echo "    API must reply: Access-Control-Allow-Origin: <origin>"
+echo ""
+echo "  Preflight (POST with JSON, custom headers, PUT, DELETE):"
+echo "    Browser FIRST sends: OPTIONS /resource"
+echo "      Origin: https://app.example.com"
+echo "      Access-Control-Request-Method: POST"
+echo "      Access-Control-Request-Headers: content-type,authorization"
+echo "    API must reply 2xx with:"
+echo "      Access-Control-Allow-Origin"
+echo "      Access-Control-Allow-Methods"
+echo "      Access-Control-Allow-Headers"
+echo "    Only then does the browser send the real request."
+
+echo ""
+echo "[ HTTP API: built in, configure once ]"
+echo "  aws apigatewayv2 update-api --api-id API_ID \\"
+echo "    --cors-configuration \\"
+echo "      AllowOrigins='https://app.example.com',\\"
+echo "      AllowMethods='GET,POST,OPTIONS',\\"
+echo "      AllowHeaders='content-type,authorization',\\"
+echo "      MaxAge=3600"
+echo "  API Gateway answers preflight itself; Lambda is not invoked."
+echo "  Do NOT also add CORS headers in Lambda; duplicates break it."
+
+echo ""
+echo "[ REST API: you do more work ]"
+echo "  Add an OPTIONS method (mock integration) per resource AND"
+echo "  return CORS headers from your Lambda proxy response."
+
+echo ""
+echo "[ RULES THAT TRIP PEOPLE ]"
+echo "  1. Allow-Origin: * cannot be combined with credentials"
+echo "     (cookies / Authorization with credentials: include)."
+echo "  2. List exact origins in production, never * for private APIs."
+echo "  3. Authorizer rejecting the OPTIONS preflight (401/403)"
+echo "     shows up in the browser as a CORS error. The preflight"
+echo "     carries no auth header and must not be authorized."
+echo "  4. Error responses (4xx/5xx from API Gateway itself) need"
+echo "     CORS headers too, or the browser hides the real error."
+echo "============================================"
