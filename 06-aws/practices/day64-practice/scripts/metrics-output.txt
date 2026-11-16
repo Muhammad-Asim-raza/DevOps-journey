@@ -1,0 +1,105 @@
+============================================
+       CLOUDWATCH METRICS
+       PRINT ONLY MODE
+============================================
+
+[ 1. LIST METRICS ]
+aws cloudwatch list-metrics --namespace AWS/Lambda --region us-east-1
+
+aws cloudwatch list-metrics --namespace AWS/EC2 --metric-name CPUUtilization --region us-east-1
+
+[ 2. READ A METRIC ]
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/Lambda \
+  --metric-name Errors \
+  --dimensions Name=FunctionName,Value=devops-journey-api-handler \
+  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ) \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+  --period 300 \
+  --statistics Sum \
+  --region us-east-1
+
+Explanation:
+  --period 300 = one 5-minute period
+  --statistics Sum = total errors during that period
+  date commands above are also printed, not executed.
+
+[ 3. GET METRIC DATA WITH METRIC MATH ]
+aws cloudwatch get-metric-data \
+  --start-time 2026-08-21T00:00:00Z \
+  --end-time 2026-08-21T01:00:00Z \
+  --metric-data-queries '[
+    {"Id":"errors","MetricStat":{"Metric":{"Namespace":"AWS/Lambda",
+      "MetricName":"Errors","Dimensions":[{"Name":"FunctionName",
+      "Value":"devops-journey-api-handler"}]},"Period":300,"Stat":"Sum"},
+      "ReturnData":false},
+    {"Id":"invocations","MetricStat":{"Metric":{"Namespace":"AWS/Lambda",
+      "MetricName":"Invocations","Dimensions":[{"Name":"FunctionName",
+      "Value":"devops-journey-api-handler"}]},"Period":300,"Stat":"Sum"},
+      "ReturnData":false},
+    {"Id":"error_rate","Expression":"100*errors/invocations",
+      "Label":"Error rate %"}
+  ]'
+
+Metric math:
+  Error rate = (Errors / Invocations) * 100
+
+[ 4. PUBLISH A CUSTOM METRIC ]
+aws cloudwatch put-metric-data \
+  --namespace DevOpsJourney/App \
+  --metric-name OrdersProcessed \
+  --dimensions Environment=staging,Service=checkout \
+  --value 42 \
+  --unit Count \
+  --region us-east-1
+
+NOTE: The custom metric command was NOT executed.
+
+[ 5. IMPORTANT METRICS PER AWS SERVICE ]
+Lambda:
+  Errors, Throttles, Duration, ConcurrentExecutions
+
+API Gateway:
+  4XXError, 5XXError, Latency, Count
+
+ALB:
+  HTTPCode_Target_5XX_Count
+  TargetResponseTime
+  UnHealthyHostCount
+
+EC2:
+  CPUUtilization
+  StatusCheckFailed
+  Memory and disk through CloudWatch Agent
+
+RDS:
+  CPUUtilization
+  FreeStorageSpace
+  DatabaseConnections
+  FreeableMemory
+  ReplicaLag
+  ReadLatency / WriteLatency
+
+ECS:
+  CPUUtilization
+  MemoryUtilization
+
+SQS:
+  ApproximateAgeOfOldestMessage
+  ApproximateNumberOfMessagesVisible
+
+[ 6. CUSTOM METRIC COST WARNING ]
+Every unique custom metric identity can contribute to charges.
+Dimensions create separate metric identities.
+Avoid high-cardinality dimensions such as:
+  UserId
+  RequestId
+  Full URLs
+
+Use LOGS for high-cardinality details.
+Use METRICS for aggregated numerical measurements.
+
+============================================
+       SCRIPT COMPLETED
+       NO AWS COMMANDS EXECUTED
+============================================
