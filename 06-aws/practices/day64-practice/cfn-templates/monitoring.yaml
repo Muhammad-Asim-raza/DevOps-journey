@@ -1,0 +1,103 @@
+# ================================================
+# monitoring.yaml
+# SNS topic + alarms + dashboard for a Lambda-backed API
+# Author: Asim Raza - Day 64
+# ================================================
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Alerts and dashboard for the DevOps Journey API
+
+Parameters:
+  AppName:
+    Type: String
+    Default: devops-journey
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [development, staging, production]
+  FunctionName:
+    Type: String
+  AlertEmail:
+    Type: String
+
+Conditions:
+  IsProduction: !Equals [!Ref Environment, production]
+
+Resources:
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AppName}-${Environment}-alerts"
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlertEmail
+
+  ErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AppName}-${Environment}-lambda-errors"
+      AlarmDescription: "Lambda errors high. Runbook: https://example.com/runbook"
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref FunctionName
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !If [IsProduction, 3, 10]
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+      OKActions: [!Ref AlertTopic]
+
+  ThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AppName}-${Environment}-lambda-throttles"
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref FunctionName
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  P99LatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AppName}-${Environment}-lambda-p99"
+      Namespace: AWS/Lambda
+      MetricName: Duration
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref FunctionName
+      ExtendedStatistic: p99
+      Period: 300
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      Threshold: 3000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "${AppName}-${Environment}"
+      DashboardBody: !Sub |
+        {"widgets":[{"type":"metric","x":0,"y":0,"width":12,"height":6,
+        "properties":{"title":"Invocations and errors","region":"${AWS::Region}",
+        "stat":"Sum","period":300,"metrics":[
+        ["AWS/Lambda","Invocations","FunctionName","${FunctionName}"],
+        ["AWS/Lambda","Errors","FunctionName","${FunctionName}"]]}}]}
+
+Outputs:
+  AlertTopicArn:
+    Value: !Ref AlertTopic
+    Export:
+      Name: !Sub "${AppName}-${Environment}-AlertTopicArn"

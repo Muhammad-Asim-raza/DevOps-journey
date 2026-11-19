@@ -1,0 +1,7 @@
+=== DASHBOARDS AND AGENT ===
+Dashboards are JSON: keep in Git, deploy with put-dashboard or CFN.
+Golden signals: latency, traffic, errors, saturation.
+CloudWatch Agent: instance role CloudWatchAgentServerPolicy, config
+JSON (mem/disk/logs), fetch-config via amazon-cloudwatch-agent-ctl,
+store config in SSM Parameter Store for fleets.
+ECS: awslogs + Container Insights. EKS: Container Insights/Fluent Bit.

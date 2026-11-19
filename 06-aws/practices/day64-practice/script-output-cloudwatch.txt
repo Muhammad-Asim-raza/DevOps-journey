@@ -1,0 +1,18 @@
+============================================
+   CLOUDWATCH REFERENCE - Day 64
+============================================
+[ METRICS ]  namespace+name+dimensions | p99 for latency
+             put-metric-data | EMF (print JSON) | metric math
+[ LOGS ]     group>stream>event | SET RETENTION | Insights |
+             metric filters | subscription filters
+[ ALARMS ]   period x eval-periods, M-of-N, TreatMissingData,
+             SNS (confirm email!), composite, set-alarm-state
+[ AGENT ]    memory/disk not default; role + config + ctl
+[ DASHBOARD ] JSON in Git; golden signals
+[ COST ]     custom metrics (cardinality), log ingestion,
+             Insights scans, retention
+[ CLI ]      cloudwatch: list-metrics get-metric-data
+             put-metric-alarm describe-alarms put-dashboard
+             logs: tail filter-log-events start-query
+             put-retention-policy put-metric-filter
+============================================

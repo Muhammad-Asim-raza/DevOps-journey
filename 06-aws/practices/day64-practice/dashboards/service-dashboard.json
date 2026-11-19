@@ -1,0 +1,53 @@
+{
+  "widgets": [
+    {
+      "type": "text", "x": 0, "y": 0, "width": 24, "height": 2,
+      "properties": {
+        "markdown": "# DevOps Journey: API health\nLambda + API Gateway + RDS. Runbook: https://example.com/runbook"
+      }
+    },
+    {
+      "type": "metric", "x": 0, "y": 2, "width": 12, "height": 6,
+      "properties": {
+        "title": "Lambda invocations vs errors",
+        "region": "us-east-1", "view": "timeSeries", "stat": "Sum", "period": 300,
+        "metrics": [
+          ["AWS/Lambda", "Invocations", "FunctionName", "devops-journey-api-handler"],
+          ["AWS/Lambda", "Errors", "FunctionName", "devops-journey-api-handler"]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 12, "y": 2, "width": 12, "height": 6,
+      "properties": {
+        "title": "Lambda duration p50 / p99",
+        "region": "us-east-1", "view": "timeSeries", "period": 300,
+        "metrics": [
+          ["AWS/Lambda", "Duration", "FunctionName", "devops-journey-api-handler", {"stat": "p50"}],
+          ["AWS/Lambda", "Duration", "FunctionName", "devops-journey-api-handler", {"stat": "p99"}]
+        ]
+      }
+    },
+    {
+      "type": "metric", "x": 0, "y": 8, "width": 12, "height": 6,
+      "properties": {
+        "title": "RDS CPU and connections",
+        "region": "us-east-1", "view": "timeSeries", "stat": "Average", "period": 300,
+        "metrics": [
+          ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "devops-journey-postgres"],
+          ["AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", "devops-journey-postgres", {"yAxis": "right"}]
+        ]
+      }
+    },
+    {
+      "type": "alarm", "x": 12, "y": 8, "width": 12, "height": 6,
+      "properties": {
+        "title": "Alarm status",
+        "alarms": [
+          "arn:aws:cloudwatch:us-east-1:ACCOUNT_ID:alarm:devops-journey-api-handler-errors",
+          "arn:aws:cloudwatch:us-east-1:ACCOUNT_ID:alarm:devops-journey-postgres-low-storage"
+        ]
+      }
+    }
+  ]
+}

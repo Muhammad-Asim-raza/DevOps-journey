@@ -1,0 +1,7 @@
+=== LOGS ===
+Group (retention/access) > Stream (one source) > Event (a line).
+DEFAULT RETENTION = NEVER EXPIRE. Set it on every group.
+Logs Insights: fields | filter | stats | sort | limit; billed by
+data scanned. Metric filters turn log patterns into metrics.
+Subscription filters stream logs in real time to Lambda/Kinesis/Firehose.
+Never log secrets or PII. Ingestion is the main cost.

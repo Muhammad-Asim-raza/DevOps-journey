@@ -1,0 +1,9 @@
+=== METRICS ===
+Identity: namespace + metric name + dimensions.
+Resolution: 1 min standard, 1 s high-res (custom). EC2 basic = 5 min.
+Statistics: use p99 for latency, Sum for errors, Average for CPU.
+EC2 memory/disk are NOT default: install CloudWatch Agent.
+Custom metric: put-metric-data OR Embedded Metric Format (print JSON).
+Cost trap: high-cardinality dimensions (UserId) create endless
+billable metrics. Put detail in logs instead.
+Metric math: error rate % = 100 * errors / invocations.

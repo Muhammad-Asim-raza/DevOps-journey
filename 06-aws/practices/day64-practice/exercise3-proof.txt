@@ -1,0 +1,10 @@
+=== ALARMS ===
+States: OK / ALARM / INSUFFICIENT_DATA.
+Period x EvaluationPeriods, DatapointsToAlarm (M of N) reduces flapping.
+TreatMissingData: notBreaching for error counts, breaching for heartbeats.
+Percentiles: --extended-statistic p99.
+SNS email subscription must be CONFIRMED.
+Composite alarms combine alarms to cut noise.
+Test with: set-alarm-state.
+Billing metrics only in us-east-1 and need billing alerts enabled.
+Alert on symptoms (user pain), make every page actionable.
