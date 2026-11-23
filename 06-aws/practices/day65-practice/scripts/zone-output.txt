@@ -1,0 +1,50 @@
+============================================
+   ROUTE 53: HOSTED ZONES AND RECORDS
+============================================
+
+[ STEP 1: Create a public hosted zone ]
+aws route53 create-hosted-zone --name "yourdomain.example" --caller-reference "day65-1795441930" --query 'HostedZone.Id' --output text
+
+[ STEP 2: Delegate: copy the 4 NS records to your registrar ]
+  aws route53 get-hosted-zone --id ZONE_ID \
+    --query 'DelegationSet.NameServers'
+  If you bought the domain elsewhere, set THESE 4 name servers
+  at the registrar. Until then, Route 53 is never asked.
+  Domains registered in Route 53 point at the matching zone,
+  but verify it if you ever recreate a zone (new zone = new NS set!).
+
+[ STEP 3: Create/Update records with a change batch ]
+scripts/01-hosted-zone-records.sh: line 28: ../configs/records.json: No such file or directory
+  UPSERT = create if missing, update if present (idempotent).
+  Other actions: CREATE (fails if exists), DELETE (must match exactly)
+  203.0.113.10 is a documentation-only IP (RFC 5737) for demos.
+
+  aws route53 change-resource-record-sets \
+    --hosted-zone-id ZONE_ID \
+    --change-batch file://../configs/records.json
+
+[ STEP 4: Verify ]
+  aws route53 list-resource-record-sets --hosted-zone-id ZONE_ID
+  dig www.yourdomain.example                    # via your resolver
+  dig @ns-123.awsdns-45.com www.yourdomain.example   # ask Route 53 directly
+  dig +short NS yourdomain.example             # confirm delegation
+  nslookup www.yourdomain.example
+  (Day 12-14 DNS tools: dig is your friend)
+
+[ TTL STRATEGY ]
+  Normal operation: 300 s (5 min) to 3600 s
+  BEFORE a planned migration: lower TTL to 60 s a day ahead,
+  so cutover propagates fast; raise it again afterwards.
+  Alias records to AWS resources use the target's TTL (no TTL field).
+  Low TTL = faster change, more queries (small cost).
+
+[ COSTS ]
+  Hosted zone ~$0.50/month (a zone deleted within 12 hours is free)
+  Standard queries ~$0.40 per million; alias queries to AWS free
+  Health checks ~$0.50-$2/month each depending on type
+  Domain registration: yearly, varies by TLD
+
+[ CLEANUP ]
+  Delete all non-default records first (keep NS/SOA), then:
+  aws route53 delete-hosted-zone --id ZONE_ID
+============================================
