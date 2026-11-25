@@ -1,0 +1,6 @@
+=== HEALTH CHECKS ===
+Endpoint, Calculated, CloudWatch-alarm types.
+Route 53 checkers are on the internet: private resources need the
+CloudWatch-alarm type. Allow checker IP ranges in the SG.
+HealthCheckStatus metric is us-east-1 only. Alias records can use
+EvaluateTargetHealth for AWS targets.

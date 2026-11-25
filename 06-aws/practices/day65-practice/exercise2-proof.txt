@@ -1,0 +1,6 @@
+=== ROUTING POLICIES ===
+Simple, Weighted (canary 90/10), Latency (multi-region),
+Failover (primary/secondary + health check),
+Geolocation (+ default record), Multivalue, Geoproximity, IP-based.
+Same name/type records are told apart by SetIdentifier.
+DNS routing is eventual: caching means failover takes minutes.

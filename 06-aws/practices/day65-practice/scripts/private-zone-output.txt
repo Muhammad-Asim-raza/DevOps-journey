@@ -1,0 +1,32 @@
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+VPC_ID="${VPC_ID:-vpc-0demo12345}"
+============================================
+   PRIVATE HOSTED ZONE
+============================================
+
+aws route53 create-hosted-zone --name corp.internal \
+    --caller-reference "priv-$(date +%s)" \
+    --vpc VPCRegion=$REGION,VPCId=$VPC_ID \
+    --hosted-zone-config Comment=internal,PrivateZone=true \
+    --query "HostedZone.Id" --output text 2>/dev/null || \
+    echo "(would create; set VPC_ID to a real VPC)"
+
+Then a CNAME for your database (CNAME is fine: not the apex):
+  db.corp.internal  CNAME  devops-journey-postgres.xxxx.us-east-1.rds.amazonaws.com
+
+Test FROM an instance inside the VPC:
+  dig +short db.corp.internal
+From your laptop it will NOT resolve (that's the point).
+
+Associate more VPCs:
+aws route53 associate-vpc-with-hosted-zone --hosted-zone-id Z... \
+    --vpc VPCRegion=$REGION,VPCId=vpc-other
+
+Split-horizon DNS: same name (api.example.com) in a public AND
+a private zone; inside the VPC the private answer wins,
+outside the public one is returned.
+
+VPC DNS resolver lives at base-of-VPC-CIDR + 2
+(10.0.0.2 for 10.0.0.0/16; also 169.254.169.253).
+Hybrid/on-prem: Route 53 Resolver inbound/outbound endpoints.
+============================================

@@ -1,0 +1,6 @@
+=== CUSTOM DOMAIN AND PRIVATE ZONES ===
+Custom API domain: ACM cert (DNS-validated) -> API GW domain name
+-> API mapping -> Route 53 ALIAS (use target's HostedZoneId).
+Private hosted zone: internal names, needs VPC DNS support +
+hostnames enabled, VPC association; split-horizon DNS possible.
+Troubleshoot with dig / dig +trace / dig @ns-...awsdns.

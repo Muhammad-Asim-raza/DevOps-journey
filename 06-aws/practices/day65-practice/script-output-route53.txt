@@ -1,0 +1,15 @@
+============================================
+   ROUTE 53 REFERENCE - Day 65
+============================================
+[ DNS ]       name -> IP; resolver caches for TTL
+[ ZONES ]     public (internet) | private (VPC-only)
+[ RECORDS ]   A AAAA CNAME MX TXT NS SOA | ALIAS (AWS targets, apex ok)
+[ POLICIES ]  simple weighted latency failover geolocation multivalue
+[ HEALTH ]    endpoint | calculated | cloudwatch-alarm (private)
+[ DOMAIN ]    ACM cert (DNS validate) + APIGW custom domain + ALIAS
+[ TTL ]       lower to 60 s before migrations
+[ CLI ]       route53: create-hosted-zone change-resource-record-sets
+              list-resource-record-sets create-health-check
+[ DEBUG ]     dig +short | dig +trace | dig @ns-... 
+[ COST ]      zone $0.50/mo, queries $0.40/M, health checks $0.50+/mo
+============================================

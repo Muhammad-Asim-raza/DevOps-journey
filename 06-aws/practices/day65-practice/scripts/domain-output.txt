@@ -1,0 +1,60 @@
+source ../../day63-practice/configs/api-config.sh 2>/dev/null || {
+    API_ID="abc123demo"; REGION="us-east-1"; }
+DOMAIN="${DOMAIN:-yourdomain.example}"
+API_DOMAIN="api.${DOMAIN}"
+ZONE_ID="${ZONE_ID:-Z0DEMO12345}"
+
+============================================
+   CUSTOM DOMAIN FOR API GATEWAY
+============================================
+
+[ STEP 1: Request ACM certificate ]
+CERT_ARN=$(aws acm request-certificate --domain-name "$API_DOMAIN" \
+    --validation-method DNS --region "$REGION" \
+    --query CertificateArn --output text 2>/dev/null) || \
+    CERT_ARN="arn:aws:acm:${REGION}:123456789012:certificate/demo"
+echo "$CERT_ARN"
+
+[ STEP 2: DNS validation ]
+aws acm describe-certificate --certificate-arn $CERT_ARN \
+    --query "Certificate.DomainValidationOptions[0].ResourceRecord"
+Create that CNAME in the hosted zone. Wait for ISSUED:
+aws acm wait certificate-validated --certificate-arn $CERT_ARN
+Keep the validation CNAME in place so ACM can auto-renew.
+
+[ STEP 3: API Gateway custom domain + mapping ]
+aws apigatewayv2 create-domain-name \
+    --domain-name $API_DOMAIN \
+    --domain-name-configurations CertificateArn=$CERT_ARN,EndpointType=REGIONAL
+
+aws apigatewayv2 create-api-mapping \
+    --domain-name $API_DOMAIN --api-id $API_ID --stage prod
+(mapping to a stage named $default removes the /prod path part)
+
+[ STEP 4: ALIAS record to the API Gateway domain ]
+Look up the target:
+aws apigatewayv2 get-domain-name --domain-name $API_DOMAIN \
+    --query "DomainNameConfigurations[0].[ApiGatewayDomainName,HostedZoneId]"
+cat << 'EOF'
+  {
+    "Changes": [{
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "api.yourdomain.example",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "<HostedZoneId returned above>",
+          "DNSName": "<ApiGatewayDomainName returned above>",
+          "EvaluateTargetHealth": false
+        }
+      }
+    }]
+  }
+EOF
+The AliasTarget HostedZoneId is the TARGET service's zone,
+NOT your own zone ID. A frequent mix-up.
+
+[ TEST ]
+curl -i https://${API_DOMAIN}/health
+dig +short ${API_DOMAIN}
+============================================

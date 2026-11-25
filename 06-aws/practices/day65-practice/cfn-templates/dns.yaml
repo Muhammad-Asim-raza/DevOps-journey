@@ -1,0 +1,61 @@
+# ================================================
+# dns.yaml
+# Health check + failover records (CloudFormation)
+# Author: Asim Raza - Day 65
+# ================================================
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Failover DNS records with a health check
+
+Parameters:
+  HostedZoneId:
+    Type: AWS::Route53::HostedZone::Id
+  DomainName:
+    Type: String
+    Description: e.g. app.yourdomain.com
+  PrimaryIp:
+    Type: String
+  SecondaryIp:
+    Type: String
+
+Resources:
+  PrimaryHealthCheck:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref DomainName
+        Port: 443
+        ResourcePath: /health
+        RequestInterval: 30
+        FailureThreshold: 3
+        EnableSNI: true
+      HealthCheckTags:
+        - Key: Name
+          Value: !Sub "${DomainName}-primary"
+
+  PrimaryRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      TTL: "60"
+      SetIdentifier: primary
+      Failover: PRIMARY
+      HealthCheckId: !Ref PrimaryHealthCheck
+      ResourceRecords: [!Ref PrimaryIp]
+
+  SecondaryRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      TTL: "60"
+      SetIdentifier: secondary
+      Failover: SECONDARY
+      ResourceRecords: [!Ref SecondaryIp]
+
+Outputs:
+  HealthCheckId:
+    Value: !Ref PrimaryHealthCheck

@@ -1,0 +1,9 @@
+=== HOSTED ZONES AND RECORDS ===
+Hosted zone = authoritative container of records for a domain.
+Public zone answers the internet; private zone only inside VPCs.
+Delegation: the 4 NS values must be set at the registrar.
+Records: A, AAAA, CNAME, MX, TXT, NS, SOA, ALIAS (Route 53-only).
+ALIAS vs CNAME: alias works at the apex, free to AWS targets,
+returns IPs directly; CNAME cannot be at the apex.
+UPSERT = idempotent create-or-update.
+TTL: lower before migrations (60 s), raise after.
