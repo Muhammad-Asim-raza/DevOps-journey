@@ -1,0 +1,98 @@
+#!/bin/bash
+# ================================================
+# 01-create-alb.sh
+# Build an ALB: SGs -> target group -> ALB -> listener
+# Author: Asim Raza - Day 66
+# ================================================
+set -uo pipefail
+REGION="${AWS_DEFAULT_REGION:-us-east-1}"
+APP="devops-journey"
+============================================
+   BUILD AN APPLICATION LOAD BALANCER
+============================================
+VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true \
+    --query 'Vpcs[0].VpcId' --output text --region "$REGION" 2>/dev/null) || VPC_ID="vpc-demo"
+SUBNETS=$(aws ec2 describe-subnets --filters Name=vpc-id,Values="$VPC_ID" \
+    --query 'Subnets[:2].SubnetId' --output text --region "$REGION" 2>/dev/null) || SUBNETS="subnet-a subnet-b"
+echo "VPC: $VPC_ID  Subnets: $SUBNETS"
+
+[ STEP 1: Security groups (Day 55 SG-to-SG pattern) ]
+ALB_SG=$(aws ec2 create-security-group --group-name "${APP}-alb-sg" \
+    --description "ALB" --vpc-id "$VPC_ID" --query GroupId --output text \
+    --region "$REGION" 2>/dev/null) || ALB_SG="sg-alb-demo"
+APP_SG=$(aws ec2 create-security-group --group-name "${APP}-app-sg" \
+    --description "App behind ALB" --vpc-id "$VPC_ID" --query GroupId --output text \
+    --region "$REGION" 2>/dev/null) || APP_SG="sg-app-demo"
+
+# ALB accepts the internet
+for P in 80 443; do
+  aws ec2 authorize-security-group-ingress --group-id "$ALB_SG" --protocol tcp \
+      --port $P --cidr 0.0.0.0/0 --region "$REGION" >/dev/null 2>&1
+done
+# App accepts ONLY the ALB's security group
+aws ec2 authorize-security-group-ingress --group-id "$APP_SG" --protocol tcp \
+    --port 8000 --source-group "$ALB_SG" --region "$REGION" >/dev/null 2>&1
+echo "  ALB SG $ALB_SG: 80/443 from anywhere"
+echo "  App SG $APP_SG: 8000 from the ALB SG only (not from the internet)"
+
+[ STEP 2: Target group ]
+TG_ARN=$(aws elbv2 create-target-group --name "${APP}-tg" \
+    --protocol HTTP --port 8000 --vpc-id "$VPC_ID" --target-type ip \
+    --health-check-protocol HTTP --health-check-path /health \
+    --health-check-interval-seconds 15 --health-check-timeout-seconds 5 \
+    --healthy-threshold-count 2 --unhealthy-threshold-count 3 \
+    --matcher HttpCode=200 \
+    --query 'TargetGroups[0].TargetGroupArn' --output text \
+    --region "$REGION" 2>/dev/null) || TG_ARN="arn:aws:elasticloadbalancing:${REGION}:123456789012:targetgroup/${APP}-tg/demo"
+  $TG_ARN
+  --target-type ip   : required for Fargate/awsvpc and EKS pods
+                       (use 'instance' for classic EC2 targets)
+  /health            : your Day 52 endpoint
+  healthy 2 / unhealthy 3 at 15 s: in after ~30 s, out after ~45 s
+# Faster scale-in / deploys
+aws elbv2 modify-target-group-attributes --target-group-arn "$TG_ARN" \
+    --attributes Key=deregistration_delay.timeout_seconds,Value=30 \
+    --region "$REGION" >/dev/null 2>&1
+  deregistration_delay 30 s (default 300 s makes deploys slow)
+
+[ STEP 3: Load balancer ]
+LB_ARN=$(aws elbv2 create-load-balancer --name "${APP}-alb" \
+    --type application --scheme internet-facing \
+    --subnets $SUBNETS --security-groups "$ALB_SG" \
+    --query 'LoadBalancers[0].LoadBalancerArn' --output text \
+    --region "$REGION" 2>/dev/null) || LB_ARN="arn:aws:elasticloadbalancing:${REGION}:123456789012:loadbalancer/app/${APP}-alb/demo"
+  $LB_ARN
+aws elbv2 wait load-balancer-available --load-balancer-arns "$LB_ARN" \
+    --region "$REGION" 2>/dev/null
+DNS=$(aws elbv2 describe-load-balancers --load-balancer-arns "$LB_ARN" \
+    --query 'LoadBalancers[0].DNSName' --output text --region "$REGION" 2>/dev/null) \
+    || DNS="${APP}-alb-123456.${REGION}.elb.amazonaws.com"
+  DNS: $DNS
+
+[ STEP 4: Listener (HTTP :80 for now) ]
+aws elbv2 create-listener --load-balancer-arn "$LB_ARN" --protocol HTTP --port 80 \
+    --default-actions Type=forward,TargetGroupArn="$TG_ARN" \
+    --region "$REGION" >/dev/null 2>&1 && echo "  ✅ Listener created" || echo "  (would create)"
+
+[ STEP 5: Register targets ]
+  aws elbv2 register-targets --target-group-arn $TG_ARN \
+    --targets Id=10.0.10.25,Port=8000 Id=10.0.11.31,Port=8000
+  For ECS/EKS you do NOT register by hand: the service/controller does it.
+  Check:  aws elbv2 describe-target-health --target-group-arn $TG_ARN
+  States: initial, healthy, unhealthy, draining, unused
+
+[ TEST ]
+  curl -i http://$DNS/health
+cat > ../configs/alb-config.sh << EOF
+REGION=$REGION
+LB_ARN=$LB_ARN
+TG_ARN=$TG_ARN
+ALB_SG=$ALB_SG
+APP_SG=$APP_SG
+DNS=$DNS
+EOF
+
+[ COST: ALB ~$0.0225/hr (~$16/month) + LCU usage. DELETE after labs ]
+  aws elbv2 delete-load-balancer --load-balancer-arn $LB_ARN
+  aws elbv2 delete-target-group  --target-group-arn $TG_ARN
+============================================
