@@ -1,0 +1,8 @@
+=== BEHAVIOR ===
+Round robin (default) or least outstanding requests.
+Cross-zone: ALB always on; NLB off by default (costs inter-AZ).
+Sticky sessions via cookie: prefer stateless apps.
+Health: N successes in, M failures out; all unhealthy = fail open.
+/health must be cheap: DB-dependent health checks cause total outages.
+Deregistration delay: default 300 s, use 30-60 s; pair with SIGTERM.
+Client IP is in X-Forwarded-For; trust only the last hop.

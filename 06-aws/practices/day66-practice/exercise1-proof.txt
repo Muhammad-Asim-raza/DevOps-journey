@@ -1,0 +1,6 @@
+=== ELB FAMILY ===
+ALB L7 (HTTP/S, gRPC, path/host/header routing, Lambda targets)
+NLB L4 (TCP/UDP/TLS, static IP, millions rps, preserves source IP)
+GWLB L3 (inline security appliances). Classic: legacy.
+Hierarchy: LB -> Listener -> Rule -> Target Group -> Targets.
+Needs 2+ subnets in different AZs. Public (internet-facing) or internal.

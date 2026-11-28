@@ -1,0 +1,8 @@
+=== MONITORING AND TROUBLESHOOTING ===
+Alarm: Target_5XX vs ELB_5XX, TargetResponseTime p99, UnHealthyHostCount.
+502 bad response from target; 503 no healthy targets;
+504 timeout or SG/NACL blocking ALB->target.
+Unhealthy checklist: describe-target-health reason, SG from ALB SG,
+port/path/matcher, bind 0.0.0.0, no redirects, subnets/AZs, start grace.
+Access logs to S3 + Athena.
+alb.yaml: SGs, ALB, TG, listeners, redirect, alarms, exports.

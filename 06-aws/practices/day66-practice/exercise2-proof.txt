@@ -1,0 +1,9 @@
+=== BUILD AND ROUTING ===
+Order: security groups -> target group -> load balancer -> listener
+-> register targets (ECS/EKS register automatically).
+App SG allows port from the ALB SG only (not CIDR, not internet).
+target-type ip for Fargate/EKS pods. Health check /health, matcher 200.
+Rules by priority: path, host, header, method, source IP.
+Actions: forward, redirect, fixed-response, authenticate.
+HTTPS: ACM cert on the listener; :80 redirects to 443 (301).
+Weighted target groups: per-request canary/blue-green, instant rollback.
